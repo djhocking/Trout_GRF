@@ -1,0 +1,1 @@
+Full_Fish_Query_MA <- read.csv("~/Documents/Research/Stream_Climate_Change/Brook_Trout/Data/MA_Raw/Full_Fish_Query_MA.csv", stringsAsFactors=FALSE)

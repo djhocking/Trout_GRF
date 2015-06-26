@@ -26,7 +26,7 @@ if(FALSE){
   dyn.unload(dynlib(paste0("Code/", Version)))
   file.remove( paste0("Code/", Version,c(".o",".dll")) )
 }
-compile( paste0(Version,".cpp") )
+compile( paste0("Code/", Version,".cpp") )
 
 # Make inputs
 if(Version=="OU_GMRF_v1a") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
@@ -37,7 +37,7 @@ Random = c( "Epsiloninput_d" )
 Map = NULL
 
 # Make object
-dyn.load( dynlib(paste0(Version) ))
+dyn.load( dynlib(paste0("Code/", Version) ))
 obj <- MakeADFun(data=Data, parameters=Params, random=Random, map=Map, hessian=FALSE, inner.control=list(maxit=1000) )
 
 # First run

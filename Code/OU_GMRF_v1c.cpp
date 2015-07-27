@@ -101,6 +101,8 @@ Type objective_function<Type>::operator() ()
   REPORT( Epsiloninput_d );
   REPORT( log_mean );
   REPORT( detectprob_ip );
+  REPORT( gamma_j );
+  REPORT( eta_i);
   
   return jnll;
 }

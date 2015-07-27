@@ -17,7 +17,7 @@ Type objective_function<Type>::operator() ()
   DATA_INTEGER(n_b);	// Number of branches in acyclic graph (b) (presumably n_b = n_d, i.e., including infinitely-long branch for root)
 
   // Data
-  DATA_VECTOR(c_i);       	// Count data
+  DATA_MATRIX(c_ip);       	// Count data
   DATA_FACTOR(d_i);         // Branch number b for each observationp
   DATA_MATRIX(X_ij);      // Covariate matrix for observation i and covariate j
 
@@ -31,6 +31,8 @@ Type objective_function<Type>::operator() ()
   PARAMETER(log_SD);
   PARAMETER(log_mean);      
   PARAMETER_VECTOR(gamma_j);
+  PARAMETER(log_detectrate);
+  PARAMETER_VECTOR(log_extradetectrate_i);
 
   // Random effects
   PARAMETER_VECTOR(Epsiloninput_d);  // Spatial process variation
@@ -42,6 +44,17 @@ Type objective_function<Type>::operator() ()
   // Derived parameters
   Type SDinput = exp(log_SD);
   Type theta = exp(log_theta);
+  Type detectrate = exp(log_detectrate);
+  vector<Type> extradetectrate_i(n_i);
+  extradetectrate_i = exp(log_extradetectrate_i);
+  
+  // Detection probability
+  matrix<Type> detectprob_ip(n_i,3);
+  for (int i=0; i<n_i; i++){
+    detectprob_ip(i,0) = 1.0 - exp(-1 * (detectrate * extradetectrate_i(i)));
+    detectprob_ip(i,1) = (1-detectprob_ip(i,0)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
+    detectprob_ip(i,2) = (1-detectprob_ip(i,0))*(1-detectprob_ip(i,1)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
+  }  
   
   // Probability of GRF on network
   vector<Type> rho_b(n_b); 
@@ -71,13 +84,14 @@ Type objective_function<Type>::operator() ()
   eta_i = X_ij * gamma_j.matrix();
   
   // Likelihood contribution from observations
-  vector<Type> log_chat_i(n_i);
+  matrix<Type> lambda_ip(n_i,3);
   for (int i=0; i<n_i; i++){
-    log_chat_i(i) = log_mean + Epsiloninput_d(d_i(i)) + eta_i(i);
-    if( !isNA(c_i(i)) ){                
-      jnll -= dpois(c_i(i), exp(log_chat_i(i)), true);
+  for (int p=0; p<3; p++){
+    lambda_ip(i,p) = exp(log_mean + Epsiloninput_d(d_i(i)) + eta_i(i));
+    if( !isNA(c_ip(i,p)) ){                
+      jnll -= dpois(c_ip(i,p), lambda_ip(i,p)*detectprob_ip(i,p), true);
     }
-  }
+  }}
 
   // Spatial field summaries
   REPORT( rho_b );
@@ -86,8 +100,7 @@ Type objective_function<Type>::operator() ()
   REPORT( theta );
   REPORT( Epsiloninput_d );
   REPORT( log_mean );
-  REPORT( eta_i );
-  ADREPORT( log_chat_i );
+  REPORT( detectprob_ip );
   
   return jnll;
 }

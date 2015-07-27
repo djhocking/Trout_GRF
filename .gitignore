@@ -1,5 +1,9 @@
 packrat/lib*/
 .Rproj.user
-Data/
+#Data/
 Related_Papers/
-*.RData
+#*.RData
+.Rhistory
+*.o
+*.dll
+*.so

@@ -6,7 +6,7 @@ setwd("C:/Users/James.Thorson/Desktop/UW Hideaway/Collaborations/2015 -- river n
 # Load data
 #######################
 
-load( "sample.RData")
+load( "Data/sample.RData")
 colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
 
@@ -60,7 +60,7 @@ c_ip = c_ip[,1:3]
 
 library( TMB )
 
-Version = "OU_GMRF_v1c"
+Version = "Code/OU_GMRF_v1c"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
 # v1c -- added triple-pass depletion with unobservable variation in area-swept/catchability among sites

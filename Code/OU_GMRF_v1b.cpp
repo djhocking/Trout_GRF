@@ -85,6 +85,7 @@ Type objective_function<Type>::operator() ()
   REPORT( Epsiloninput_d );
   REPORT( log_mean );
   REPORT( eta_i );
+  REPORT( gamma_j );
   
   return jnll;
 }

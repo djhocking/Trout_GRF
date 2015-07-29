@@ -5,6 +5,7 @@
 # Load libraries
 #######################
 library(TMB)
+library(dplyr)
 
 #######################
 # Load data
@@ -26,7 +27,7 @@ if(FALSE){
   dyn.unload(dynlib(paste0("Code/", Version)))
   file.remove( paste0("Code/", Version,c(".o",".dll")) )
 }
-compile( paste0(Version,".cpp") )
+compile( paste0("Code/", Version,".cpp") )
 
 # Make inputs
 
@@ -71,7 +72,7 @@ Random = c( "Epsiloninput_d", "log_extradetectrate_i" )
   Random = c( "Epsiloninput_d" )
 }
 
-Map = ls()
+Map = list()
 if(Version=="OU_GMRF_v1c"){
   Map[["log_extradetectrate_i"]] = factor( rep(NA,Data$n_i) )
 }
@@ -93,19 +94,23 @@ opt[["final_gradient"]] = obj$gr( opt$par )
 Report = obj$report()
 Sdreport = sdreport( obj )
 
-if(!exists(file.path("Output", Version))) dir.create(path = paste0("Output/", Version, "/"), recursive = TRUE)
-capture.output( Sdreport, file=paste0("Output/", Version, "SD.txt")
+if(!exists(file.path("Output", Version))) {
+  dir.create(path = paste0("Output/", Version, "/"), recursive = TRUE)
+} 
+capture.output( Sdreport, file=paste0("Output/", Version, "SD.txt"))
 
 # compare predicted vs. observed on original scale
 c_est <- exp(Report[["Epsiloninput_d"]]+Report[["log_mean"]]+Report[["eta_i"]])
-plot(c_i, c_est)
+plot(c_ip[ , 1], c_est)
 abline( a=0, b=1, lty="dotted")
 
 
-foo <- data.frame(family$child_name, c_est, Report$rho_b)
+# get outpts for maping rho and N
+N_i <- c_est/Report$detectprob_ip[ , 1]
+df_N <- data.frame(child_name = family$child_name, c_sum = rowSums(family[ , c("pass_1", "pass_2", "pass_3")]), N_i, rho_b = Report$rho_b, p = Report$detectprob_ip)
 
-df_N <- data.frame(c_obs, c_sum = rowSums(c_obs), N_cs)
-df_estimates <- bind_cols(dplyr::filter(family, !is.na(pass_1)), foo)
-foo <- dplyr::select(df_estimates, child_name)
-df_estimates <- left_join(family, df_estimates)
-df_estimates$rho <- Report$rho_b
+# check if predictions of N are at least as large as the number of individuals caught (assume: complete closure during removal passes and no mis-identification)
+df_N <- df_N %>%
+  dplyr::mutate(p_miss_total = (1-p.1)^3,
+                problem = ifelse(c_sum > N_i, TRUE, FALSE))
+df_N

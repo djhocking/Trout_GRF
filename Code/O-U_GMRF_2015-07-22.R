@@ -112,3 +112,5 @@ abline( a=0, b=1, lty="dotted")
 detectprob_hat = 1 - exp(-exp(opt$par['log_detectrate']))
 colSums(Report$detectprob_ip) / sum(Report$detectprob_ip)
 colSums( c_ip ) / sum(c_ip)
+
+Report$detectprob_ip

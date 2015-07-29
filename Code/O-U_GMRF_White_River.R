@@ -98,3 +98,11 @@ c_est <- exp(Report[["Epsiloninput_d"]]+Report[["log_mean"]]+Report[["eta_i"]])
 plot(c_i, c_est)
 abline( a=0, b=1, lty="dotted")
 
+
+foo <- data.frame(family$child_name, c_est, Report$rho_b)
+
+df_N <- data.frame(c_obs, c_sum = rowSums(c_obs), N_cs)
+df_estimates <- bind_cols(dplyr::filter(family, !is.na(pass_1)), foo)
+foo <- dplyr::select(df_estimates, child_name)
+df_estimates <- left_join(family, df_estimates)
+df_estimates$rho <- Report$rho_b

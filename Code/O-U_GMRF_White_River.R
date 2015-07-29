@@ -17,7 +17,7 @@ family <- df
 # Fit in TMB
 #######################
 
-Version = "OU_GMRF_v1b"
+Version = "OU_GMRF_v1c"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
 # v1c- adds linear predictors to SD output and multinomial count process
@@ -26,7 +26,7 @@ if(FALSE){
   dyn.unload(dynlib(paste0("Code/", Version)))
   file.remove( paste0("Code/", Version,c(".o",".dll")) )
 }
-compile( paste0("Code/", Version,".cpp") )
+compile( paste0(Version,".cpp") )
 
 # Make inputs
 
@@ -71,7 +71,10 @@ Random = c( "Epsiloninput_d", "log_extradetectrate_i" )
   Random = c( "Epsiloninput_d" )
 }
 
-Map = NULL
+Map = ls()
+if(Version=="OU_GMRF_v1c"){
+  Map[["log_extradetectrate_i"]] = factor( rep(NA,Data$n_i) )
+}
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version) ))

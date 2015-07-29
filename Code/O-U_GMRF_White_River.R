@@ -10,7 +10,7 @@ library(dplyr)
 #######################
 # Load data
 #######################
-load("Data/Prepared_Data.RData")
+load("../Data/Prepared_Data.RData")
 
 family <- df
 
@@ -18,16 +18,22 @@ family <- df
 # Fit in TMB
 #######################
 
-Version = "OU_GMRF_v1c"
+Version = "OU_GMRF_v1d"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
-# v1c- adds linear predictors to SD output and multinomial count process
+# v1c- adds linear predictors to SD output and multinomial count process (HAS A BUG!)
+# v1d- adds makes random variation in detection probability random, and fixed bug in detectprob calculation
 #setwd( TmbFile )
+
+# Other settings
+ExtraDetectionSD = TRUE
+
+# Compile
 if(FALSE){
   dyn.unload(dynlib(paste0("Code/", Version)))
   file.remove( paste0("Code/", Version,c(".o",".dll")) )
 }
-compile( paste0("Code/", Version,".cpp") )
+compile( paste0(Version,".cpp") )
 
 # Make inputs
 
@@ -61,24 +67,26 @@ if(Version=="OU_GMRF_v1b") {
 
 if(Version=="OU_GMRF_v1a") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
 if(Version=="OU_GMRF_v1b") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
-if(Version=="OU_GMRF_v1c") Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "c_ip"=as.matrix(c_ip), "d_i"=family[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
+if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "c_ip"=as.matrix(c_ip), "d_i"=family[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
 
 if(Version=="OU_GMRF_v1a") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "Epsiloninput_d"=rnorm(Data$n_b))
 if(Version=="OU_GMRF_v1b") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "Epsiloninput_d"=rnorm(Data$n_b))
-if(Version=="OU_GMRF_v1c") {
-  Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
-Random = c( "Epsiloninput_d", "log_extradetectrate_i" )
-} else {
-  Random = c( "Epsiloninput_d" )
-}
+if(Version=="OU_GMRF_v1c") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
+if(Version=="OU_GMRF_v1d") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
+
+if(Version%in%c("OU_GMRF_v1a","OU_GMRF_v1b")) Random = c( "Epsiloninput_d" )
+if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Random = c( "Epsiloninput_d", "log_extradetectrate_i" )
 
 Map = list()
 if(Version=="OU_GMRF_v1c"){
   Map[["log_extradetectrate_i"]] = factor( rep(NA,Data$n_i) )
 }
+if( Version%in%c("OU_GMRF_v1d") & ExtraDetectionSD==FALSE ){
+  Map[["ExtraDetectionSD"]] = factor(NA)
+}
 
 # Make object
-dyn.load( dynlib(paste0("Code/", Version) ))
+dyn.load( dynlib(paste0(Version) ))
 obj <- MakeADFun(data=Data, parameters=Params, random=Random, map=Map, hessian=FALSE, inner.control=list(maxit=1000) )
 
 # First run

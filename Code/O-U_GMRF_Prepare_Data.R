@@ -87,4 +87,6 @@ length_std <- (df$length_sample - mean(df$length_sample)) / sd(df$length_sample)
 width_std <- (df$width - mean(df$width)) / sd(df$width)
 X_ij = cbind(dummies[ , 2:ncol(dummies)], length_std, width_std)
 
-save(c_ip, X_ij, df, file = "Data/Prepared_Data.RData")
+df_stds <- data.frame(parameter = c("length", "width"), means = c(mean(df$length_sample), mean(df$width)), sds = c(sd(df$length_sample), sd(df$width)))
+
+save(c_ip, X_ij, df_stds, df, file = "Data/Prepared_Data.RData")

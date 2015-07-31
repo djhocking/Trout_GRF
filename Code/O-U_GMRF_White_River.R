@@ -10,7 +10,7 @@ library(dplyr)
 #######################
 # Load data
 #######################
-load("../Data/Prepared_Data.RData")
+load("Data/Prepared_Data.RData")
 
 family <- df
 
@@ -33,7 +33,7 @@ if(FALSE){
   dyn.unload(dynlib(paste0("Code/", Version)))
   file.remove( paste0("Code/", Version,c(".o",".dll")) )
 }
-compile( paste0(Version,".cpp") )
+compile( paste0("Code/", Version,".cpp") )
 
 # Make inputs
 
@@ -60,11 +60,6 @@ if(Version=="OU_GMRF_v1b") {
   c_i <- as.vector(dplyr::bind_rows(foo, dplyr::select(N_cs, No))$No)
 } # end if version b statement
 
-  
-######### temp make covariates just intercept ##########
-#X_ij <- cbind(rep(x = 1, length.out = dim(c_ip)[1])) # didn't help
-##############
-
 if(Version=="OU_GMRF_v1a") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
 if(Version=="OU_GMRF_v1b") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
 if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "c_ip"=as.matrix(c_ip), "d_i"=family[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[,'parent_b']-1, "child_b"=family[,'child_b']-1, "dist_b"=family[,'dist_b'])
@@ -86,7 +81,7 @@ if( Version%in%c("OU_GMRF_v1d") & ExtraDetectionSD==FALSE ){
 }
 
 # Make object
-dyn.load( dynlib(paste0(Version) ))
+dyn.load( dynlib(paste0("Code/", Version) ))
 obj <- MakeADFun(data=Data, parameters=Params, random=Random, map=Map, hessian=FALSE, inner.control=list(maxit=1000) )
 
 # First run
@@ -101,6 +96,13 @@ opt[["final_gradient"]] = obj$gr( opt$par )
 # Get standard errors
 Report = obj$report()
 Sdreport = sdreport( obj )
+SD = sdreport( obj, bias.correct=TRUE )
+SD$unbiased$value
+
+n = nrow(family)
+data.frame(v1 = SD$unbiased$value[1:n], v2 = SD$unbiased$value[(n+1):(2*n)], v3 = SD$unbiased$value[(2*n+1):(3*n)])
+
+N_unbias <- SD$unbiased$value[1:n]
 
 if(!exists(file.path("Output", Version))) {
   dir.create(path = paste0("Output/", Version, "/"), recursive = TRUE)
@@ -108,17 +110,27 @@ if(!exists(file.path("Output", Version))) {
 capture.output( Sdreport, file=paste0("Output/", Version, "SD.txt"))
 
 # compare predicted vs. observed on original scale
-c_est <- exp(Report[["Epsiloninput_d"]]+Report[["log_mean"]]+Report[["eta_i"]])
-plot(c_ip[ , 1], c_est)
+c_est <- Report$lambda_ip * Report$detectprob_ip
+
+plot(c_ip[ , 1], c_est[ , 1], xlab = "Count Observed", ylab = "Count Estimated")
+points(c_ip[ , 2], c_est[ , 2], pch = 2)
+points(c_ip[ , 3], c_est[ , 3], pch = 3)
 abline( a=0, b=1, lty="dotted")
 
 
 # get outpts for maping rho and N
-N_i <- c_est/Report$detectprob_ip[ , 1]
-df_N <- data.frame(child_name = family$child_name, c_sum = rowSums(family[ , c("pass_1", "pass_2", "pass_3")]), N_i, rho_b = Report$rho_b, p = Report$detectprob_ip)
+N_i <- Report$lambda_ip[ , 1]
+
+df_N <- data.frame(child_name = family$child_name, c_sum = rowSums(family[ , c("pass_1", "pass_2", "pass_3")]), N_i, N_unbias, rho_b = Report$rho_b, p = Report$detectprob_ip, pass_1 = family$pass_1, pass_2 = family$pass_2, pass_3 = family$pass_3)
 
 # check if predictions of N are at least as large as the number of individuals caught (assume: complete closure during removal passes and no mis-identification)
 df_N <- df_N %>%
   dplyr::mutate(p_miss_total = (1-p.1)^3,
-                problem = ifelse(c_sum > N_i, TRUE, FALSE))
+                problem = ifelse(c_sum > N_i, TRUE, FALSE),
+                N_100 = N_i / df$length_sample * 100)
 df_N
+
+df_N %>%
+  dplyr::select(c_sum, N_i, N_unbias, problem, pass_1, pass_2, pass_3) %>%
+  dplyr::filter(!is.na(c_sum))
+

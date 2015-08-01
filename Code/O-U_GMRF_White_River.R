@@ -103,6 +103,7 @@ n = nrow(family)
 data.frame(v1 = SD$unbiased$value[1:n], v2 = SD$unbiased$value[(n+1):(2*n)], v3 = SD$unbiased$value[(2*n+1):(3*n)])
 
 N_unbias <- SD$unbiased$value[1:n]
+N_sd <- SD$sd[1:n]
 
 if(!exists(file.path("Output", Version))) {
   dir.create(path = paste0("Output/", Version, "/"), recursive = TRUE)
@@ -121,7 +122,7 @@ abline( a=0, b=1, lty="dotted")
 # get outpts for maping rho and N
 N_i <- Report$lambda_ip[ , 1]
 
-df_N <- data.frame(child_name = family$child_name, c_sum = rowSums(family[ , c("pass_1", "pass_2", "pass_3")]), N_i, N_unbias, rho_b = Report$rho_b, p = Report$detectprob_ip, pass_1 = family$pass_1, pass_2 = family$pass_2, pass_3 = family$pass_3)
+df_N <- data.frame(child_name = family$child_name, c_sum = rowSums(family[ , c("pass_1", "pass_2", "pass_3")]), N_i, N_unbias, N_sd, rho_b = Report$rho_b, p = Report$detectprob_ip, pass_1 = family$pass_1, pass_2 = family$pass_2, pass_3 = family$pass_3)
 
 # check if predictions of N are at least as large as the number of individuals caught (assume: complete closure during removal passes and no mis-identification)
 df_N <- df_N %>%
@@ -131,6 +132,6 @@ df_N <- df_N %>%
 df_N
 
 df_N %>%
-  dplyr::select(c_sum, N_i, N_unbias, problem, pass_1, pass_2, pass_3) %>%
+  dplyr::select(c_sum, N_i, N_unbias, N_sd, problem, pass_1, pass_2, pass_3) %>%
   dplyr::filter(!is.na(c_sum))
 

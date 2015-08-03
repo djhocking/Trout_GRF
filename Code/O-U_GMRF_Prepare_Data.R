@@ -30,17 +30,17 @@ df_bkt_reduced <- df_bkt %>%
                    width = mean(width))
 
 # just use the most recent date a site was sampled to avoid temporal trends at sites
-recent_site_visits <- df_bkt_reduced %>%
-  dplyr::ungroup() %>%
-  dplyr::group_by(location_id) %>%
-  dplyr::summarise(date = max(date)) %>%
-  dplyr::mutate(visit = paste0(location_id, "_", date))
-
-df_visit <- df_bkt_reduced %>%
-  dplyr::select(visit, location_id, date, year, month, length_sample, width)
-
-df_recent_visits <- left_join(recent_site_visits, df_visit) %>%
-  distinct() # i don't understand why this was needed but only way not duplicated -- maybe do to grouping of one or both of the dataframes - groupings seems to cause problems, maybe should always ungroup at end of pipes.
+# recent_site_visits <- df_bkt_reduced %>%
+#   dplyr::ungroup() %>%
+#   dplyr::group_by(location_id) %>%
+#   dplyr::summarise(date = max(date)) %>%
+#   dplyr::mutate(visit = paste0(location_id, "_", date))
+# 
+ df_visit <- df_bkt_reduced %>%
+   dplyr::select(visit, location_id, date, year, month, length_sample, width)
+# 
+# df_recent_visits <- left_join(recent_site_visits, df_visit) %>%
+#   distinct() # i don't understand why this was needed but only way not duplicated -- maybe due to grouping of one or both of the dataframes - groupings seems to cause problems, maybe should always ungroup at end of pipes.
 
 # expand to 3-pass for all visits
 foo <- df_bkt_reduced %>%
@@ -60,7 +60,10 @@ df_bkt_3_pass <- df_bkt_3_pass %>%
   tidyr::spread(key = pass, value = count) 
 
 # reduce to most recent site-visit
-df_trout <- left_join(df_recent_visits, df_bkt_3_pass)
+#df_trout <- left_join(df_recent_visits, df_bkt_3_pass)
+
+# combine covariate data back in
+df_trout <- left_join(df_bkt_3_pass, df_visit) %>% distinct()
 
 df <- left_join(family, df_trout, by = c("child_name" = "location_id")) %>%
   dplyr::select(child_name, parent_b, dist_b, child_b, NodeLat, NodeLon, pass_1, pass_2, pass_3, date, length_sample, width)
@@ -85,8 +88,10 @@ year <- as.factor(df$year)
 dummies <- model.matrix(~year)
 length_std <- (df$length_sample - mean(df$length_sample)) / sd(df$length_sample)
 width_std <- (df$width - mean(df$width)) / sd(df$width)
-X_ij = cbind(dummies[ , 2:ncol(dummies)], length_std, width_std)
+X_ij = cbind(dummies, length_std, width_std) #[ , 2:ncol(dummies)]
 
 df_stds <- data.frame(parameter = c("length", "width"), means = c(mean(df$length_sample), mean(df$width)), sds = c(sd(df$length_sample), sd(df$width)))
 
-save(c_ip, X_ij, df_stds, df, file = "Data/Prepared_Data.RData")
+t_i <- df$year
+
+save(c_ip, X_ij, df_stds, t_i, df, family, file = "Data/Prepared_Data.RData")

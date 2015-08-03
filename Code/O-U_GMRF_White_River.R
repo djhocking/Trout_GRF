@@ -12,6 +12,9 @@ library(dplyr)
 #######################
 load("Data/Prepared_Data.RData")
 
+# remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
+X_ij <- X_ij[ , c("(Intercept)", "length_std", "width_std")]
+
 # df = dataframe with all data including sites with multiple passes (multiple instances of each child)
 # family = dataframe with unique child rows. Other columns are parents of each child, lat, lon, and other data associated with each child node.
 # C_ip matrix of counts at site-year i on electrofish survey pass p
@@ -127,11 +130,11 @@ abline( a=0, b=1, lty="dotted")
 # get outpts for maping rho and N
 N_i <- Report$lambda_ip[ , 1]
 
-df_N <- data.frame(child_name = df$child_name, c_sum = rowSums(df[ , c("pass_1", "pass_2", "pass_3")]), N_i, N_unbias, N_sd, p = Report$detectprob_ip, pass_1 = df$pass_1, pass_2 = df$pass_2, pass_3 = df$pass_3)
+df_N <- data.frame(child_name = df$child_name, year = df$year, c_sum = rowSums(df[ , c("pass_1", "pass_2", "pass_3")]), N_i, N_unbias, N_sd, p = Report$detectprob_ip, pass_1 = df$pass_1, pass_2 = df$pass_2, pass_3 = df$pass_3)
 
 # only 1 rho per node - add child_name and join back to df_N if rho doesn't change by year
 rho_b = data.frame(child_name = family$child_name, rho_b = Report$rho_b)
-df_N <- left_join(df_N, rho_b)
+df_N <- left_join(df_N, rho_b) 
 
 # check if predictions of N are at least as large as the number of individuals caught (assume: complete closure during removal passes and no mis-identification)
 df_N <- df_N %>%
@@ -141,7 +144,12 @@ df_N <- df_N %>%
 df_N
 
 df_N %>%
-  dplyr::select(c_sum, N_i, N_unbias, N_sd, pass_1, pass_2, pass_3, p_miss_total) %>%
+  dplyr::select(c_sum, N_i, N_unbias, N_sd, pass_1, pass_2, pass_3, p_miss_total, N_100) %>%
+  dplyr::filter(!is.na(c_sum)) 
+
+# site getting the same values at a given site across years!!!!
+df_N %>%
+  dplyr::select(child_name, year, c_sum, N_i, N_unbias, N_sd, pass_1, pass_2, pass_3, p_miss_total, N_100) %>%
   dplyr::filter(!is.na(c_sum))
 
 # save output for Kyle to map

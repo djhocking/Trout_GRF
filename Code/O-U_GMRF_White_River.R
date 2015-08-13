@@ -38,7 +38,7 @@ Version = "OU_GMRF_v1g"
 #setwd( TmbFile )
 
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1)
 
 # YearSet
 YearSet = min(t_i):max(t_i)
@@ -104,8 +104,8 @@ Map = list()
 if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatialTF"]]==FALSE ){
   Map[["log_theta"]] = factor(NA)
   Map[["log_SD"]] = factor(NA)
-  Params[["Epsiloninput_d"]] = rep(0,length("Epsiloninput_d"))
-  Map[["Epsiloninput_d"]] = factor( rep(NA,length("Epsiloninput_d")) )
+  Params[["Epsiloninput_d"]] = rep(0,length(Params[["Epsiloninput_d"]]))
+  Map[["Epsiloninput_d"]] = factor( rep(NA,length(Params[["Epsiloninput_d"]])) )
 }
 if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["TemporalTF"]]==FALSE ){
   Map[["rhot"]] = factor(NA)

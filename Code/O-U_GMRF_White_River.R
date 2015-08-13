@@ -27,17 +27,18 @@ X_ij <- X_ij[ , c("(Intercept)", "length_std", "width_std")]
 # Fit in TMB
 #######################
 
-Version = "OU_GMRF_v1f"
+Version = "OU_GMRF_v1g"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
 # v1c- adds linear predictors to SD output and multinomial count process (HAS A BUG!)
 # v1d- adds makes random variation in detection probability random, and fixed bug in detectprob calculation
 # v1e- adds Temporal variation as AR1 process
 # v1f- adds Spatiotemporal variation as kronecker product of O-U and AR1 process, plus interface to turn off components
+# v1g- add IID lognormal variation (representing micro-variation)
 #setwd( TmbFile )
 
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1)
 
 # YearSet
 YearSet = min(t_i):max(t_i)
@@ -82,7 +83,7 @@ if(Version=="OU_GMRF_v1a") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "
 if(Version=="OU_GMRF_v1b") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[,'parent_b']-1, "child_b"=child_b-1, "dist_b"=family[,'dist_b'])
 if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
 if(Version%in%c("OU_GMRF_v1e")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
-if(Version%in%c("OU_GMRF_v1f")) Data = list( "Options_vec"=Options_vec, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
+if(Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f")) Data = list( "Options_vec"=Options_vec, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
 
 if(Version=="OU_GMRF_v1a") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "Epsiloninput_d"=rnorm(Data$n_b))
 if(Version=="OU_GMRF_v1b") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "Epsiloninput_d"=rnorm(Data$n_b))
@@ -90,35 +91,38 @@ if(Version=="OU_GMRF_v1c") Params = list( "log_theta"=log(1), "log_SD"=log(1), "
 if(Version=="OU_GMRF_v1d") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
 if(Version=="OU_GMRF_v1e") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b), "Deltainput_t"=rnorm(Data$n_t))
 if(Version=="OU_GMRF_v1f") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_sp"=log(1), "log_SD_sp"=log(1), "rho_sp"=0, "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
+if(Version=="OU_GMRF_v1g") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_sp"=log(1), "log_SD_sp"=log(1), "rho_sp"=0, "log_sigmaIID"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "lognormal_overdispersed_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
 
 if(Version%in%c("OU_GMRF_v1a","OU_GMRF_v1b")) Random = c( "Epsiloninput_d" )
 if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Random = c( "Epsiloninput_d", "log_extradetectrate_i" )
 if(Version%in%c("OU_GMRF_v1e")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t" )
 if(Version%in%c("OU_GMRF_v1f")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t", "Nu_dt" )
+if(Version%in%c("OU_GMRF_v1g")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t", "Nu_dt", "lognormal_overdispersed_i" )
 
 # Turn off random effects if desired
 Map = list()
-if( Version%in%c("OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatialTF"]]==FALSE ){
+if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatialTF"]]==FALSE ){
   Map[["log_theta"]] = factor(NA)
   Map[["log_SD"]] = factor(NA)
   Params[["Epsiloninput_d"]] = rep(0,length("Epsiloninput_d"))
   Map[["Epsiloninput_d"]] = factor( rep(NA,length("Epsiloninput_d")) )
 }
-if( Version%in%c("OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["TemporalTF"]]==FALSE ){
+if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["TemporalTF"]]==FALSE ){
   Map[["rhot"]] = factor(NA)
   Map[["log_sigmat"]] = factor(NA)
   Params[["Deltainput_t"]] = rep(0,length(Params[["Deltainput_t"]]))
   Map[["Deltainput_t"]] = factor( rep(NA,length(Params[["Deltainput_t"]])) )
 }
-if( Version%in%c("OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatiotemporalTF"]]==FALSE ){
+if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatiotemporalTF"]]==FALSE ){
   Map[["log_theta_sp"]] = factor(NA)
   Map[["log_SD_sp"]] = factor(NA)
   Map[["rho_sp"]] = factor(NA)
   Params[["Nu_dt"]] = array(0,dim(Params[["Nu_dt"]]))
   Map[["Nu_dt"]] = factor( array(NA,dim(Params[["Nu_dt"]])) )
 }
-if( Version%in%c("OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["DetectabilityTF"]]==FALSE ){
-  Map[["ExtraDetectionSD"]] = factor(NA)
+if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["DetectabilityTF"]]==FALSE ){
+  Map[["log_extradetectionSD"]] = factor(NA)
+  Map[["log_extradetectrate_i"]] = factor( rep(NA,Data$n_i) )
   Params[["log_extradetectrate_i"]] = rep(0,Data$n_i)
 }
 
@@ -134,6 +138,7 @@ Which = which( obj$gr( obj$par )==0 )
 # Run model
 opt = nlminb(start=obj$env$last.par.best[-c(obj$env$random)], objective=obj$fn, gradient=obj$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt[["final_gradient"]] = obj$gr( opt$par )
+opt[["AIC"]] = 2*opt$objective + 2*length(opt$par)
 
 # Get standard errors
 Report = obj$report()

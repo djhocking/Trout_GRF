@@ -5,3 +5,6 @@ Related_Papers/
 *.o
 *.dll
 *.so
+
+#KO Ignore
+gisFiles/

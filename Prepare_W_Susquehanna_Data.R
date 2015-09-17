@@ -8,6 +8,10 @@ library(lubridate)
 library(tidyr)
 library(ggplot2)
 
+# clear environment
+rm(list = ls())
+gc()
+
 dir_out <- "Output"
 
 #######################
@@ -134,6 +138,12 @@ str(df)
 summary(df)
 head(df, 20)
 tail(df, 20)
+
+# check for weird distances (should all be positive)
+nearby <- dplyr::filter(family, dist_b < 0.01) # nodes less than 10 m apart
+df <- df %>%
+  dplyr::mutate(dist_b = ifelse(dist_b < 0.01, 0.01, dist_b))
+
 
 c_ip <- dplyr::select(df, starts_with("pass"))
 year <- as.factor(df$year)

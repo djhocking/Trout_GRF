@@ -4,6 +4,10 @@
 library(TMB)
 library(dplyr)
 
+# clear environment
+rm(list = ls())
+gc()
+
 #######################
 # Load data
 #######################
@@ -23,7 +27,7 @@ X_ij <- X_ij[ , c("(Intercept)", "length_std", "width_std", "effort_std")]
 # Fit in TMB
 #######################
 
-Version = "OU_GMRF_v1c"
+Version = "OU_GMRF_v1g"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
 # v1c- adds linear predictors to SD output and multinomial count process (HAS A BUG!)

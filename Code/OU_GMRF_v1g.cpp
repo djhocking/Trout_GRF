@@ -40,9 +40,9 @@ Type objective_function<Type>::operator() ()
   // Fixed effects
   PARAMETER(log_theta);             // Autocorrelation (i.e. density dependence)
   PARAMETER(log_SD);
-  PARAMETER(log_theta_sp);         // Spatial correlation of spatiotemporal error
-  PARAMETER(log_SD_sp);         // Magnitude of Spatiotemporal error
-  PARAMETER(rho_sp);              // Temporal correlation of spatiomteporal error
+  PARAMETER(log_theta_st);         // Spatial correlation of spatiotemporal error
+  PARAMETER(log_SD_st);         // Magnitude of Spatiotemporal error
+  PARAMETER(rho_st);              // Temporal correlation of spatiomteporal error
   PARAMETER(log_sigmaIID);
   PARAMETER(log_mean);      
   PARAMETER(log_extradetectionSD);
@@ -67,8 +67,8 @@ Type objective_function<Type>::operator() ()
   // Derived parameters
   Type SDinput = exp(log_SD);
   Type theta = exp(log_theta);
-  Type SDinput_sp = exp(log_SD_sp);
-  Type theta_sp = exp(log_theta_sp);
+  Type SDinput_st = exp(log_SD_st);
+  Type theta_st = exp(log_theta_st);
   Type detectrate = exp(log_detectrate);
   Type sigmaIID = exp(log_sigmaIID);
   vector<Type> extradetectrate_i(n_i);
@@ -83,7 +83,7 @@ Type objective_function<Type>::operator() ()
   for (int i=0; i<n_i; i++){
     detectprob_ip(i,0) = 1.0 - exp(-1 * (detectrate * extradetectrate_i(i)));
     detectprob_ip(i,1) = (1-detectprob_ip(i,0)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
-    detectprob_ip(i,2) = (1-detectprob_ip(i,0)-detectprob_ip(i,1)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
+    detectprob_ip(i,2) = (1-detectprob_ip(i,0)) * (1-detectprob_ip(i,1)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
   }  
   
   // Probability of GRF on network -- SPATIAL
@@ -94,7 +94,7 @@ Type objective_function<Type>::operator() ()
     if( isNA(dist_b(b)) ){
       // Correlation between i and parent(i) as distance -> INF
       rho_b(b) = 0; 
-      // SD of O-U process as distance -> INF
+      // SD of Ornstein-Uhlenbeck process as distance -> INF
       SDinput_b(b) = SDinput / pow(2*theta, 0.5);
       // conditional probability
       if(Options_vec(0)==1) jnll_comp(0) -= dnorm(Epsiloninput_d(child_b(b)), Type(0.0), SDinput_b(b), true);
@@ -119,19 +119,19 @@ Type objective_function<Type>::operator() ()
       // Correlation between i and parent(i) as distance -> INF
       rho_t_b(b) = 0; 
       // SD of O-U process as distance -> INF
-      SDinput_t_b(b) = SDinput_sp / pow(2*theta_sp, 0.5);
+      SDinput_t_b(b) = SDinput_st / pow(2*theta_st, 0.5);
       // conditional probability
       temp_b = Nu_dt.row(child_b(b));
-      if(Options_vec(2)==1) jnll_comp(2) += SCALE( AR1(rho_sp), SDinput_t_b(b))(temp_b);
+      if(Options_vec(2)==1) jnll_comp(2) += SCALE( AR1(rho_st), SDinput_t_b(b))(temp_b);
     }
     if( !isNA(dist_b(b)) ){
       // Correlation between i and parent(i)
-      rho_t_b(b) = exp(-theta_sp * dist_b(b)); 
+      rho_t_b(b) = exp(-theta_st * dist_b(b)); 
       // SD of O-U process
-      SDinput_t_b(b) = pow( pow(SDinput_sp,2)/(2*theta_sp) * (1-exp(-2*theta_sp*dist_b(b))), 0.5 );
+      SDinput_t_b(b) = pow( pow(SDinput_st,2)/(2*theta_st) * (1-exp(-2*theta_st*dist_b(b))), 0.5 );
       // conditional probability
       temp_b = Nu_dt.row(child_b(b)) - rho_t_b(b)*Nu_dt.row(parent_b(b));
-      if(Options_vec(2)==1) jnll_comp(2) += SCALE( AR1(rho_sp), SDinput_t_b(b))(temp_b);
+      if(Options_vec(2)==1) jnll_comp(2) += SCALE( AR1(rho_st), SDinput_t_b(b))(temp_b);
     }
   }
   
@@ -167,9 +167,12 @@ Type objective_function<Type>::operator() ()
 
   // Spatial field summaries
   REPORT( rho_b );
+  REPORT( rho_st );
+  REPORT( rho_t_b );
   REPORT( SD_b );
   REPORT( SDinput_b );
   REPORT( theta );
+  REPORT( theta_st );
   REPORT( Epsiloninput_d );
   REPORT( log_mean );
   REPORT( detectprob_ip );
@@ -185,6 +188,9 @@ Type objective_function<Type>::operator() ()
   REPORT( jnll );
   REPORT( sigmaIID );
   REPORT( lognormal_overdispersed_i );
+  REPORT( SDinput_t_b );
+  REPORT( temp_b );
+  REPORT( Nu_dt );
     
   ADREPORT( lambda_ip);
   

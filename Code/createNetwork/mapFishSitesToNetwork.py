@@ -2,34 +2,34 @@ import arcpy
 from arcpy import env
 from arcpy.sa import *
 
+
 # ==============
 # Specify inputs
 # ==============
-
 #Stream Rasters
 networkGrid_DEM       = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/NHDHRDV1/streamRasters.gdb/strdem"
 networkGrid_Detailed  = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/NHDHRDV1/streamRasters.gdb/strHR"
 networkGrid_Truncated = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/NHDHRDV1/streamRasters.gdb/str"
 
 # Sample Locations
-points = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/sampleLocations.gdb/petersen"
+points = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/sampleLocations.gdb/Lincoln_Peterson_MR_Locations"
 
 # Verision ID
-version = "petersen"
+datasetID = "petersen"
 
 # Snapping Range
 bufferInMeters = "100"
 
 # Base Directory
-baseDirectory = "C:/KPONEIL/streamNetwork/PA/occupancy/spatial"
+gisDirectory = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles"
 
 
 # ===============
 # Create Database
 # ===============
 # Create version geodatabase
-workingDirectory = baseDirectory + "/hydrography.gdb"
-if not arcpy.Exists(workingDirectory): arcpy.CreateFileGDB_management (baseDirectory, "hydrography", "CURRENT")
+workingDirectory = gisDirectory + "/hydrography.gdb"
+if not arcpy.Exists(workingDirectory): arcpy.CreateFileGDB_management (gisDirectory, "hydrography", "CURRENT")
 
 
 # ==================
@@ -65,11 +65,11 @@ if not arcpy.Exists(truncatedPath):
 else: truncated = truncatedPath											   
 
 # Observed points
-observedPath = workingDirectory + "/samplePoints_" + version
+observedPath = workingDirectory + "/samplePoints_" + datasetID
 if not arcpy.Exists(observedPath):	
 	observed = arcpy.FeatureClassToFeatureClass_conversion(points, 
 															workingDirectory, 
-															"samplePoints_" + version)
+															"samplePoints_" + datasetID)
 else: observed = observedPath	
 
 # Mosaic rasters
@@ -94,6 +94,7 @@ if not arcpy.Exists(workingDirectory + "/vectorMosaic"):
 															"NO_SIMPLIFY")
 else: mosaicFlowLines = workingDirectory + "/vectorMosaic"
 
+
 # ==========================		
 # Observed points processing
 # ==========================
@@ -107,7 +108,7 @@ arcpy.Snap_edit("pointsLyr",
 # Sample the different versions of flow grids so the points can be classified. The points now lie on these grids after snapping
 sampleOutput = Sample([dem, detailed, truncated], 
 								"pointsLyr",
-								workingDirectory + "/sampleTable_" + version,
+								workingDirectory + "/sampleTable_" + datasetID,
 								"NEAREST")					
 								
 # Calculate the field that described the location
@@ -117,47 +118,64 @@ arcpy.AddField_management("pointsLyr", "LocationClass", "TEXT")
 arcpy.JoinField_management("pointsLyr", 
 							"OBJECTID", 
 							sampleOutput, 
-							"samplePoints_" + version, 
+							"samplePoints_" + datasetID, 
 							["flowDem", "flowDetailed", "flowTruncated"])
 
 							
 
 # Classify points
-# ---------------
+# ===============
+
 # Points outside of the snapping limit
+# ------------------------------------
 arcpy.SelectLayerByAttribute_management ("pointsLyr", 
 											"NEW_SELECTION", 
 											""" flowDetailed IS NULL AND flowDem IS NULL AND flowTruncated IS NULL """)										
 arcpy.CalculateField_management ("pointsLyr", "LocationClass", """ "Outside """ + bufferInMeters + """ Meter Buffer" """)
 
+
 # Points not on our flowlines, but within buffer of DEM derived streams
+# ---------------------------------------------------------------------
 arcpy.SelectLayerByAttribute_management ("pointsLyr", 
 											"NEW_SELECTION", 
 											""" flowDetailed IS NULL AND flowDem = 1 AND flowTruncated IS NULL """)
 arcpy.CalculateField_management ("pointsLyr", "LocationClass", """ "Undocumented Stream" """)	
 
+
 # Points that only fall on the "deatiled" flow network
+# ----------------------------------------------------
 arcpy.SelectLayerByAttribute_management ("pointsLyr", 
 											"NEW_SELECTION", 
 											""" flowDetailed = 1 AND flowTruncated IS NULL """)
 arcpy.CalculateField_management ("pointsLyr", "LocationClass", """ "Detailed Network Only" """)	
 
+
 # Points that fall on the "truncated" network
+# -------------------------------------------
 arcpy.SelectLayerByAttribute_management ("pointsLyr", 
 											"NEW_SELECTION", 
 											""" flowTruncated = 1 """)
 arcpy.CalculateField_management ("pointsLyr", "LocationClass", """ "Truncated Network" """)	
 
-# Points that were missed 
+# Export the points on the functional network
+arcpy.CopyFeatures_management("pointsLyr", 
+								workingDirectory + "/snappedPointsTruncated_"  + datasetID)
+
+
+# Points that were missed
+# -----------------------
 arcpy.SelectLayerByAttribute_management ("pointsLyr", 
 											"NEW_SELECTION", 
 											""" LocationClass IS NULL """)
 arcpy.CalculateField_management ("pointsLyr", "LocationClass", """ "Unclassified" """)	
-	
-								
+
+
+# Output stats & layers
+# =====================
+
 # Output summary statistics of where points fall						
 arcpy.Statistics_analysis("pointsLyr", 
-							workingDirectory + "/snappedStats_" + version, [["LocationClass", "COUNT"]], "LocationClass")							
+							workingDirectory + "/snappedStats_" + datasetID, [["LocationClass", "COUNT"]], "LocationClass")							
 
 
 # Save the snapped points (feature layer is temporary)
@@ -165,6 +183,6 @@ arcpy.SelectLayerByAttribute_management ("pointsLyr", "CLEAR_SELECTION")
 arcpy.SelectLayerByAttribute_management ("pointsLyr", "SWITCH_SELECTION")
 
 arcpy.CopyFeatures_management("pointsLyr", 
-								workingDirectory + "/snappedPointsDetailed_"  + version)
+								workingDirectory + "/snappedPointsDetailed_"  + datasetID)
 
 arcpy.SelectLayerByAttribute_management ("pointsLyr", "CLEAR_SELECTION")

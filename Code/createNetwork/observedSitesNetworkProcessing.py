@@ -1,14 +1,22 @@
 # Specify inputs
 # --------------
 
-versionID = 
+flowlinesSource = workingDirectory + "/flowlines"
+
+
+versionID = "petersen"
 
 #baseDirectory = "C:/KPONEIL/streamNetwork/UpperWhiteRiver"
 baseDirectory = "C:/KPONEIL/streamNetwork/PA/networkAnalysis/SusquehannaWest_Threepass"
 
-#pointsFile = "C:/KPONEIL/streamNetwork/occupancy/networkAnalysis.gdb/snappedPointsDetailed_VTFS"
+pointsFile = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/hydrography.gdb/snappedPointsTruncated_petersen"
 
-pointsFile = "C:/KPONEIL/streamNetwork/PA/occupancy/spatial/hydrography.gdb/snappedPointsDetailed_threepass"
+
+uniqueIDField = "GIS_Key"
+
+
+
+
 
 # File pre-processing
 # -------------------
@@ -43,9 +51,9 @@ arcpy.SelectLayerByLocation_management ("pointsFileLyr",
 											"", 
 											"NEW_SELECTION")
 
-arcpy.SelectLayerByAttribute_management ("pointsFileLyr", 
-											"SUBSET_SELECTION", 
-											""" LocationClass =  'Truncated Network'""")	
+#arcpy.SelectLayerByAttribute_management ("pointsFileLyr", 
+#											"SUBSET_SELECTION", 
+#											""" LocationClass =  'Truncated Network'""")	
 											
 points = arcpy.FeatureClassToFeatureClass_conversion("pointsFileLyr", 
 														workingDirectory, 

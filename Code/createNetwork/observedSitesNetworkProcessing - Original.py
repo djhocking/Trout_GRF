@@ -6,41 +6,50 @@ baseDirectory = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/modelVersion
 
 pointsFile = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/hydrography.gdb/snappedPointsTruncated_petersen"
 
+
 uniqueIDField = "GIS_Key"
 
-flowlinesFile = baseDirectory + "/spatialModel_Inputs/flowlines"
-
+flowlinesSource = baseDirectory + "/spatialModel_Inputs/flowlines"
 processingBoundary = baseDirectory + "/spatialModel_Inputs/processingBoundary"
 
 
-# ===================
+
+
 # File pre-processing
-# ===================
+# -------------------
 
 # Create version geodatabase
-workingDirectory = baseDirectory + "/spatialModel_Processing.gdb"
-if not arcpy.Exists(workingDirectory): arcpy.CreateFileGDB_management (baseDirectory, "spatialModel_Processing", "CURRENT")
+workingDirectory = baseDirectory + "/spatialModel.gdb"
+if not arcpy.Exists(workingDirectory): arcpy.CreateFileGDB_management (baseDirectory, "spatialModel", "CURRENT")
+
+
 
 
 # Map Definitions
 mxd = arcpy.mapping.MapDocument("CURRENT")
 df = arcpy.mapping.ListDataFrames(mxd)[0]
 
-# Copy flowlines file for editing
-flowlines = arcpy.FeatureClassToFeatureClass_conversion(flowlinesFile, 
+
+flowlines = arcpy.FeatureClassToFeatureClass_conversion(flowlinesSource, 
 														workingDirectory, 
 														"flowlinesEditing")
 
 
-# Select points in the watershed
-# ------------------------------
+# Process points
+# --------------
 arcpy.MakeFeatureLayer_management(pointsFile,    "pointsFileLyr")
+
+
 
 arcpy.SelectLayerByLocation_management ("pointsFileLyr", 
 											"INTERSECT", 
 											processingBoundary, 
 											"", 
 											"NEW_SELECTION")
+
+#arcpy.SelectLayerByAttribute_management ("pointsFileLyr", 
+#											"SUBSET_SELECTION", 
+#											""" LocationClass =  'Truncated Network'""")	
 											
 points = arcpy.FeatureClassToFeatureClass_conversion("pointsFileLyr", 
 														workingDirectory, 
@@ -49,8 +58,6 @@ points = arcpy.FeatureClassToFeatureClass_conversion("pointsFileLyr",
 arcpy.Delete_management("pointsFileLyr")
 
 
-# Calculate fields for processing
-# -------------------------------
 # Calculate unique IDs
 arcpy.AddField_management(points, "nodeID", "TEXT")
 arcpy.CalculateField_management (points, "nodeID", "!location_id!", "PYTHON_9.3")
@@ -62,10 +69,6 @@ arcpy.CalculateField_management (flowlines, "nodeID", """"N_" + str(!FEATUREID!)
 arcpy.AddField_management(flowlines, "fromMeas", "SHORT")
 arcpy.CalculateField_management (flowlines, "fromMeas", 0, "PYTHON_9.3")
 
-
-# ==================
-# Network Processing
-# ==================
 
 # Snap the points to the flowlines
 arcpy.Snap_edit(points,
@@ -153,13 +156,13 @@ arcpy.TableToTable_conversion("occupancyTable",
 
 # Delete Interim Files
 # --------------------
-#arcpy.Delete_management(flowlines)								
-#arcpy.Delete_management(flowlinesGCS)							
-#arcpy.Delete_management(routes)
+arcpy.Delete_management(flowlines)								
+arcpy.Delete_management(flowlinesGCS)							
+arcpy.Delete_management(routes)
 #arcpy.Delete_management(points)
-#arcpy.Delete_management(pointsGCS)
-#arcpy.Delete_management("pointsGCSTable")
-#arcpy.Delete_management("occupancyTable")
-#arcpy.Delete_management("flowlinesGCSTable")
-#arcpy.Delete_management(occupancySites)
+arcpy.Delete_management(pointsGCS)
+arcpy.Delete_management("pointsGCSTable")
+arcpy.Delete_management("occupancyTable")
+arcpy.Delete_management("flowlinesGCSTable")
+arcpy.Delete_management(occupancySites)
 

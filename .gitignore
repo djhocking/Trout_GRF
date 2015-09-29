@@ -5,3 +5,9 @@ Related_Papers/
 *.o
 *.dll
 *.so
+*.png
+*.pdf
+*.jpg
+*.jpeg
+*.tif
+*.tiff

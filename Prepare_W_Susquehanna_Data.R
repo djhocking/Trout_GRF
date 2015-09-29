@@ -142,7 +142,7 @@ tail(df, 20)
 # check for weird distances (should all be positive)
 nearby <- dplyr::filter(family, dist_b < 0.01) # nodes less than 10 m apart
 df <- df %>%
-  dplyr::mutate(dist_b = ifelse(dist_b < 0.01, 0.01, dist_b))
+  dplyr::mutate(dist_b = ifelse(dist_b < 0.001, 0.001, dist_b))
 
 
 c_ip <- dplyr::select(df, starts_with("pass"))
@@ -150,7 +150,7 @@ year <- as.factor(df$year)
 dummies <- model.matrix(~year)
 length_std <- (df$length_sample - mean(df_covs_visit$length_sample)) / sd(df_covs_visit$length_sample)
 width_std <- (df$width - mean(df_covs_visit$width)) / sd(df_covs_visit$width)
-effort_std <- (df$effort - mean(df_covs_visit$effort)) / sd(df_covs_visit$effort)
+effort_std <- (df$effort - mean(df_covs_visit$effort, na.rm = T)) / sd(df_covs_visit$effort, na.rm = T)
 X_ij = cbind(dummies, length_std, width_std, effort_std) #[ , 2:ncol(dummies)]
 
 df_stds <- data.frame(parameter = c("length", "width", "effort"), means = c(mean(df$length_sample), mean(df$width), mean(df$effort)), sds = c(sd(df$length_sample), sd(df$width), sd(df$effort)))

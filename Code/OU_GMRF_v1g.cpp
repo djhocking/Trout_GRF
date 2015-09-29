@@ -78,14 +78,6 @@ Type objective_function<Type>::operator() ()
   vector<Type> Delta_t(n_t);
   Delta_t = Deltainput_t * sigmat;
   
-  // Detection probability
-  matrix<Type> detectprob_ip(n_i,3);
-  for (int i=0; i<n_i; i++){
-    detectprob_ip(i,0) = 1.0 - exp(-1 * (detectrate * extradetectrate_i(i)));
-    detectprob_ip(i,1) = (1-detectprob_ip(i,0)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
-    detectprob_ip(i,2) = (1-detectprob_ip(i,0)) * (1-detectprob_ip(i,1)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
-  }  
-  
   // Probability of GRF on network -- SPATIAL
   vector<Type> rho_b(n_b); 
   vector<Type> SD_b(n_b); 
@@ -143,6 +135,14 @@ Type objective_function<Type>::operator() ()
     jnll_comp(5) -= dnorm( lognormal_overdispersed_i(i), Type(0.0), sigmaIID, true );
   }
   
+    // Detection probability
+  matrix<Type> detectprob_ip(n_i,3);
+  for (int i=0; i<n_i; i++){
+    detectprob_ip(i,0) = 1.0 - exp(-1 * (detectrate * extradetectrate_i(i)));
+    detectprob_ip(i,1) = (1-detectprob_ip(i,0)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
+    detectprob_ip(i,2) = (1-detectprob_ip(i,0)) * (1-detectprob_ip(i,1)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
+  }  
+  
   // Random variation in detection probability
   for (int i=0; i<n_i; i++){
     if(Options_vec(3)==1) jnll_comp(3) -= dnorm( log_extradetectrate_i(i), Type(0.0), extradetectionSD, true );
@@ -192,7 +192,11 @@ Type objective_function<Type>::operator() ()
   REPORT( temp_b );
   REPORT( Nu_dt );
     
-  ADREPORT( lambda_ip);
+ // ADREPORT( lambda_ip);
+ ADREPORT( gamma_j );
+ ADREPORT( theta );
+ ADREPORT( theta_st );
+ ADREPORT( rhot );
   
   return jnll;
 }

@@ -11,3 +11,6 @@ Related_Papers/
 *.jpeg
 *.tif
 *.tiff
+
+#KO Ignore
+gisFiles/

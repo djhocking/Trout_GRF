@@ -53,6 +53,9 @@ makeInput <- function(family, c_i, options = Options_vec, X, t_i, version) {
     warning("Missing covariate values: replaced with mean")
   }
   
+  ###### make dist min = 10 m
+  Data$dist_b = ifelse(Data$dist_b < 0.01, 0.01, Data$dist_b)
+  ######
   # Check for Options_vec combos that don't make sense
   
   ######################################################

@@ -71,7 +71,7 @@ for(i in 1:length(unique(df_bkt$site_visit))) {
 
 # First try use three passes for adults only for years with block nets
 df_bkt_adult <- df_bkt %>%
-  dplyr::mutate(stage = ifelse(sizebin >= 125, "adult", "yoy")) %>%
+  dplyr::mutate(stage = ifelse(sizebin >= 100, "adult", "yoy")) %>%
   dplyr::filter(species == "Brook Trout" & stage == "adult") %>%
   dplyr::group_by(site_visit, site, year, date, pass) %>%
   dplyr::summarise(count = sum(catch),

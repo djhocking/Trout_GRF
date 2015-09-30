@@ -12,6 +12,7 @@ Related_Papers/
 *.tif
 *.tiff
 W_Susquehanna.RData
+Output/*.RData
 
 #KO Ignore
 gisFiles/

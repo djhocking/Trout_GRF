@@ -173,6 +173,7 @@ opt5 = nlminb(start=obj5$env$last.par.best[-c(obj5$env$random)], objective=obj5$
 opt5[["final_gradient"]] = obj5$gr( opt5$par )
 opt5[["AIC"]] = 2*opt5$objective + 2*length(opt5$par)
 
+ParHat <- obj5( opt5$par )
 Report5 = obj5$report()
 SD5 = sdreport( obj5, bias.correct=TRUE )
 #--------------------------------------------------
@@ -202,6 +203,8 @@ opt6[["AIC"]] = 2*opt6$objective + 2*length(opt6$par)
 
 Report6 = obj6$report()
 SD6 = sdreport( obj6, bias.correct=TRUE )
+
+save(obj6, Report6, SD6, file = "Output/Best_Model_Output.RData")
 #--------------------------------------------------
 
 #----------------- Spatial + Temporal ------------------
@@ -246,21 +249,21 @@ aic_table
 #------------------------------------------------
 
 # compare coefficient estimates
-LCI <- SD5$value - (1.96 * SD5$sd) # lower CI rough estimate for best model
-UCI <- SD5$value - (1.96 * SD5$sd)
+LCI <- SD6$value - (1.96 * SD6$sd) # lower CI rough estimate for best model
+UCI <- SD6$value - (1.96 * SD6$sd)
   
-coef_table <- data.frame(Parameter = names(SD5$value), Estimate = SD5$value, SD = SD5$sd, LCI, UCI, stringsASFactors = FALSE)
+coef_table <- data.frame(Parameter = names(SD6$value), Estimate = SD6$value, SD = SD6$sd, LCI, UCI, stringsAsFactors = FALSE)
 for(i in 1:ncol(as.matrix(X_ij))) {
   coef_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
 }
 format(coef_table, digits = 2, scientific = 5)
 
-SD_table <- data.frame(Parameter = names(SD5$value), 
+SD_table <- data.frame(Parameter = names(SD6$value), 
                        #SD1 = SD1$sd, 
                        SD2 = SD2$sd, 
                        SD3 = SD3$sd, 
                        #SD4 = SD4$sd, 
-                       SD5 = SD5$sd, 
+                       #SD5 = SD5$sd, 
                        SD6 = SD6$sd, 
                        SD7 = SD7$sd,
                        stringsAsFactors = FALSE)

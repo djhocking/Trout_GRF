@@ -191,6 +191,26 @@ dyn.load( dynlib(paste0("Code/", Version )))
 obj6 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj6$report()
 
+# Diagnose problems of convergence and SD estimation
+DiagnosticDir <- "Diagnostics/"
+# create code directory if doesn't exist
+if (!file.exists(DiagnosticDir)) {
+  dir.create(DiagnosticDir)
+}
+
+obj6$gr_orig = obj6$gr
+obj6$fn_orig = obj6$fn
+obj6$fn <- function( vec ){
+  Fn = obj6$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"Fn.txt") )
+  return( Fn )
+}
+obj6$gr = function( vec ){
+  Gr = obj6$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"gr.txt") )
+  return( Gr )
+}
+
 # First run
 obj6$fn( obj6$par )
 # Check for parameters that don't do anything
@@ -202,9 +222,10 @@ opt6[["final_gradient"]] = obj6$gr( opt6$par )
 opt6[["AIC"]] = 2*opt6$objective + 2*length(opt6$par)
 
 Report6 = obj6$report()
-SD6 = sdreport( obj6, bias.correct=TRUE )
+SD6 = sdreport( obj6, bias.correct=FALSE )
 
 save(obj6, Report6, SD6, file = "Output/Best_Model_Output.RData")
+
 #--------------------------------------------------
 
 #----------------- Spatial + Temporal ------------------
@@ -218,6 +239,26 @@ Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij,
 dyn.load( dynlib(paste0("Code/", Version )))
 obj7 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj7$report()
+
+# Diagnose problems of convergence and SD estimation
+DiagnosticDir <- "Diagnostics/"
+# create code directory if doesn't exist
+if (!file.exists(DiagnosticDir)) {
+  dir.create(DiagnosticDir)
+}
+
+obj7$gr_orig = obj7$gr
+obj7$fn_orig = obj7$fn
+obj7$fn <- function( vec ){
+  Fn = obj7$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"Fn.txt") )
+  return( Fn )
+}
+obj7$gr = function( vec ){
+  Gr = obj7$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"gr.txt") )
+  return( Gr )
+}
 
 # First run
 obj7$fn( obj7$par )

@@ -1,12 +1,13 @@
+# clear environment
+rm(list = ls())
+gc()
 
-
-#setwd("C:/Users/James.Thorson/Desktop/UW Hideaway/Collaborations/2015 -- river network GMRF/exploratory data/")
-#setwd("C:/Users/James.Thorson/Desktop/Project_git/Trout_GRF/")
 #######################
 # Load libraries
 #######################
 library(TMB)
 library(dplyr)
+source("Functions/Input_Functions.R")
 
 #######################
 # Load data
@@ -37,12 +38,6 @@ Version = "OU_GMRF_v1g"
 # v1g- add IID lognormal variation (representing micro-variation)
 #setwd( TmbFile )
 
-# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1)
-
-# YearSet
-YearSet = min(t_i):max(t_i)
-
 # Compile
 if(FALSE) {
   dyn.unload(dynlib(paste0("Code/", Version)))
@@ -50,101 +45,276 @@ if(FALSE) {
 }
 compile( paste0("Code/", Version,".cpp") )
 
+#----------------- Observation-Detection Only ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+
 # Make inputs
-rmatrix = function( nrow=1, ncol=1, mean=0, sd=1, ... ){
-  Return = matrix( rnorm(nrow*ncol,mean=mean,sd=sd), nrow=nrow, ncol=ncol, ...)
-  return( Return )
-}
-
-# convert 3-pass counts to abundance using Carle & Strub 1978 methods
-if(Version=="OU_GMRF_v1b") {
-  #source("http://www.rforge.net/FSA/InstallFSA.R")
-  if(!"FSA" %in% installed.packages()) {
-    if (!require('devtools')) install.packages('devtools')
-    require('devtools')
-    devtools::install_github('droglenc/FSA')
-  }
-  library(FSA)
-  c_obs <- dplyr::filter(c_ip, !is.na(pass_1))
-  N_cs <- as.data.frame(matrix(NA, nrow(c_obs), 8))
-  for(i in 1:dim(c_obs)[1]){
-    foo <- FSA::removal(catch = as.vector(c_obs[i, ]), method = c("CarleStrub"), just.ests = TRUE)
-    N_cs[i, ] <- foo
-  } # end carle-strub for loop
-  names(N_cs) <- names(foo)
-  data.frame(c_obs, c_sum = rowSums(c_obs), N_cs)
-  foo <- c_ip %>%
-    dplyr::select(pass_1) %>%
-    dplyr::filter(is.na(pass_1))
-  c_i <- as.vector(dplyr::bind_rows(foo, dplyr::select(N_cs, No))$No)
-} # end if version b statement
-
-if(Version=="OU_GMRF_v1a") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "parent_b"=family[,'parent_b']-1, "child_b"=child_b-1, "dist_b"=family[,'dist_b'])
-if(Version=="OU_GMRF_v1b") Data = list( "n_i"=length(c_i), "n_b"=nrow(family), "c_i"=c_i, "d_i"=family[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[,'parent_b']-1, "child_b"=child_b-1, "dist_b"=family[,'dist_b'])
-if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
-if(Version%in%c("OU_GMRF_v1e")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
-if(Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f")) Data = list( "Options_vec"=Options_vec, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
-
-if(Version=="OU_GMRF_v1a") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "Epsiloninput_d"=rnorm(Data$n_b))
-if(Version=="OU_GMRF_v1b") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "Epsiloninput_d"=rnorm(Data$n_b))
-if(Version=="OU_GMRF_v1c") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
-if(Version=="OU_GMRF_v1d") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
-if(Version=="OU_GMRF_v1e") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b), "Deltainput_t"=rnorm(Data$n_t))
-if(Version=="OU_GMRF_v1f") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_sp"=log(1), "log_SD_sp"=log(1), "rho_sp"=0, "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
-if(Version=="OU_GMRF_v1g") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_sp"=log(1), "log_SD_sp"=log(1), "rho_sp"=0, "log_sigmaIID"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "lognormal_overdispersed_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
-
-if(Version%in%c("OU_GMRF_v1a","OU_GMRF_v1b")) Random = c( "Epsiloninput_d" )
-if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Random = c( "Epsiloninput_d", "log_extradetectrate_i" )
-if(Version%in%c("OU_GMRF_v1e")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t" )
-if(Version%in%c("OU_GMRF_v1f")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t", "Nu_dt" )
-if(Version%in%c("OU_GMRF_v1g")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t", "Nu_dt", "lognormal_overdispersed_i" )
-
-# Turn off random effects if desired
-Map = list()
-if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatialTF"]]==FALSE ){
-  Map[["log_theta"]] = factor(NA)
-  Map[["log_SD"]] = factor(NA)
-  Params[["Epsiloninput_d"]] = rep(0,length(Params[["Epsiloninput_d"]]))
-  Map[["Epsiloninput_d"]] = factor( rep(NA,length(Params[["Epsiloninput_d"]])) )
-}
-if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["TemporalTF"]]==FALSE ){
-  Map[["rhot"]] = factor(NA)
-  Map[["log_sigmat"]] = factor(NA)
-  Params[["Deltainput_t"]] = rep(0,length(Params[["Deltainput_t"]]))
-  Map[["Deltainput_t"]] = factor( rep(NA,length(Params[["Deltainput_t"]])) )
-}
-if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatiotemporalTF"]]==FALSE ){
-  Map[["log_theta_sp"]] = factor(NA)
-  Map[["log_SD_sp"]] = factor(NA)
-  Map[["rho_sp"]] = factor(NA)
-  Params[["Nu_dt"]] = array(0,dim(Params[["Nu_dt"]]))
-  Map[["Nu_dt"]] = factor( array(NA,dim(Params[["Nu_dt"]])) )
-}
-if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["DetectabilityTF"]]==FALSE ){
-  Map[["log_extradetectionSD"]] = factor(NA)
-  Map[["log_extradetectrate_i"]] = factor( rep(NA,Data$n_i) )
-  Params[["log_extradetectrate_i"]] = rep(0,Data$n_i)
-}
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
-dyn.load( dynlib(paste0("Code/", Version) ))
-obj <- MakeADFun(data=Data, parameters=Params, random=Random, map=Map, hessian=FALSE, inner.control=list(maxit=1000) )
+dyn.load( dynlib(paste0("Code/", Version )))
+obj1 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report1 = obj1$report()
 
 # First run
-obj$fn( obj$par )
+obj1$fn( obj1$par )
 # Check for parameters that don't do anything
-Which = which( obj$gr( obj$par )==0 )
+Which = which( obj1$gr( obj1$par )==0 )
 
 # Run model
-opt = nlminb(start=obj$env$last.par.best[-c(obj$env$random)], objective=obj$fn, gradient=obj$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt[["final_gradient"]] = obj$gr( opt$par )
-opt[["AIC"]] = 2*opt$objective + 2*length(opt$par)
+opt1 = nlminb(start=obj1$env$last.par.best[-c(obj1$env$random)], objective=obj1$fn, gradient=obj1$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt1[["final_gradient"]] = obj1$gr( opt1$par )
+opt1[["AIC"]] = 2*opt1$objective + 2*length(opt1$par)
 
-# Get standard errors
-Report = obj$report()
-Sdreport = sdreport( obj )
-SD = sdreport( obj, bias.correct=TRUE )
-SD$unbiased$value
+Report1 = obj1$report()
+SD1 = sdreport( obj1, bias.correct=TRUE )
+#--------------------------------------------------
+
+
+#----------------- Temporal Only ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj2 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj2$report()
+
+# First run
+obj2$fn( obj2$par )
+# Check for parameters that don't do anything
+Which = which( obj2$gr( obj2$par )==0 )
+
+# Run model
+opt2 = nlminb(start=obj2$env$last.par.best[-c(obj2$env$random)], objective=obj2$fn, gradient=obj2$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt2[["final_gradient"]] = obj2$gr( opt2$par )
+opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
+
+Report2 = obj2$report()
+SD2 = sdreport( obj2, bias.correct=TRUE )
+#--------------------------------------------------
+
+#----------------- Spatial Only ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj3 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj3$report()
+
+# First run
+obj3$fn( obj3$par )
+# Check for parameters that don't do anything
+Which = which( obj3$gr( obj3$par )==0 )
+
+# Run model
+opt3 = nlminb(start=obj3$env$last.par.best[-c(obj3$env$random)], objective=obj3$fn, gradient=obj3$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt3[["final_gradient"]] = obj3$gr( opt3$par )
+opt3[["AIC"]] = 2*opt3$objective + 2*length(opt3$par)
+
+Report3 = obj3$report()
+SD3 = sdreport( obj3, bias.correct=TRUE )
+#--------------------------------------------------
+
+
+#----------------- Spatiotemporal Only ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj4 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj4$report()
+
+# First run
+obj4$fn( obj4$par )
+# Check for parameters that don't do anything
+Which = which( obj4$gr( obj4$par )==0 )
+
+# Run model
+opt4 = nlminb(start=obj4$env$last.par.best[-c(obj4$env$random)], objective=obj4$fn, gradient=obj4$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt4[["final_gradient"]] = obj4$gr( opt4$par )
+opt4[["AIC"]] = 2*opt4$objective + 2*length(opt4$par)
+
+Report4 = obj4$report()
+SD4 = sdreport( obj4, bias.correct=TRUE )
+#--------------------------------------------------
+
+#----------------- Temporal + Spatiotemporal ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj5 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj5$report()
+
+# First run
+obj5$fn( obj5$par )
+# Check for parameters that don't do anything
+Which = which( obj5$gr( obj5$par )==0 )
+
+# Run model
+opt5 = nlminb(start=obj5$env$last.par.best[-c(obj5$env$random)], objective=obj5$fn, gradient=obj5$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt5[["final_gradient"]] = obj5$gr( opt5$par )
+opt5[["AIC"]] = 2*opt5$objective + 2*length(opt5$par)
+
+ParHat <- obj5( opt5$par )
+Report5 = obj5$report()
+SD5 = sdreport( obj5, bias.correct=TRUE )
+#--------------------------------------------------
+
+
+#----------------- Spatial Temporal Spatiotemporal ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj6 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj6$report()
+
+# Diagnose problems of convergence and SD estimation
+DiagnosticDir <- "Diagnostics/"
+# create code directory if doesn't exist
+if (!file.exists(DiagnosticDir)) {
+  dir.create(DiagnosticDir)
+}
+
+obj6$gr_orig = obj6$gr
+obj6$fn_orig = obj6$fn
+obj6$fn <- function( vec ){
+  Fn = obj6$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"Fn.txt") )
+  return( Fn )
+}
+obj6$gr = function( vec ){
+  Gr = obj6$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"gr.txt") )
+  return( Gr )
+}
+
+# First run
+obj6$fn( obj6$par )
+# Check for parameters that don't do anything
+Which = which( obj6$gr( obj6$par )==0 )
+
+# Run model
+opt6 = nlminb(start=obj6$env$last.par.best[-c(obj6$env$random)], objective=obj6$fn, gradient=obj6$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt6[["final_gradient"]] = obj6$gr( opt6$par )
+opt6[["AIC"]] = 2*opt6$objective + 2*length(opt6$par)
+
+Report6 = obj6$report()
+SD6 = sdreport( obj6, bias.correct=FALSE )
+
+save(obj6, Report6, SD6, file = "Output/Best_Model_Output.RData")
+
+#--------------------------------------------------
+
+#----------------- Spatial + Temporal ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj7 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj7$report()
+
+# Diagnose problems of convergence and SD estimation
+DiagnosticDir <- "Diagnostics/"
+# create code directory if doesn't exist
+if (!file.exists(DiagnosticDir)) {
+  dir.create(DiagnosticDir)
+}
+
+obj7$gr_orig = obj7$gr
+obj7$fn_orig = obj7$fn
+obj7$fn <- function( vec ){
+  Fn = obj7$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"Fn.txt") )
+  return( Fn )
+}
+obj7$gr = function( vec ){
+  Gr = obj7$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"gr.txt") )
+  return( Gr )
+}
+
+# First run
+obj7$fn( obj7$par )
+# Check for parameters that don't do anything
+Which = which( obj7$gr( obj7$par )==0 )
+
+# Run model
+opt7 = nlminb(start=obj7$env$last.par.best[-c(obj7$env$random)], objective=obj7$fn, gradient=obj7$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt7[["final_gradient"]] = obj7$gr( opt7$par )
+opt7[["AIC"]] = 2*opt7$objective + 2*length(opt7$par)
+
+Report7 = obj7$report()
+SD7 = sdreport( obj7, bias.correct=TRUE )
+#--------------------------------------------------
+
+
+#--------------- AIC -------------
+Model <- c("Obs", "Temporal", "Spatial", "Spatiotemporal", "Temporal + ST", "S+T+ST", "Spatial + Temporal")
+M_num <- 1:length(Model)
+AIC <- c(opt1$AIC, opt2$AIC, opt3$AIC, opt4$AIC, opt5$AIC, opt6$AIC, opt7$AIC)
+aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
+names(aic_table) <- c("M_num", "Model", "AIC")
+aic_table <- dplyr::arrange(aic_table, AIC)
+aic_table$delta_AIC <- 0
+for(i in 2:nrow(aic_table)) {
+  aic_table$delta_AIC[i] <- aic_table$AIC[i] - aic_table$AIC[1]
+}
+aic_table
+#------------------------------------------------
+
+# compare coefficient estimates
+LCI <- SD6$value - (1.96 * SD6$sd) # lower CI rough estimate for best model
+UCI <- SD6$value - (1.96 * SD6$sd)
+
+coef_table <- data.frame(Parameter = names(SD6$value), Estimate = SD6$value, SD = SD6$sd, LCI, UCI, stringsAsFactors = FALSE)
+for(i in 1:ncol(as.matrix(X_ij))) {
+  coef_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
+}
+format(coef_table, digits = 2, scientific = 5)
+
+SD_table <- data.frame(Parameter = names(SD6$value), 
+                       #SD1 = SD1$sd, 
+                       SD2 = SD2$sd, 
+                       SD3 = SD3$sd, 
+                       #SD4 = SD4$sd, 
+                       #SD5 = SD5$sd, 
+                       SD6 = SD6$sd, 
+                       SD7 = SD7$sd,
+                       stringsAsFactors = FALSE)
+for(i in 1:ncol(as.matrix(X_ij))) {
+  SD_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
+}
+format(SD_table, digits = 2, scientific = 5)
+
+# save
+save.image(file = "Output/White_River.RData")
 
 n = nrow(df)
 data.frame(v1 = SD$unbiased$value[1:n], v2 = SD$unbiased$value[(n+1):(2*n)], v3 = SD$unbiased$value[(2*n+1):(3*n)])

@@ -176,7 +176,7 @@ Type objective_function<Type>::operator() ()
   REPORT( jnll_comp );
   REPORT( jnll );
     
-  ADREPORT( lambda_ip);
+  ADREPORT( gamma_j );
   
   return jnll;
 }

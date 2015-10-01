@@ -12,7 +12,7 @@ source("Functions/Input_Functions.R")
 #######################
 # Load data
 #######################
-load("Data/Prepared_Data.RData")
+load("Data/Prepared_Data_White_River.RData")
 
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
 X_ij <- X_ij[ , c("(Intercept)", "length_std", "width_std")]
@@ -28,6 +28,109 @@ X_ij <- X_ij[ , c("(Intercept)", "length_std", "width_std")]
 # Fit in TMB
 #######################
 
+# v1a -- Original version
+# v1b -- added covariates matrix X_ij
+# v1c- adds linear predictors to SD output and multinomial count process (HAS A BUG!)
+# v1d- adds makes random variation in detection probability random, and fixed bug in detectprob calculation
+# v1e- adds Temporal variation as AR1 process
+# v1f- adds Spatiotemporal variation as kronecker product of O-U and AR1 process, plus interface to turn off components
+# v1g- add IID lognormal variation (representing micro-variation)
+#setwd( TmbFile )
+
+############### Try version d ############ - map doesn't match parameter names
+Version = "OU_GMRF_v1d"
+# Compile
+if(FALSE) {
+  dyn.unload(dynlib(paste0("Code/", Version)))
+  file.remove( paste0("Code/", Version,c(".o",".dll")) )
+}
+compile( paste0("Code/", Version,".cpp") )
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj1_d <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report1d = obj1_d$report()
+
+# First run
+obj1_d$fn( obj1_d$par )
+# Check for parameters that don't do anything
+(Which = which( obj1_d$gr( obj1_d$par )==0 ))
+
+# Run model
+opt1_d = nlminb(start=obj1_d$env$last.par.best[-c(obj1_d$env$random)], objective=obj1_d$fn, gradient=obj1_d$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt1_d[["final_gradient"]] = obj1_d$gr( opt1_d$par )
+opt1_d[["AIC"]] = 2*opt1_d$objective + 2*length(opt1_d$par)
+
+Report1d = obj1_d$report()
+SD1d = sdreport( obj1_d, bias.correct=FALSE )
+
+############### Try version e ############ - map doesn't match parameter names
+Version = "OU_GMRF_v1e"
+# Compile
+if(FALSE) {
+  dyn.unload(dynlib(paste0("Code/", Version)))
+  file.remove( paste0("Code/", Version,c(".o",".dll")) )
+}
+compile( paste0("Code/", Version,".cpp") )
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj1_e <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report1_e = obj1_e$report()
+
+# First run
+obj1_e$fn( obj1_e$par )
+# Check for parameters that don't do anything
+(Which = which( obj1_e$gr( obj1_e$par )==0 ))
+
+# Run model
+opt1_e = nlminb(start=obj1_e$env$last.par.best[-c(obj1_e$env$random)], objective=obj1_e$fn, gradient=obj1_e$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt1_e[["final_gradient"]] = obj1_e$gr( opt1_e$par )
+opt1_e[["AIC"]] = 2*opt1_e$objective + 2*length(opt1_e$par)
+
+Report1_e = obj1_e$report()
+SD1_e = sdreport( obj1_e, bias.correct=FALSE )
+
+############### Try version f ############ - Error when reading the variable: 'log_SD_sp'. Please check data and parameters
+Version = "OU_GMRF_v1f"
+# Compile
+if(FALSE) {
+  dyn.unload(dynlib(paste0("Code/", Version)))
+  file.remove( paste0("Code/", Version,c(".o",".dll")) )
+}
+compile( paste0("Code/", Version,".cpp") )
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj1_f <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report1_f = obj1_f$report()
+
+# First run
+obj1_f$fn( obj1_f$par )
+# Check for parameters that don't do anything
+(Which = which( obj1_f$gr( obj1_f$par )==0 ))
+
+# Run model
+opt1_f = nlminb(start=obj1_f$env$last.par.best[-c(obj1_f$env$random)], objective=obj1_f$fn, gradient=obj1_f$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt1_f[["final_gradient"]] = obj1_f$gr( opt1_f$par )
+opt1_f[["AIC"]] = 2*opt1_f$objective + 2*length(opt1_f$par)
+
+Report1_f = obj1_f$report()
+SD1_f = sdreport( obj1_f, bias.correct=FALSE )
+
+
+################### Compare models with version g ################
 Version = "OU_GMRF_v1g"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij

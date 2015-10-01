@@ -113,7 +113,7 @@ Type objective_function<Type>::operator() ()
   REPORT( gamma_j );
   REPORT( eta_i);
   REPORT( lambda_ip );
-  ADREPORT( lambda_ip);
+  ADREPORT( gamma_j);
   
   return jnll;
 }

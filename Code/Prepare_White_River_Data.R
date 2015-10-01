@@ -94,4 +94,4 @@ df_stds <- data.frame(parameter = c("length", "width"), means = c(mean(df$length
 
 t_i <- df$year
 
-save(c_ip, X_ij, df_stds, t_i, df, family, file = "Data/Prepared_Data.RData")
+save(c_ip, X_ij, df_stds, t_i, df, family, file = "Data/Prepared_Data_White_River.RData")

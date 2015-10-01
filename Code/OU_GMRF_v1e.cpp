@@ -130,7 +130,7 @@ Type objective_function<Type>::operator() ()
   REPORT( Delta_t );
   REPORT( rhot );
   REPORT( sigmat );
-  ADREPORT( lambda_ip);
+  ADREPORT( gamma_j);
   
   return jnll;
 }

@@ -9,6 +9,13 @@ library(TMB)
 library(dplyr)
 source("Functions/Input_Functions.R")
 
+# Diagnose problems of convergence and SD estimation
+DiagnosticDir <- "Diagnostics/"
+# create code directory if doesn't exist
+if (!file.exists(DiagnosticDir)) {
+  dir.create(DiagnosticDir)
+}
+
 #######################
 # Load data
 #######################
@@ -37,7 +44,8 @@ X_ij <- X_ij[ , c("(Intercept)", "length_std", "width_std")]
 # v1g- add IID lognormal variation (representing micro-variation)
 #setwd( TmbFile )
 
-############### Try version d ############ - map doesn't match parameter names
+############### Try version d ############ 
+#- map doesn't match parameter names
 Version = "OU_GMRF_v1d"
 # Compile
 if(FALSE) {
@@ -67,7 +75,8 @@ opt1_d[["AIC"]] = 2*opt1_d$objective + 2*length(opt1_d$par)
 Report1d = obj1_d$report()
 SD1d = sdreport( obj1_d, bias.correct=FALSE )
 
-############### Try version e ############ - map doesn't match parameter names
+############### Try version e ############
+#- map doesn't match parameter names
 Version = "OU_GMRF_v1e"
 # Compile
 if(FALSE) {
@@ -97,7 +106,8 @@ opt1_e[["AIC"]] = 2*opt1_e$objective + 2*length(opt1_e$par)
 Report1_e = obj1_e$report()
 SD1_e = sdreport( obj1_e, bias.correct=FALSE )
 
-############### Try version f ############ - Error when reading the variable: 'log_SD_sp'. Please check data and parameters
+############### Try version f ############ 
+#- Error when reading the variable: 'log_SD_sp'. Please check data and parameters
 Version = "OU_GMRF_v1f"
 # Compile
 if(FALSE) {
@@ -153,12 +163,25 @@ compile( paste0("Code/", Version,".cpp") )
 Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj1 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report1 = obj1$report()
+
+obj1$gr_orig = obj1$gr
+obj1$fn_orig = obj1$fn
+obj1$fn <- function( vec ){
+  Fn = obj1$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj1$par),NULL)), file=paste0(DiagnosticDir,"Fn1.txt"), append = TRUE )
+  return( Fn )
+}
+obj1$gr = function( vec ){
+  Gr = obj1$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj1$par),NULL)), file=paste0(DiagnosticDir,"gr1.txt"), append = TRUE )
+  return( Gr )
+}
 
 # First run
 obj1$fn( obj1$par )
@@ -180,12 +203,25 @@ SD1 = sdreport( obj1, bias.correct=TRUE )
 Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj2 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj2$report()
+
+obj2$gr_orig = obj2$gr
+obj2$fn_orig = obj2$fn
+obj2$fn <- function( vec ){
+  Fn = obj2$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj2$par),NULL)), file=paste0(DiagnosticDir,"Fn2.txt"), append = TRUE )
+  return( Fn )
+}
+obj2$gr = function( vec ){
+  Gr = obj2$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj2$par),NULL)), file=paste0(DiagnosticDir,"gr2.txt"), append = TRUE )
+  return( Gr )
+}
 
 # First run
 obj2$fn( obj2$par )
@@ -206,12 +242,25 @@ SD2 = sdreport( obj2, bias.correct=TRUE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj3 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj3$report()
+
+obj3$gr_orig = obj3$gr
+obj3$fn_orig = obj3$fn
+obj3$fn <- function( vec ){
+  Fn = obj3$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj3$par),NULL)), file=paste0(DiagnosticDir,"Fn3.txt"), append = TRUE )
+  return( Fn )
+}
+obj3$gr = function( vec ){
+  Gr = obj3$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj3$par),NULL)), file=paste0(DiagnosticDir,"gr3.txt"), append = TRUE )
+  return( Gr )
+}
 
 # First run
 obj3$fn( obj3$par )
@@ -233,13 +282,25 @@ SD3 = sdreport( obj3, bias.correct=TRUE )
 Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj4 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj4$report()
 
+obj4$gr_orig = obj4$gr
+obj4$fn_orig = obj4$fn
+obj4$fn <- function( vec ){
+  Fn = obj4$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj4$par),NULL)), file=paste0(DiagnosticDir,"Fn1.txt"), append = TRUE )
+  return( Fn )
+}
+obj4$gr = function( vec ){
+  Gr = obj4$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj4$par),NULL)), file=paste0(DiagnosticDir,"gr1.txt"), append = TRUE )
+  return( Gr )
+}
 # First run
 obj4$fn( obj4$par )
 # Check for parameters that don't do anything
@@ -259,12 +320,25 @@ SD4 = sdreport( obj4, bias.correct=TRUE )
 Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj5 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj5$report()
+
+obj5$gr_orig = obj5$gr
+obj5$fn_orig = obj5$fn
+obj5$fn <- function( vec ){
+  Fn = obj5$gr_orig(vec)
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj5$par),NULL)), file=paste0(DiagnosticDir,"Fn5.txt"), append = TRUE )
+  return( Fn )
+}
+obj5$gr = function( vec ){
+  Gr = obj5$gr_orig(vec)
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj5$par),NULL)), file=paste0(DiagnosticDir,"gr5.txt"), append = TRUE )
+  return( Gr )
+}
 
 # First run
 obj5$fn( obj5$par )
@@ -287,30 +361,23 @@ SD5 = sdreport( obj5, bias.correct=TRUE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj6 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj6$report()
 
-# Diagnose problems of convergence and SD estimation
-DiagnosticDir <- "Diagnostics/"
-# create code directory if doesn't exist
-if (!file.exists(DiagnosticDir)) {
-  dir.create(DiagnosticDir)
-}
-
 obj6$gr_orig = obj6$gr
 obj6$fn_orig = obj6$fn
 obj6$fn <- function( vec ){
   Fn = obj6$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"Fn.txt") )
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"Fn6.txt"), append = TRUE )
   return( Fn )
 }
 obj6$gr = function( vec ){
   Gr = obj6$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"gr.txt") )
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"gr6.txt"), append = TRUE )
   return( Gr )
 }
 
@@ -336,30 +403,23 @@ save(obj6, Report6, SD6, file = "Output/Best_Model_Output.RData")
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_i = c_i, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj7 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report = obj7$report()
 
-# Diagnose problems of convergence and SD estimation
-DiagnosticDir <- "Diagnostics/"
-# create code directory if doesn't exist
-if (!file.exists(DiagnosticDir)) {
-  dir.create(DiagnosticDir)
-}
-
 obj7$gr_orig = obj7$gr
 obj7$fn_orig = obj7$fn
 obj7$fn <- function( vec ){
   Fn = obj7$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"Fn.txt") )
+  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"Fn7.txt") )
   return( Fn )
 }
 obj7$gr = function( vec ){
   Gr = obj7$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"gr.txt") )
+  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"gr7.txt") )
   return( Gr )
 }
 
@@ -374,7 +434,7 @@ opt7[["final_gradient"]] = obj7$gr( opt7$par )
 opt7[["AIC"]] = 2*opt7$objective + 2*length(opt7$par)
 
 Report7 = obj7$report()
-SD7 = sdreport( obj7, bias.correct=TRUE )
+SD7 = sdreport( obj7, bias.correct=FALSE )
 #--------------------------------------------------
 
 

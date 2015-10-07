@@ -2,15 +2,23 @@
 # Specify inputs
 # ==============
 
+# Base Directory
 baseDirectory = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/modelVersions/SusquehannaWest_Threepass"
 
-pointsFile = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/hydrography.gdb/snappedPointsTruncated_petersen"
+# Sample Locations Shapefile
+pointsFile = "C:/KPONEIL/GitHub/projects/Trout_GRF/Data/gisFiles/hydrography.gdb/snappedPointsTruncated_threepass"
 
+# Unique ID
 uniqueIDField = "GIS_Key"
 
-flowlinesFile = baseDirectory + "/spatialModel_Inputs/flowlines"
+# Flowlines Shapefile
+flowlinesFile = baseDirectory + "/spatialModel_Inputs.gdb/flowlines"
 
-processingBoundary = baseDirectory + "/spatialModel_Inputs/processingBoundary"
+# Processing Boundary Polygon
+processingBoundary = baseDirectory + "/spatialModel_Inputs.gdb/processingBoundary"
+
+# Snapping Distance (in meters)
+snapDistanceM = "100"
 
 
 # ===================
@@ -20,7 +28,6 @@ processingBoundary = baseDirectory + "/spatialModel_Inputs/processingBoundary"
 # Create version geodatabase
 workingDirectory = baseDirectory + "/spatialModel_Processing.gdb"
 if not arcpy.Exists(workingDirectory): arcpy.CreateFileGDB_management (baseDirectory, "spatialModel_Processing", "CURRENT")
-
 
 # Map Definitions
 mxd = arcpy.mapping.MapDocument("CURRENT")
@@ -51,14 +58,15 @@ arcpy.Delete_management("pointsFileLyr")
 
 # Calculate fields for processing
 # -------------------------------
-# Calculate unique IDs
+# Rename unique IDs
 arcpy.AddField_management(points, "nodeID", "TEXT")
-arcpy.CalculateField_management (points, "nodeID", "!location_id!", "PYTHON_9.3")
+arcpy.CalculateField_management (points, "nodeID", "!" + uniqueIDField + "!", "PYTHON_9.3")
 
 arcpy.AddField_management(flowlines, "nodeID", "TEXT")
 arcpy.CalculateField_management (flowlines, "nodeID", """"N_" + str(!FEATUREID!)""", "PYTHON_9.3")
 
-# Create field for creating routes
+
+# Create field for creating routes (ensures correct direction)
 arcpy.AddField_management(flowlines, "fromMeas", "SHORT")
 arcpy.CalculateField_management (flowlines, "fromMeas", 0, "PYTHON_9.3")
 
@@ -69,7 +77,7 @@ arcpy.CalculateField_management (flowlines, "fromMeas", 0, "PYTHON_9.3")
 
 # Snap the points to the flowlines
 arcpy.Snap_edit(points,
-					[[flowlines, "EDGE", " 100 Meters"]])
+					[[flowlines, "EDGE", snapDistanceM + " Meters"]])
 
 
 # Determine positions
@@ -84,13 +92,13 @@ routes = arcpy.CreateRoutes_lr(flowlines,
 									"", "", "",
 									"IGNORE",
 									"INDEX")
-													
-															
+
+
 # Find the distance of the points along the routes
-occupancySites = arcpy.LocateFeaturesAlongRoutes_lr(points, 
+occupancySites = arcpy.LocateFeaturesAlongRoutes_lr(points,
 														routes,
 														"FEATUREID",
-														"100 METERS", 
+														snapDistanceM + " METERS", 
 														baseDirectory + "/pointLocations.dbf",
 														"FEATUREID POINT FMEAS TMEAS",
 														"FIRST",
@@ -100,23 +108,25 @@ occupancySites = arcpy.LocateFeaturesAlongRoutes_lr(points,
 														"M_DIRECTON")
 
 
-# Flowline Node locations
-# -----------------------
+# Calculate flowline node locations
+# ---------------------------------
+
+# Project to a geographic coordinate system to calculate lat/lon
 spatialRef_flow = arcpy.Describe(flowlines).spatialReference
 
 flowlinesGCS = arcpy.Project_management(flowlines,
 											workingDirectory + "/flowlinesGCS",
 											spatialRef_flow.GCS)
-			
+
+# Calculate lat/lon fields (at upstream point of line)											
 arcpy.AddField_management(flowlinesGCS, "NodeLon", "DOUBLE")
 arcpy.AddField_management(flowlinesGCS, "NodeLat",  "DOUBLE")			
 arcpy.CalculateField_management (flowlinesGCS, "NodeLon", "!Shape!.positionAlongLine(1.0,True).firstPoint.X", "PYTHON_9.3")
 arcpy.CalculateField_management (flowlinesGCS, "NodeLat", "!Shape!.positionAlongLine(1.0,True).firstPoint.Y", "PYTHON_9.3")
 
-
+# Add lat/lon fields to the main flowlines table
 arcpy.MakeTableView_management(flowlinesGCS, "flowlinesGCSTable")
 arcpy.MakeTableView_management(flowlines, "flowlinesTable")	
-
 
 arcpy.JoinField_management("flowlinesTable", "FEATUREID", "flowlinesGCSTable", "FEATUREID", ["NodeLat","NodeLon"])
 
@@ -128,21 +138,25 @@ arcpy.TableToTable_conversion("flowlinesTable",
 								
 # Point Node locations
 # --------------------
+
+# Project to a geographic coordinate system to calculate lat/lon
 spatialRef_points = arcpy.Describe(points).spatialReference
 
 pointsGCS = arcpy.Project_management(points,
 										workingDirectory + "/pointsGCS",
 										spatialRef_points.GCS)
-			
+
+# Calculate lat/lon fields										
 arcpy.AddField_management(pointsGCS, "NodeLon", "DOUBLE")
 arcpy.AddField_management(pointsGCS, "NodeLat",  "DOUBLE")			
 arcpy.CalculateField_management (pointsGCS, "NodeLon", "!shape.centroid.X!", "PYTHON_9.3")
 arcpy.CalculateField_management (pointsGCS, "NodeLat", "!shape.centroid.Y!", "PYTHON_9.3")
 
+# Add lat/lon fields to the main points table
 arcpy.MakeTableView_management(pointsGCS, "pointsGCSTable")	
 arcpy.MakeTableView_management(occupancySites, "occupancyTable")	
 
-arcpy.JoinField_management("occupancyTable", "location_i", "pointsGCSTable", "location_id", ["NodeLat","NodeLon"])
+arcpy.JoinField_management("occupancyTable", "nodeID", "pointsGCSTable", "nodeID", ["NodeLat","NodeLon"])
 
 arcpy.TableToTable_conversion("occupancyTable", 
 								baseDirectory,
@@ -153,13 +167,13 @@ arcpy.TableToTable_conversion("occupancyTable",
 
 # Delete Interim Files
 # --------------------
+arcpy.Delete_management("occupancyTable")
+arcpy.Delete_management("pointsGCSTable")
+arcpy.Delete_management("flowlinesGCSTable")
 #arcpy.Delete_management(flowlines)								
 #arcpy.Delete_management(flowlinesGCS)							
 #arcpy.Delete_management(routes)
 #arcpy.Delete_management(points)
 #arcpy.Delete_management(pointsGCS)
-#arcpy.Delete_management("pointsGCSTable")
-#arcpy.Delete_management("occupancyTable")
-#arcpy.Delete_management("flowlinesGCSTable")
 #arcpy.Delete_management(occupancySites)
 

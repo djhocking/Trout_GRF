@@ -88,7 +88,7 @@ year <- as.factor(df$year)
 dummies <- model.matrix(~year)
 length_std <- (df$length_sample - mean(df$length_sample)) / sd(df$length_sample)
 width_std <- (df$width - mean(df$width)) / sd(df$width)
-X_ij = cbind(dummies, length_std, width_std) #[ , 2:ncol(dummies)]
+X_ij = data.frame(dummies[ , 2:ncol(dummies)], length_std, width_std) #[ , 2:ncol(dummies)]
 
 df_stds <- data.frame(parameter = c("length", "width"), means = c(mean(df$length_sample), mean(df$width)), sds = c(sd(df$length_sample), sd(df$width)))
 

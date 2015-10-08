@@ -144,6 +144,57 @@ nearby <- dplyr::filter(family, dist_b < 0.01) # nodes less than 10 m apart
 df <- df %>%
   dplyr::mutate(dist_b = ifelse(dist_b < 0.001, 0.001, dist_b))
 
+############ Pull covariates from DB ############
+library(RPostgreSQL)
+library(tidyr)
+
+# get featureid for database
+df_loc <- read.csv("Data/occupancySitesSusqWest_Threepass.csv", header = TRUE, stringsAsFactors = FALSE)
+df_loc$featureid <- as.numeric(gsub(",", "", df_loc$FEATUREID))
+
+df <- left_join(df, df_loc[ , c("featureid", "GIS_Key")], by = c("child_name" = "GIS_Key")) %>%
+  dplyr::mutate(featureid = ifelse(is.na(featureid), gsub("^N_", "", child_name), featureid))
+
+featureids <- unique(df$featureid)
+featureid_string <- paste(shQuote(featureids), collapse = ", ")
+
+# connect to database
+  drv <- dbDriver("PostgreSQL")
+  con <- dbConnect(drv, dbname='sheds', host='felek.cns.umass.edu', user=options('SHEDS_USERNAME'), password=options('SHEDS_PASSWORD'))
+
+param_list <- c("forest", 
+                "herbaceous", 
+                "agriculture", 
+                "devel_hi", 
+                "developed",
+                "AreaSqKM",  
+                "allonnet",
+                "alloffnet",
+                "surfcoarse", 
+                "srad", 
+                "dayl", 
+                "swe")
+
+cov_list_string <- paste(shQuote(param_list), collapse = ", ")
+
+qry_covariates <- paste0("SELECT * FROM covariates WHERE zone='upstream' AND variable IN (", cov_list_string, ") AND featureid IN (", featureid_string, ");")
+rs <- dbSendQuery(con, qry_covariates)
+df_covariates_long <- fetch(rs, n=-1)
+
+# transform from long to wide format
+df_covariates_upstream <- tidyr::spread(df_covariates_long, variable, value) %>%
+  dplyr::mutate(featureid = as.character(featureid),
+                impound = AreaSqKM * allonnet)
+
+dbClearResult(res = rs)
+dbDisconnect(con)
+dbUnloadDriver(drv)
+#dbListConnections(drv)
+
+df <- left_join(df, df_covariates_upstream)
+
+gc()
+################################################
 
 c_ip <- dplyr::select(df, starts_with("pass"))
 year <- as.factor(df$year)
@@ -151,9 +202,34 @@ dummies <- model.matrix(~year)
 length_std <- (df$length_sample - mean(df_covs_visit$length_sample)) / sd(df_covs_visit$length_sample)
 width_std <- (df$width - mean(df_covs_visit$width)) / sd(df_covs_visit$width)
 effort_std <- (df$effort - mean(df_covs_visit$effort, na.rm = T)) / sd(df_covs_visit$effort, na.rm = T)
-X_ij = cbind(dummies, length_std, width_std, effort_std) #[ , 2:ncol(dummies)]
+surfcoarse_std <- (df$surfcoarse - mean(df$surfcoarse, na.rm = T)) / sd(df$surfcoarse, na.rm = T)
+forest_std <- (df$forest - mean(df$forest, na.rm = T)) / sd(df$forest, na.rm = T)
+area_std <- (df$AreaSqKM - mean(df$AreaSqKM, na.rm = T)) / sd(df$AreaSqKM, na.rm = T)
+impound_std <- (df$impound - mean(df$impound, na.rm = T)) / sd(df$impound, na.rm = T)
+X_ij = data.frame(dummies[ , 2:ncol(dummies)], 
+                  length_std, 
+                  width_std, 
+                  effort_std, 
+                  surfcoarse_std, 
+                  forest_std, 
+                  area_std, 
+                  impound_std) #
 
-df_stds <- data.frame(parameter = c("length", "width", "effort"), means = c(mean(df$length_sample), mean(df$width), mean(df$effort)), sds = c(sd(df$length_sample), sd(df$width), sd(df$effort)))
+df_stds <- data.frame(parameter = c("length", "width", "effort", "surfcoarse", "forest", "area", "impound"), 
+                      means = c(mean(df_covs_visit$length_sample), 
+                                mean(df_covs_visit$width), 
+                                mean(df_covs_visit$effort, na.rm = T),
+                                mean(df$surfcoarse, na.rm = T),
+                                mean(df$forest, na.rm = T),
+                                mean(df$AreaSqKM, na.rm = T),
+                                mean(df$impound, na.rm = T)), 
+                      sds = c(sd(df_covs_visit$length_sample), 
+                              sd(df_covs_visit$width), 
+                              sd(df_covs_visit$effort),
+                              sd(df$surfcoarse, na.rm = T),
+                              sd(df$forest, na.rm = T),
+                              sd(df$AreaSqKM, na.rm = T),
+                              sd(df$impound, na.rm = T)))
 
 t_i <- df$year
 

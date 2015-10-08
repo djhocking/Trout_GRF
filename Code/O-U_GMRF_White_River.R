@@ -22,12 +22,13 @@ if (!file.exists(DiagnosticDir)) {
 load("Data/Prepared_Data_White_River.RData")
 
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
-X_ij <- X_ij[ , c("(Intercept)", "length_std", "width_std")]
+covs <- X_ij
+X_ij <- as.matrix(dplyr::select(covs, length_std))
 
 # df = dataframe with all data including sites with multiple passes (multiple instances of each child)
 # family = dataframe with unique child rows. Other columns are parents of each child, lat, lon, and other data associated with each child node.
 # C_ip matrix of counts at site-year i on electrofish survey pass p
-# X_ij matrix of covariates (j) for each site-year i as a design matrix including the intercept (column of 1s)
+# X_ij matrix of covariates (j) for each site-year i as a design matrix NOT including the intercept (column of 1s)
 # t_i vector of length i indicating the survey year for each site-year visit
 # df_stds dataframe with three columns of the parameter name, means, stds used for z-score standardization of the continuously-distributed independent variables in X_ij
 
@@ -64,7 +65,7 @@ compile( paste0("Code/", Version,".cpp") )
 
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
@@ -357,21 +358,21 @@ aic_table
 #------------------------------------------------
 
 # compare coefficient estimates
-LCI <- SD6$value - (1.96 * SD6$sd) # lower CI rough estimate for best model
-UCI <- SD6$value - (1.96 * SD6$sd)
+LCI <- SD4$value - (1.96 * SD4$sd) # lower CI rough estimate for best model
+UCI <- SD4$value + (1.96 * SD4$sd)
 
-coef_table <- data.frame(Parameter = names(SD6$value), Estimate = SD6$value, SD = SD6$sd, LCI, UCI, stringsAsFactors = FALSE)
+coef_table <- data.frame(Parameter = names(SD4$value), Estimate = SD4$value, SD = SD4$sd, LCI, UCI, stringsAsFactors = FALSE)
 for(i in 1:ncol(as.matrix(X_ij))) {
   coef_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
 }
 format(coef_table, digits = 2, scientific = 5)
 
 SD_table <- data.frame(Parameter = names(SD6$value), 
-                       #SD1 = SD1$sd, 
+                       SD1 = SD1$sd, 
                        SD2 = SD2$sd, 
                        SD3 = SD3$sd, 
-                       #SD4 = SD4$sd, 
-                       #SD5 = SD5$sd, 
+                       SD4 = SD4$sd, 
+                       SD5 = SD5$sd, 
                        SD6 = SD6$sd, 
                        SD7 = SD7$sd,
                        stringsAsFactors = FALSE)

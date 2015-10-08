@@ -1,6 +1,7 @@
 # clear environment
 rm(list = ls())
 gc()
+# setwd( "C:/Users/James.Thorson/Desktop/Project_git/Trout_GRF/" )
 
 #######################
 # Load libraries
@@ -32,7 +33,7 @@ X_ij <- as.matrix(dplyr::select(covs, length_std, effort_std, forest_std, surfco
 # Fit in TMB
 #######################
 
-Version = "OU_GMRF_v1g"
+Version = "OU_GMRF_v1h"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
 # v1c- adds linear predictors to SD output and multinomial count process (HAS A BUG!)
@@ -52,7 +53,7 @@ compile( paste0("Code/", Version,".cpp") )
 
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
@@ -140,7 +141,7 @@ SD3 = sdreport( obj3, bias.correct=FALSE )
 
 #----------------- Spatiotemporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)

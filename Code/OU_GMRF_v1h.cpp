@@ -20,6 +20,9 @@ template<class Type>
     // Slot 0 : Include spatial variation (0=No, 1=Yes)
     // Slot 1 : Include temporal variation (0=No, 1=Yes)
     // Slot 2 : Include spatiotemporal variation (0=No, 1=Yes)
+    // Slot 3 : Include log_extradetectrate_i variation (0=No, 1=Yes)
+    // Slot 4 : Observation model (1=Poisson)
+    // Slot 5 : Include lognormal_overdispersed_i (0=No, 1=Yes)
     
     // Sizes
     DATA_INTEGER(n_i);   // Number of data points
@@ -135,11 +138,7 @@ template<class Type>
       if(Options_vec(5)==1) {
         jnll_comp(5) -= dnorm( lognormal_overdispersed_i(i), Type(0.0), sigmaIID, true );
       }
-      else {
-        lognormal_overdispersed_i(i) = 0;
-      }
     }
-    if(Options_vec(5)==0) log_sigmaIID = 0;
     
     // Detection probability
     matrix<Type> detectprob_ip(n_i,3);
@@ -158,6 +157,13 @@ template<class Type>
     vector<Type> eta_i(n_i);
     eta_i = X_ij * gamma_j.matrix();
     
+    // log-predictions
+    matrix<Type> lambda_dt(n_b,n_t);
+    for(int d=0; d<n_b; d++){
+    for(int t=0; t<n_t; t++){
+      lambda_dt(d,t) = exp( log_mean + Epsiloninput_d(d) + Delta_t(t) + Nu_dt(d,t) );
+    }}
+        
     // Likelihood contribution from observations
     matrix<Type> lambda_ip(n_i,3);
     for (int i=0; i<n_i; i++){
@@ -197,6 +203,7 @@ template<class Type>
     REPORT( SDinput_t_b );
     REPORT( temp_b );
     REPORT( Nu_dt );
+    REPORT( lambda_dt );
     
     // ADREPORT( lambda_ip);
     ADREPORT( gamma_j );

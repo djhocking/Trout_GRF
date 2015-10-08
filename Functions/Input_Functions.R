@@ -66,38 +66,39 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options = Options_vec, X,
   if(Version=="OU_GMRF_v1d") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
   if(Version=="OU_GMRF_v1e") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b), "Deltainput_t"=rnorm(Data$n_t))
   if(Version=="OU_GMRF_v1f") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_sp"=log(1), "log_SD_st"=log(1), "rho_sp"=0, "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
-  if(Version=="OU_GMRF_v1g") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_st"=log(1), "log_SD_st"=log(1), "rho_st"=0, "log_sigmaIID"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "lognormal_overdispersed_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
-  if(Version=="OU_GMRF_v1h") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_st"=log(1), "log_SD_st"=log(1), "rho_st"=0, "log_sigmaIID"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "lognormal_overdispersed_i"=rnorm(Data$n_i,sd=0), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
-
+  if(Version%in%c("OU_GMRF_v1h","OU_GMRF_v1g")) Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_st"=log(1), "log_SD_st"=log(1), "rho_st"=0, "log_sigmaIID"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "lognormal_overdispersed_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
   
   if(Version%in%c("OU_GMRF_v1a","OU_GMRF_v1b")) Random = c( "Epsiloninput_d" )
   if(Version%in%c("OU_GMRF_v1c","OU_GMRF_v1d")) Random = c( "Epsiloninput_d", "log_extradetectrate_i" )
   if(Version%in%c("OU_GMRF_v1e")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t" )
   if(Version%in%c("OU_GMRF_v1f")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t", "Nu_dt" )
   if(Version%in%c("OU_GMRF_v1g", "OU_GMRF_v1h")) Random = c( "Epsiloninput_d", "log_extradetectrate_i", "Deltainput_t", "Nu_dt", "lognormal_overdispersed_i" )
+  if(Version%in%c("OU_GMRF_v1h")){
+    if( sum(unlist(Options_vec[c("SpatialTF", "TemporalTF", "SpatiotemporalTF", "DetectabilityTF", "OverdispersedTF")]))==0 ) Random = NULL
+  }
   
   # Turn off random effects if desired
   Map = list()
-  if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatialTF"]]==FALSE ){
+  if( Version%in%c("OU_GMRF_v1h","OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatialTF"]]==FALSE ){
     Map[["log_theta"]] = factor(NA)
     Map[["log_SD"]] = factor(NA)
     Params[["Epsiloninput_d"]] = rep(0,length(Params[["Epsiloninput_d"]]))
     Map[["Epsiloninput_d"]] = factor( rep(NA,length(Params[["Epsiloninput_d"]])) )
   }
-  if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["TemporalTF"]]==FALSE ){
+  if( Version%in%c("OU_GMRF_v1h","OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["TemporalTF"]]==FALSE ){
     Map[["rhot"]] = factor(NA)
     Map[["log_sigmat"]] = factor(NA)
     Params[["Deltainput_t"]] = rep(0,length(Params[["Deltainput_t"]]))
     Map[["Deltainput_t"]] = factor( rep(NA,length(Params[["Deltainput_t"]])) )
   }
-  if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatiotemporalTF"]]==FALSE ){
+  if( Version%in%c("OU_GMRF_v1h","OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["SpatiotemporalTF"]]==FALSE ){
     Map[["log_theta_st"]] = factor(NA)
     Map[["log_SD_st"]] = factor(NA)
     Map[["rho_st"]] = factor(NA)
     Params[["Nu_dt"]] = array(0,dim(Params[["Nu_dt"]]))
     Map[["Nu_dt"]] = factor( array(NA,dim(Params[["Nu_dt"]])) )
   }
-  if( Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["DetectabilityTF"]]==FALSE ){
+  if( Version%in%c("OU_GMRF_v1h","OU_GMRF_v1g","OU_GMRF_v1f","OU_GMRF_v1e","OU_GMRF_v1d") & Options_vec[["DetectabilityTF"]]==FALSE ){
     Map[["log_extradetectionSD"]] = factor(NA)
     Map[["log_extradetectrate_i"]] = factor( rep(NA,Data$n_i) )
     Params[["log_extradetectrate_i"]] = rep(0,Data$n_i)

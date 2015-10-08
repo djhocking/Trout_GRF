@@ -202,11 +202,11 @@ time2 <- Sys.time()
 time.nm <- time2 - time1
 
 # CG
-time1 <- Sys.time()
-opt4_CG <- optim(obj4$env$last.par.best[-c(obj4$env$random)], fn = obj4$fn, gr = obj4$gr, method = "CG")
-SD4_CG <- sdreport(obj4)
-time2 <- Sys.time()
-time.cg <- time2 - time1
+# time1 <- Sys.time()
+# opt4_CG <- optim(obj4$env$last.par.best[-c(obj4$env$random)], fn = obj4$fn, gr = obj4$gr, method = "CG")
+# SD4_CG <- sdreport(obj4)
+# time2 <- Sys.time()
+# time.cg <- time2 - time1
 
 # author of CG, John Nash, says not good and should Rcgmin instead
 library(Rcgmin)
@@ -329,13 +329,13 @@ SD5 = sdreport( obj5, bias.correct=F )
 
 # LBFGSB
 time1.lbfgsb.5 <- Sys.time()
-opt5_LBFGSB <- optim(obj5$env$last.par.best[-c(obj5$env$random)], fn = obj5$fn, gr = obj4$gr, method = "L-BFGS-B")
+opt5_LBFGSB <- optim(obj5$env$last.par.best[-c(obj5$env$random)], fn = obj5$fn, gr = obj5$gr, method = "L-BFGS-B")
 SD5_LBFGSB <- sdreport(obj5)
 time2.lbfgsb.5 <- Sys.time()
 time.lbfgsb.5 <- time2.lbfgsb.5 - time1.lbfgsb.5
 
 Report5.lbfgsb = obj5$report()
-SD5.lbfgsb = sdreport( obj5, bias.correct=F ) # fails
+SD5.lbfgsb = sdreport( obj5, bias.correct=F ) # 
 
 # bobyqa
 time1_bobyqa_5 <- Sys.time()
@@ -345,7 +345,7 @@ time2_bobyqa_5 <- Sys.time()
 time_bobyqa_5 <- time2_bobyqa_5 - time1_bobyqa_5
 
 Report5.bobyqa = obj5$report()
-SD5.bobyqa = sdreport( obj5, bias.correct=F ) # fails
+SD5.bobyqa = sdreport( obj5, bias.correct=F ) # 
 #--------------------------------------------------
 
 
@@ -409,6 +409,20 @@ opt6_bobyqa$ierr # converges but SD fails
 opt6_bobyqa[["AIC"]] = 2*opt6_bobyqa$fval + 2*length(opt6_bobyqa$par)
 
 # model can't differentiate between spatial and spatiotemporal
+
+# LBFGSB
+lower6g <- c(log(0), log(1e-4), log(0), log(0), 0, log(1e-4), log(1e-4), -100, log(0), -10, -10, -10, -10, log(0.01))
+upper6g <- c(log(800), log(100), log(800), log(100), 100, log(100), log(100), 100, log(100), 10, 10, 10, 10, log(10))
+
+time1.lbfgsb.6 <- Sys.time()
+opt6_LBFGSB <- optim(obj6$env$last.par.best[-c(obj6$env$random)], fn = obj6$fn, gr = obj6$gr, method = "L-BFGS-B", lower = lower6g, upper = upper6g)
+SD6_LBFGSB <- sdreport(obj6)
+time2.lbfgsb.6 <- Sys.time()
+time.lbfgsb.6 <- time2.lbfgsb.6 - time1.lbfgsb.6
+
+Report6.lbfgsb = obj6$report()
+SD6.lbfgsb = sdreport( obj6, bias.correct=F )
+
 #--------------------------------------------------
 
 #----------------- Spatial + Temporal ------------------
@@ -470,6 +484,57 @@ opt7_bobyqa[["final_gradient"]] = obj7$gr( opt7_bobyqa$par )
 opt7_bobyqa$ierr # converges
 #--------------------------------------------------
 
+
+#----------------- Spatial + Spatiotemporal ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj8 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj8$report()
+
+# First run
+obj8$fn( obj8$par )
+#fn_test < obj8$fn(obj8$par)
+
+# Check for parameters that don't do anything
+Which = which( obj8$gr( obj8$par )==0 )
+
+# Run model
+# ports
+opt8 = nlminb(start=obj8$env$last.par.best[-c(obj8$env$random)], objective=obj8$fn, gradient=obj8$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt8[["final_gradient"]] = obj8$gr( opt8$par )
+opt8[["AIC"]] = 2*opt8$objective + 2*length(opt8$par)
+
+ParHat <- obj8( opt8$par )
+Report8 = obj8$report()
+SD8 = sdreport( obj8, bias.correct=F )
+
+# LBFGSB
+time1.lbfgsb.8 <- Sys.time()
+opt8_LBFGSB <- optim(obj8$env$last.par.best[-c(obj8$env$random)], fn = obj8$fn, gr = obj8$gr, method = "L-BFGS-B")
+SD8_LBFGSB <- sdreport(obj8)
+time2.lbfgsb.8 <- Sys.time()
+time.lbfgsb.8 <- time2.lbfgsb.8 - time1.lbfgsb.8
+
+Report8.lbfgsb = obj8$report()
+SD8.lbfgsb = sdreport( obj8, bias.correct=F ) # 
+
+# bobyqa
+time1_bobyqa_8 <- Sys.time()
+opt8_bobyqa <- bobyqa(obj8$env$last.par.best[-c(obj8$env$random)], fn = obj8$fn)
+SD8_bobyqa <- sdreport(obj8)
+time2_bobyqa_8 <- Sys.time()
+time_bobyqa_8 <- time2_bobyqa_8 - time1_bobyqa_8
+
+Report8.bobyqa = obj8$report()
+SD8.bobyqa = sdreport( obj8, bias.correct=F ) # 
+#--------------------------------------------------
+
 ################# Try without IID variation in lambda ##########
 Version = "OU_GMRF_v1h"
 
@@ -528,7 +593,7 @@ Report6h.lbfgsb = obj6h$report()
 
 #-------------- S + T no overdispersion ----------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
@@ -579,6 +644,78 @@ time2.nm.8 <- Sys.time()
 time.nm.8 <- time2.nm.8 - time1.nm.8 # 
 
 Report8.nm = obj8$report()
+
+#-------------- ST ----------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj9 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj9$report()
+
+# First run
+obj9$fn( obj9$par )
+# Check for parameters that don't do anything
+Which = which( obj9$gr( obj9$par )==0 )
+
+# Run model
+# bobyqa
+library(optimx)
+lower9 <- c(log(0), log(1e-4), log(0), log(0), 0, log(1e-4), log(1e-4), -100, log(0), -10, -10, -10, -10, log(0.01))
+upper9 <- c(log(800), log(100), log(800), log(100), 100, log(100), log(100), 100, log(100), 10, 10, 10, 10, log(10))
+
+time1_bobyqa_9 <- Sys.time()
+opt9_bobyqa <- bobyqa(obj9$env$last.par.best[-c(obj9$env$random)], fn = obj9$fn) # optimx(obj9$par, fn = obj9$fn, gradient=obj9$gr, method = "bobyqa", lower = lower9, upper = upper9)
+SD9_bobyqa <- sdreport(obj9) # fails
+time2_bobyqa_9 <- Sys.time()
+time_bobyqa_9 <- time2_bobyqa_9 - time1_bobyqa_9
+
+Report9_bobyqa = obj9$report()
+
+data.frame(names(SD9_bobyqa$value), SD9_bobyqa$sd)
+opt9_bobyqa[["final_gradient"]] = obj9$gr( opt9_bobyqa$par )
+opt9_bobyqa$ierr # 
+opt9_bobyqa[["AIC"]] = 2*opt9_bobyqa$fval + 2*length(opt9_bobyqa$par)
+
+#-------------- Obs ----------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj10 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj10$report()
+
+# First run
+obj10$fn( obj10$par )
+# Check for parameters that don't do anything
+Which = which( obj10$gr( obj10$par )==0 )
+
+# Run model
+# bobyqa
+library(optimx)
+lower10 <- c(log(0), log(1e-4), log(0), log(0), 0, log(1e-4), log(1e-4), -100, log(0), -10, -10, -10, -10, log(0.01))
+upper10 <- c(log(800), log(100), log(800), log(100), 100, log(100), log(100), 100, log(100), 10, 10, 10, 10, log(10))
+
+time1_bobyqa_10 <- Sys.time()
+opt10_bobyqa <- bobyqa(obj10$env$last.par.best[-c(obj10$env$random)], fn = obj10$fn) # optimx(obj10$par, fn = obj10$fn, gradient=obj10$gr, method = "bobyqa", lower = lower10, upper = upper10)
+SD10_bobyqa <- sdreport(obj10) # fails
+time2_bobyqa_10 <- Sys.time()
+time_bobyqa_10 <- time2_bobyqa_10 - time1_bobyqa_10
+
+Report10_bobyqa = obj10$report()
+
+data.frame(names(SD10_bobyqa$value), SD10_bobyqa$sd)
+opt10_bobyqa[["final_gradient"]] = obj10$gr( opt10_bobyqa$par )
+opt10_bobyqa$ierr # 
+opt10_bobyqa[["AIC"]] = 2*opt10_bobyqa$fval + 2*length(opt10_bobyqa$par)
 
 ###############################
 

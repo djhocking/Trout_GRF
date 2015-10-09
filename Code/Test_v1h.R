@@ -169,6 +169,7 @@ Report3 = obj3$report()
 SD3 = sdreport( obj3, bias.correct=TRUE )
 #--------------------------------------------------
 
+
 #----------------- Spatial Only no overdispersion ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
 Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0)

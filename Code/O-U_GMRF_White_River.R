@@ -46,7 +46,7 @@ X_ij <- as.matrix(dplyr::select(covs, length_std))
 #setwd( TmbFile )
 
 ################### Compare models with version g ################
-Version = "OU_GMRF_v1g"
+Version = "OU_GMRF_v1h"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
 # v1c- adds linear predictors to SD output and multinomial count process (HAS A BUG!)
@@ -65,7 +65,7 @@ compile( paste0("Code/", Version,".cpp") )
 
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
@@ -74,19 +74,6 @@ Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_i
 dyn.load( dynlib(paste0("Code/", Version )))
 obj1 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report1 = obj1$report()
-
-obj1$gr_orig = obj1$gr
-obj1$fn_orig = obj1$fn
-obj1$fn <- function( vec ){
-  Fn = obj1$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj1$par),NULL)), file=paste0(DiagnosticDir,"Fn1.txt"), append = TRUE )
-  return( Fn )
-}
-obj1$gr = function( vec ){
-  Gr = obj1$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj1$par),NULL)), file=paste0(DiagnosticDir,"gr1.txt"), append = TRUE )
-  return( Gr )
-}
 
 # First run
 obj1$fn( obj1$par )
@@ -139,7 +126,7 @@ opt2[["final_gradient"]] = obj2$gr( opt2$par )
 opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
 
 Report2 = obj2$report()
-SD2 = sdreport( obj2, bias.correct=TRUE )
+SD2 = sdreport( obj2, bias.correct=FALSE )
 #--------------------------------------------------
 
 #----------------- Spatial Only ------------------

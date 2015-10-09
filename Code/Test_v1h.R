@@ -1,4 +1,5 @@
 # Testing_Version1h
+setwd( "C:/Users/James.Thorson/Desktop/Project_git/Trout_GRF/" )
 
 # clear environment
 rm(list = ls())
@@ -67,13 +68,13 @@ compile( paste0("Code/", Version,".cpp") )
 
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
-dyn.load( dynlib(paste0("Code/", Version )))
+dyn.load( dynlib(paste0("Code/", Version )))                       #  
 obj1 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
 Report1 = obj1$report()
 

@@ -5,7 +5,7 @@ rmatrix = function( nrow=1, ncol=1, mean=0, sd=1, ... ){
 
 
 # Make inputs
-makeInput <- function(family, c_i = NULL, c_ip = NULL, options = Options_vec, X, t_i, version) {
+makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version) {
   
   # convert 3-pass counts to abundance using Carle & Strub 1978 methods
   if(Version=="OU_GMRF_v1b") {
@@ -54,7 +54,7 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options = Options_vec, X,
   }
   
   ###### make dist min = 10 m
-  Data$dist_b = ifelse(Data$dist_b < 0.01, 0.01, Data$dist_b)
+  #Data$dist_b = ifelse(Data$dist_b < 0.01, 0.01, Data$dist_b)
   ######
   # Check for Options_vec combos that don't make sense
   

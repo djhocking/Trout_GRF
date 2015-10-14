@@ -2,6 +2,7 @@ packrat/lib*/
 .Rproj.user
 Related_Papers/
 .Rhistory
+*.Rhistory
 *.o
 *.dll
 *.so

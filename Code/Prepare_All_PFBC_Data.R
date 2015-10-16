@@ -33,17 +33,16 @@ obs_sites_network <- family %>%
   distinct() %>%
   dplyr::filter(!(grepl("N_", child_name)))
 
-# organize
+# assign stage class
 df_fish <- df_fish %>%
   dplyr::mutate(site = GIS_Key,
                 site_visit = paste0(site, "_", date),
                 site_year = paste0(site, "_", year),
                 pass = EffortNumber)
 
-# assign stage class
 df_bkt <- df_fish %>%
   dplyr::filter(species == "Brook Trout")
-  
+
 # make paths
 if(!exists(file.path(getwd(), dir_out, "/Figures/Stage/BKT"))) dir.create(file.path(getwd(), dir_out, "/Figures/Stage/BKT"), recursive = T)
 
@@ -54,28 +53,33 @@ if(!exists(file.path(getwd(), dir_out, "/Figures/Stage/BKT/yoy_assignment_bkt.cs
 
 # export histograms
 if(FALSE) {
-j <- 0
-for(i in 1:length(unique(df_bkt$site_visit))) {
-  bar <- df_bkt %>% dplyr::filter(site_visit == unique(df_bkt$site_visit)[i])
-  if(sum(bar$catch) >= 100) {
-    j <- j + 1
-  g <- ggplot(bar, aes(sizebin)) + geom_histogram(binwidth = 5, aes(weight = catch)) + ggtitle(paste0("BKT ", unique(df_bkt$site_visit)[i])) + xlim(50, 175) #+ geom_density(aes(y = 5*..count..)) 
-  ggsave(filename = paste0(dir_out, "/Figures/Stage/BKT/", unique(df_bkt$site_visit)[i], ".png"))
+  j <- 0
+  for(i in 1:length(unique(df_bkt$site_visit))) {
+    bar <- df_bkt %>% dplyr::filter(site_visit == unique(df_bkt$site_visit)[i])
+    if(sum(bar$catch) >= 100) {
+      j <- j + 1
+      g <- ggplot(bar, aes(sizebin)) + geom_histogram(binwidth = 5, aes(weight = catch)) + ggtitle(paste0("BKT ", unique(df_bkt$site_visit)[i])) + xlim(50, 175) #+ geom_density(aes(y = 5*..count..)) 
+      ggsave(filename = paste0(dir_out, "/Figures/Stage/BKT/", unique(df_bkt$site_visit)[i], ".png"))
+    }
+    print(j)
   }
-  print(j)
-}
 }
 
 # large size bins make it impossible to separate out YOY and 1+ very well. I will use 100 mm and larger as adults and below 100m as YOY
 
-# Covariates each site-visit
+# First try use three passes for adults only for years with block nets
+df_fish <- df_fish %>%
+  dplyr::group_by(site_visit, site, year, date, pass) %>%
+  dplyr::mutate(length_sample = mean(length, na.rm = T),
+                width = mean(width, na.rm = T),
+                effort = mean(SiteEffortHours, na.rm = T)) # effort the total over all 3 passes
+
 df_covs_visit <- df_fish %>%
   group_by(site_visit, site, year, date) %>%
-  dplyr::summarise(length_sample = mean(length, na.rm = T),
+  dplyr::summarise(length_sample = mean(length_sample, na.rm = T),
                    width = mean(width, na.rm = T),
-                   effort = mean(SiteEffortHours, na.rm = T))
+                   effort = mean(effort, na.rm = T))
 
-# First try use three passes for adults only for years with block nets
 df_bkt_adult <- df_fish %>%
   dplyr::mutate(stage = ifelse(sizebin >= 100, "adult", "yoy")) %>%
   dplyr::filter(species == "Brook Trout" & stage == "adult") %>%
@@ -83,9 +87,8 @@ df_bkt_adult <- df_fish %>%
   dplyr::summarise(count = sum(catch))
 
 df_bkt_yoy <- df_fish %>%
-  dplyr::mutate(stage = ifelse(sizebin < 100, "yoy", "adult")) %>%
-  dplyr::filter(species == "Brook Trout" & stage == "yoy") 
-df_bkt_yoy <- df_bkt_yoy %>%
+  dplyr::mutate(stage = ifelse(sizebin < 100, "adult", "yoy")) %>%
+  dplyr::filter(species == "Brook Trout" & stage == "yoy") %>%
   dplyr::group_by(site_visit, site, year, date, pass) %>%
   dplyr::summarise(count = sum(catch))
 
@@ -93,11 +96,13 @@ df_bkt_yoy <- df_bkt_yoy %>%
 foo <- df_bkt_adult %>%
   dplyr::ungroup() %>%
   dplyr::select(site_visit, site, date, year, pass, count)
-df_bkt_3_pass <- tidyr::complete(ungroup(foo), c(site_visit, site, date, year), pass, fill = list(count = 0))
 
 bar <- df_bkt_yoy %>%
   dplyr::ungroup() %>%
   dplyr::select(site_visit, site, date, year, pass, count)
+
+df_bkt_3_pass <- tidyr::complete(ungroup(foo), c(site_visit, site, date, year), pass, fill = list(count = 0))
+
 df_bkt_3_pass_yoy <- tidyr::complete(ungroup(bar), c(site_visit, site, date, year), pass, fill = list(count = 0))
 
 # test that expands to correct size
@@ -109,7 +114,7 @@ dim(df_bkt_3_pass)[1] == dim(df_bkt_3_pass_yoy)[1]
 
 # any sites visited multiple days in a year
 length(unique(df_bkt_adult$site_visit))
-length(unique(df_fish$site_year)) # yes
+length(unique(df_bkt$site_year)) # yes
 
 # interesting site 103-1 was sampled 2 days in a row in 1996 and have about half as many on the second day.
 
@@ -161,7 +166,7 @@ summary(df)
 head(df, 20)
 tail(df, 20)
 
-
+df[is.na(df$date), "date"] <- "2010-08-01"
 df_yoy[is.na(df_yoy$date), "date"] <- "2010-08-01"
 
 df_yoy <- df_yoy %>%
@@ -196,8 +201,8 @@ featureids <- unique(df$featureid)
 featureid_string <- paste(shQuote(featureids), collapse = ", ")
 
 # connect to database
-  drv <- dbDriver("PostgreSQL")
-  con <- dbConnect(drv, dbname='sheds', host='felek.cns.umass.edu', user=options('SHEDS_USERNAME'), password=options('SHEDS_PASSWORD'))
+drv <- dbDriver("PostgreSQL")
+con <- dbConnect(drv, dbname='sheds', host='felek.cns.umass.edu', user=options('SHEDS_USERNAME'), password=options('SHEDS_PASSWORD'))
 
 param_list <- c("forest", 
                 "herbaceous", 
@@ -234,6 +239,11 @@ qry_daymet <- paste0("SELECT featureid, date, tmax, tmin, prcp, dayl, srad, vp, 
 rs <- dbSendQuery(con, statement = qry_daymet)
 climateData <- fetch(rs, n=-1)
 
+dbClearResult(res = rs)
+dbDisconnect(con)
+dbUnloadDriver(drv)
+#dbListConnections(drv)
+
 climateData <- climateData %>%
   group_by(featureid, year) %>%
   arrange(featureid, year, date) %>%
@@ -243,47 +253,41 @@ climateData <- climateData %>%
                                        ifelse(month %in% c(7,8,9), "summer",
                                               ifelse(month %in% c(10,11,12), "fall", NA))))) %>%
   group_by(featureid, year, season)
-  
-  # fall precip (previous fall)
-  dplyr::mutate(precip)
-  
-  # winter precip (include december of previous year?)
-  
-  # summer precip
-  
-  # fall temp (previous year)
-  
-  # summer temp
-  
+
+# fall precip (previous fall)
+dplyr::mutate(precip)
+
+# winter precip (include december of previous year?)
+
+# summer precip
+
+# fall temp (previous year)
+
+# summer temp
+
 # summer temp (previous year)
-  
-  mutate(impoundArea = AreaSqKM * allonnet,
-         airTempLagged1 = lag(airTemp, n = 1, fill = NA),
-         temp5p = rollapply(data = airTempLagged1, 
-                            width = 5, 
-                            FUN = mean, 
-                            align = "right", 
-                            fill = NA, 
-                            na.rm = T),
-         temp7p = rollapply(data = airTempLagged1, 
-                            width = 7, 
-                            FUN = mean, 
-                            align = "right", 
-                            fill = NA, 
-                            na.rm = T),
-         prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
-         prcp7 = rollsum(x = prcp, 7, align = "right", fill = NA),
-         prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA))
-##########################
+
+mutate(impoundArea = AreaSqKM * allonnet,
+       airTempLagged1 = lag(airTemp, n = 1, fill = NA),
+       temp5p = rollapply(data = airTempLagged1, 
+                          width = 5, 
+                          FUN = mean, 
+                          align = "right", 
+                          fill = NA, 
+                          na.rm = T),
+       temp7p = rollapply(data = airTempLagged1, 
+                          width = 7, 
+                          FUN = mean, 
+                          align = "right", 
+                          fill = NA, 
+                          na.rm = T),
+       prcp2 = rollsum(x = prcp, 2, align = "right", fill = NA),
+       prcp7 = rollsum(x = prcp, 7, align = "right", fill = NA),
+       prcp30 = rollsum(x = prcp, 30, align = "right", fill = NA))
+
 
 df <- left_join(df, df_covariates_upstream)
 df_yoy <- left_join(df_yoy, df_covariates_upstream)
-
-
-dbClearResult(res = rs)
-dbDisconnect(con)
-dbUnloadDriver(drv)
-#dbListConnections(drv)
 
 gc()
 ################################################

@@ -11,6 +11,7 @@ library(TMB)
 library(dplyr)
 library(minqa)
 library(optimx)
+library(ggplot2)
 source("Functions/Input_Functions.R")
 
 #######################
@@ -21,7 +22,7 @@ load("Data/Prepared_Data_W_Susquehanna.RData")
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
 #X_ij <- X_ij[ , c("length_std", "effort_std")]
 covs <- X_ij
-X_ij <- as.matrix(dplyr::select(covs, length_std, effort_std, forest_std, surfcoarse_std))
+X_ij <- as.matrix(dplyr::select(covs, length_std, forest_std, surfcoarse_std))
 
 # df = dataframe with all data including sites with multiple passes (multiple instances of each child)
 # family = dataframe with unique child rows. Other columns are parents of each child, lat, lon, and other data associated with each child node.
@@ -54,15 +55,14 @@ compile( paste0("Code/", Version,".cpp") )
 
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj1 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report1 = obj1$report()
 
 # First run
 obj1$fn( obj1$par )
@@ -76,25 +76,24 @@ opt1[["AIC"]] = 2*opt1$objective + 2*length(opt1$par)
 Report1 = obj1$report()
 SD1 = sdreport( obj1, bias.correct=FALSE )
 # 
-# opt1 <- bobyqa(par = obj1$env$last.par.best[-c(obj1$env$random)], fn = obj1$fn)
-# Report1 = obj1$report()
-# opt1[["AIC"]] = 2*opt1$fval + 2*length(opt1$par)
-# SD1 <- sdreport(obj1, bias.correct=FALSE )
+opt1b <- bobyqa(par = obj1$env$last.par.best[-c(obj1$env$random)], fn = obj1$fn)
+Report1b = obj1$report()
+opt1b[["AIC"]] = 2*opt1b$fval + 2*length(opt1b$par)
+SD1b <- sdreport(obj1, bias.correct=FALSE )
 
 #--------------------------------------------------
 
 
 #----------------- Temporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj2 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj2$report()
 
 # First run
 obj2$fn( obj2$par )
@@ -108,11 +107,12 @@ opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
 Report2 = obj2$report()
 SD2 = sdreport( obj2, bias.correct=FALSE )
 
+
 # 
-# opt2 <- bobyqa(par = obj2$env$last.par.best, fn = obj2$fn)
-# Report2 = obj2$report( par = obj2$env$last.par.best)
-# opt2[["AIC"]] = 2*opt2$fval + 2*length(opt2$par)
-# SD2 <- sdreport(obj2, bias.correct=FALSE )
+opt2b <- bobyqa(par = obj2$env$last.par.best[-c(obj2$env$random)], fn = obj2$fn)
+Report2b = obj2$report()
+opt2b[["AIC"]] = 2*opt2b$fval + 2*length(opt2b$par)
+SD2b <- sdreport(obj2, bias.correct=FALSE )
 #--------------------------------------------------
 
 #----------------- Spatial Only ------------------
@@ -120,12 +120,11 @@ SD2 = sdreport( obj2, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj3 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj3$report()
 
 # First run
 obj3$fn( obj3$par )
@@ -139,19 +138,19 @@ opt3[["AIC"]] = 2*opt3$objective + 2*length(opt3$par)
 Report3 = obj3$report()
 SD3 = sdreport( obj3, bias.correct=FALSE )
 
-# opt3 <- bobyqa(par = obj3$env$last.par.best[-c(obj3$env$random)], fn = obj3$fn)
-# Report3 = obj3$report()
-# opt3[["AIC"]] = 2*opt3$fval + 2*length(opt3$par)
-# SD3 <- sdreport(obj3, bias.correct=FALSE )
+opt3b <- bobyqa(par = obj3$env$last.par.best[-c(obj3$env$random)], fn = obj3$fn)
+Report3b = obj3$report()
+opt3b[["AIC"]] = 2*opt3b$fval + 2*length(opt3b$par)
+SD3b <- sdreport(obj3, bias.correct=FALSE )
 #--------------------------------------------------
 
 
 #----------------- Spatiotemporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -164,25 +163,29 @@ obj4$fn( obj4$par )
 Which = which( obj4$gr( obj4$par )==0 )
 
 # Run model (nlminb is slow)
-opt4 = nlminb(start=obj4$env$last.par.best[-c(obj4$env$random)], objective=obj4$fn, gradient=obj4$gr, control=list(eval.max=4e4, iter.max=4e4, trace=4, rel.tol=4e-44) )
+opt4 = nlminb(start=obj4$env$last.par.best[-c(obj4$env$random)], objective=obj4$fn, gradient=obj4$gr, control=list(eval.max=1e4, iter.max=1e4, trace=4, rel.tol=1e-14) )
 opt4[["final_gradient"]] = obj4$gr( opt4$par )
 opt4[["AIC"]] = 2*opt4$objective + 2*length(opt4$par)
 Report4 = obj4$report()
 SD4 = sdreport( obj4, bias.correct=FALSE )
 
-# opt4 <- bobyqa(par = obj4$env$last.par.best[-c(obj4$env$random)], fn = obj4$fn)
-# Report4 = obj4$report()
-# opt4[["AIC"]] = 2*opt4$fval + 2*length(opt4$par)
-# SD4 <- sdreport(obj4, bias.correct=FALSE )
+opt4b <- bobyqa(par = obj4$env$last.par.best[-c(obj4$env$random)], fn = obj4$fn)
+Report4b = obj4$report()
+opt4b[["AIC"]] = 2*opt4b$fval + 2*length(opt4b$par)
+SD4b <- sdreport(obj4, bias.correct=FALSE )
 
+opt4_lbfgsb <- optim(obj4$env$last.par.best[-c(obj4$env$random)], fn = obj4$fn, gr = obj4$gr, method = "L-BFGS-B")
+Report4_lbfgsb = obj4$report()
+opt4_lbfgsb[["AIC"]] = 2*opt4_lbfgsb$fval + 2*length(opt4_lbfgsb$par)
+SD4_lbfgsb<- sdreport(obj4)
 #--------------------------------------------------
 
 #----------------- Temporal + Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -197,26 +200,26 @@ obj5$fn( obj5$par )
 Which = which( obj5$gr( obj5$par )==0 )
 
 # Run model
-opt5 = nlminb(start=obj5$env$last.par.best[-c(obj5$env$random)], objective=obj5$fn, gradient=obj5$gr, control=list(eval.max=5e4, iter.max=5e4, trace=5, rel.tol=5e-54) )
+opt5 = nlminb(start=obj5$env$last.par.best[-c(obj5$env$random)], objective=obj5$fn, gradient=obj5$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt5[["final_gradient"]] = obj5$gr( opt5$par )
 opt5[["AIC"]] = 2*opt5$objective + 2*length(opt5$par)
 Report5 = obj5$report()
 SD5 = sdreport( obj5, bias.correct=FALSE )
 
-# opt5 <- bobyqa(par = obj5$env$last.par.best[-c(obj5$env$random)], fn = obj5$fn)
-# Report5 = obj5$report()
-# opt5[["AIC"]] = 2*opt5$fval + 2*length(opt5$par)
-# SD5 <- sdreport(obj5, bias.correct=FALSE )
+opt5b <- bobyqa(par = obj5$env$last.par.best[-c(obj5$env$random)], fn = obj5$fn)
+Report5b = obj5$report()
+opt5b[["AIC"]] = 2*opt5b$fval + 2*length(opt5b$par)
+SD5b <- sdreport(obj5, bias.correct=FALSE )
 
 #--------------------------------------------------
 
 
 #----------------- Spatial Temporal Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -229,16 +232,16 @@ obj6$fn( obj6$par )
 Which = which( obj6$gr( obj6$par )==0 )
 
 # Run model
-opt6 = nlminb(start=obj6$env$last.par.best[-c(obj6$env$random)], objective=obj6$fn, gradient=obj6$gr, control=list(eval.max=6e4, iter.max=6e4, trace=6, rel.tol=6e-64) )
+opt6 = nlminb(start=obj6$env$last.par.best[-c(obj6$env$random)], objective=obj6$fn, gradient=obj6$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt6[["final_gradient"]] = obj6$gr( opt6$par )
 opt6[["AIC"]] = 2*opt6$objective + 2*length(opt6$par)
 Report6 = obj6$report()
 SD6 = sdreport( obj6, bias.correct=FALSE )
 
-# opt6 <- bobyqa(par = obj6$env$last.par.best[-c(obj6$env$random)], fn = obj6$fn)
-# Report6 = obj6$report()
-# opt6[["AIC"]] = 2*opt6$fval + 2*length(opt6$par)
-# SD6 <- sdreport(obj6, bias.correct=FALSE )
+opt6b <- bobyqa(par = obj6$env$last.par.best[-c(obj6$env$random)], fn = obj6$fn)
+Report6b = obj6b$report()
+opt6b[["AIC"]] = 2*opt6b$fval + 2*length(opt6b$par)
+SD6b <- sdreport(obj6, bias.correct=FALSE )
 
 #--------------------------------------------------
 
@@ -247,12 +250,11 @@ SD6 = sdreport( obj6, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF" = 1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
 obj7 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj7$report()
 
 # First run
 obj7$fn( obj7$par )
@@ -266,20 +268,20 @@ opt7[["AIC"]] = 2*opt7$objective + 2*length(opt7$par)
 Report7 = obj7$report()
 SD7 = sdreport( obj7, bias.correct=FALSE )
 
-# opt7 <- bobyqa(par = obj7$env$last.par.best[-c(obj7$env$random)], fn = obj7$fn)
-# Report7 = obj7$report(obj7$env$last.par.best)
-# opt7[["AIC"]] = 2*opt7$fval + 2*length(opt7$par)
-# SD7 <- sdreport(obj7, bias.correct=FALSE )
+opt7b <- bobyqa(par = obj7$env$last.par.best[-c(obj7$env$random)], fn = obj7$fn)
+Report7b = obj7$report(obj7$env$last.par.best)
+opt7b[["AIC"]] = 2*opt7b$fval + 2*length(opt7b$par)
+SD7b <- sdreport(obj7, bias.correct=FALSE )
 
 #--------------------------------------------------
 
 
 #----------------- Spatial + Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -294,28 +296,184 @@ obj8$fn( obj8$par )
 Which = which( obj8$gr( obj8$par )==0 )
 
 # Run model
-opt8 = nlminb(start=obj8$env$last.par.best[-c(obj8$env$random)], objective=obj8$fn, gradient=obj8$gr, control=list(eval.max=8e4, iter.max=8e4, trace=8, rel.tol=8e-84) )
+opt8 = nlminb(start=obj8$env$last.par.best[-c(obj8$env$random)], objective=obj8$fn, gradient=obj8$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt8[["final_gradient"]] = obj8$gr( opt8$par )
 opt8[["AIC"]] = 2*opt8$objective + 2*length(opt8$par)
 Report8 = obj8$report()
 SD8 = sdreport( obj8, bias.correct=FALSE )
 
-# opt8 <- bobyqa(par = obj8$env$last.par.best[-c(obj8$env$random)], fn = obj8$fn)
-# Report8 = obj8$report(obj8$env$last.par.best)
-# opt8[["AIC"]] = 2*opt8$fval + 2*length(opt8$par)
-# SD8 <- sdreport(obj8, bias.correct=FALSE )
+opt8b <- bobyqa(par = obj8$env$last.par.best[-c(obj8$env$random)], fn = obj8$fn)
+Report8b = objb$report(obj8$env$last.par.best)
+opt8b[["AIC"]] = 2*opt8b$fval + 2*length(opt8b$par)
+SD8b <- sdreport(obj8, bias.correct=FALSE )
 
 #--------------------------------------------------
 
 # Convergence 
-c(opt1$message, opt2$message, opt3$message, opt4$message, opt5$message, opt6$message, opt7$message)
+df_convergence <- data.frame(model = 1:8, 
+                             message = c(opt1$message, opt2$message, opt3$message, opt4$message, opt5$message, opt6$message, opt7$message, opt8$message), 
+                             final_gr = c(max(opt1$final_gradient), max(opt2$final_gradient), max(opt3$final_gradient), max(opt4$final_gradient), max(opt5$final_gradient), max(opt6$final_gradient), max(opt7$final_gradient), max(opt8$final_gradient))) %>%
+  dplyr::mutate(problem_gr = ifelse(final_gr > 0.001, TRUE, FALSE))
+df_convergence
 
-c(opt1$ierr, opt2$ierr, opt3$ierr, opt4$ierr, opt5$ierr, opt6$ierr, opt7$ierr, opt8$ierr)
+c(opt1b$ierr, opt2b$ierr, opt3b$ierr, opt4b$ierr, opt5b$ierr, opt6b$ierr, opt7b$ierr, opt8b$ierr)
+
+
+#------------------------------------------------
+
+SD_table <- data.frame(Parameter = names(SD3$value), 
+                       SD1 = SD1$sd, 
+                       SD2 = SD2$sd, 
+                       SD3 = SD3$sd, 
+                       #SD4 = SD4r_lbfgsb$sd, 
+                       #SD5 = SD5r_lbfgsb$sd, 
+                       SD6 = SD6$sd, # fails ports and bobyqa
+                       SD7 = SD7$sd,
+                       SD8 = SD8$sd, # fails ports and bobyqa
+                       stringsAsFactors = FALSE)
+for(i in 1:ncol(as.matrix(X_ij))) {
+  SD_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
+}
+format(SD_table, digits = 2, scientific = 5)
+
+#-------------------- Redo reduced Spatiotemporal -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj4r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj4r$fn( obj4r$par )
+# Check for parameters that don't do anything
+Which = which( obj4r$gr( obj4r$par )==0 )
+
+opt4r_lbfgsb <- optim(obj4r$env$last.par.best[-c(obj4r$env$random)], fn = obj4r$fn, gr = obj4r$gr, method = "L-BFGS-B")
+Report4r_lbfgsb = obj4r$report()
+opt4r_lbfgsb[["AIC"]] = 2*opt4r_lbfgsb$fval + 2*length(opt4r_lbfgsb$par)
+SD4r_lbfgsb<- sdreport(obj4r)
+
+opt4r_boybqa <- bobyqa(par = obj4r$env$last.par.best[-c(obj4r$env$random)], fn = obj4r$fn)
+Report4r_bobyqa = obj4r$report()
+opt4r_bobyqa[["AIC"]] = 2*opt4r_bobyqa$fval + 2*length(opt4r_bobyqa$par)
+SD4r_bobyqa <- sdreport(obj4r, bias.correct=FALSE )
+
+#-------------------- Redo reduced T + ST -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj5r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj5r$fn( obj5r$par )
+# Check for parameters that don't do anything
+Which = which( obj5r$gr( obj5r$par )==0 )
+
+opt5r_lbfgsb <- optim(obj5r$env$last.par.best[-c(obj5r$env$random)], fn = obj5r$fn, gr = obj5r$gr, method = "L-BFGS-B", control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14))
+Report5r_lbfgsb = obj5r$report()
+opt5r_lbfgsb[["AIC"]] = 2*opt5r_lbfgsb$fval + 2*length(opt5r_lbfgsb$par)
+SD5r_lbfgsb<- sdreport(obj5r)
+
+#-------------------- Redo reduced S + T + ST -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj6r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj6r$fn( obj6r$par )
+# Check for parameters that don't do anything
+Which = which( obj6r$gr( obj6r$par )==0 )
+
+opt6r_lbfgsb <- optim(obj6r$env$last.par.best[-c(obj6r$env$random)], fn = obj6r$fn, gr = obj6r$gr, method = "L-BFGS-B", control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14))
+Report6r_lbfgsb = obj6r$report()
+opt6r_lbfgsb[["AIC"]] = 2*opt6r_lbfgsb$fval + 2*length(opt6r_lbfgsb$par)
+SD6r_lbfgsb<- sdreport(obj6r)
+
+#----------------------
+
+#-------------------- Redo reduced S + ST -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj8r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj8r$fn( obj8r$par )
+# Check for parameters that don't do anything
+Which = which( obj8r$gr( obj8r$par )==0 )
+
+opt8r_lbfgsb <- optim(obj8r$env$last.par.best[-c(obj8r$env$random)], fn = obj8r$fn, gr = obj8r$gr, method = "L-BFGS-B", control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14))
+Report8r_lbfgsb = obj8r$report()
+opt8r_lbfgsb[["AIC"]] = 2*opt8r_lbfgsb$fval + 2*length(opt8r_lbfgsb$par)
+SD8r_lbfgsb<- sdreport(obj8r)
+
+#----------------------
+
+SD4r_lbfgsb$sd # fail
+SD5r_lbfgsb$sd # fail
+SD6r_lbfgsb$sd # fail
+SD8r_lbfgsb$sd # fail
 
 #--------------- AIC -------------
-Model <- c("Obs", "Temporal", "Spatial", "Spatiotemporal", "Temporal + ST", "S+T+ST", "Spatial + Temporal", "Spatial + ST") #
-M_num <- 1:length(Model)
-AIC <- c(opt1$AIC, opt2$AIC, opt3$AIC, opt4$AIC, opt5$AIC, opt6$AIC, opt7$AIC, opt8$AIC) # 
+Model <- c("Obs", 
+           "Temporal", 
+           "Spatial",#, 
+          # "Spatiotemporal", 
+          # "Temporal + ST", 
+          # "S+T+ST", 
+           "Spatial + Temporal" 
+           #"Spatial + ST"
+) #
+M_num <- c(1,
+           2,
+           3, #,
+           #4,
+           #5,
+           #6,
+           7 #,
+           #8
+)
+AIC <- c(opt1$AIC, 
+         opt2$AIC, 
+         opt3$AIC, #, 
+         #opt4$AIC, 
+         #opt5$AIC, 
+         #opt6$AIC, 
+         opt7$AIC #, 
+         #opt8$AIC
+         ) # 
 aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
 names(aic_table) <- c("M_num", "Model", "AIC")
 aic_table <- dplyr::arrange(aic_table, AIC)
@@ -324,34 +482,177 @@ for(i in 2:nrow(aic_table)) {
   aic_table$delta_AIC[i] <- aic_table$AIC[i] - aic_table$AIC[1]
 }
 aic_table
-#------------------------------------------------
+
+# Convergence 
+df_convergence <- data.frame(model = 1:8, 
+                             message = c(opt1$message, opt2$message, opt3$message, opt4$message, opt5$message, opt6$message, opt7$message, opt8$message), 
+                             final_gr = c(max(opt1$final_gradient), max(opt2$final_gradient), max(opt3$final_gradient), max(opt4$final_gradient), max(opt5$final_gradient), max(opt6$final_gradient), max(opt7$final_gradient), max(opt8$final_gradient))) %>%
+  dplyr::mutate(problem_gr = ifelse(final_gr > 0.001, TRUE, FALSE))
+df_convergence
+
+######### Conclusions #########
+
+# models with spatiotemporal component definitely don't work. data is a bit sparse. few sites have good time series. Good spatial data, okay temporal but poor timeseries at many sites
+# Convergence sketchy for most remaining models so redid all with bobyqa to check
+
+c(opt1b$ierr, opt2b$ierr, opt3b$ierr, opt4b$ierr, opt5b$ierr, opt6b$ierr, opt7b$ierr, opt8b$ierr) # all converge (but SD doesn't work for models with spatiotemporal)
+
+Model <- c("Obs", 
+           "Temporal", 
+           "Spatial",#, 
+           # "Spatiotemporal", 
+           # "Temporal + ST", 
+           # "S+T+ST", 
+           "Spatial + Temporal" 
+           #"Spatial + ST"
+) #
+M_num <- c(1,
+           2,
+           3, #,
+           #4,
+           #5,
+           #6,
+           7 #,
+           #8
+)
+AIC <- c(opt1b$AIC, 
+         opt2b$AIC, 
+         opt3b$AIC, #, 
+         #opt4b$AIC, 
+         #opt5b$AIC, 
+         #opt6b$AIC, 
+         opt7b$AIC #, 
+         #opt8b$AIC
+) # 
+aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
+names(aic_table) <- c("M_num", "Model", "AIC")
+aic_table <- dplyr::arrange(aic_table, AIC)
+aic_table$delta_AIC <- 0
+for(i in 2:nrow(aic_table)) {
+  aic_table$delta_AIC[i] <- aic_table$AIC[i] - aic_table$AIC[1]
+}
+aic_table
 
 # compare coefficient estimates
-LCI <- SD7$value - (1.96 * SD7$sd) # lower CI rough estimate for best model
-UCI <- SD7$value + (1.96 * SD7$sd)
-  
-coef_table <- data.frame(Parameter = names(SD7$value), Estimate = SD7$value, SD = SD7$sd, LCI, UCI, stringsAsFactors = FALSE)
+LCI <- SD7b$value - (1.96 * SD7b$sd) # lower CI rough estimate for best model
+UCI <- SD7b$value + (1.96 * SD7b$sd)
+
+coef_table <- data.frame(Parameter = names(SD7b$value), Estimate = SD7b$value, SD = SD7b$sd, LCI, UCI, stringsAsFactors = FALSE)
 for(i in 1:ncol(as.matrix(X_ij))) {
   coef_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
 }
 format(coef_table, digits = 2, scientific = 5)
 
-SD_table <- data.frame(Parameter = names(SD3$value), 
-                       SD1 = SD1$sd, 
-                       SD2 = SD2$sd, 
-                       SD3 = SD3$sd, 
-                       SD4 = SD4$sd, 
-                       SD5 = SD5$sd, 
-                       SD6 = SD6$sd, 
-                       SD7 = SD7$sd,
-                       stringsAsFactors = FALSE)
-for(i in 1:ncol(as.matrix(X_ij))) {
-  SD_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
+theta_low <- exp(coef_table[which(coef_table$Parameter == "log_theta"), ]$LCI)
+theta_high <- exp(coef_table[which(coef_table$Parameter == "log_theta"), ]$UCI)
+
+dist <- seq(from = 0, to = 10, length.out = 101)
+cor_N <- exp(-1*SD7b$value["theta"]*dist)
+cor_low <- exp(-1*theta_low*dist)
+cor_high <- exp(-1*theta_high*dist)
+df_theta <- data.frame(dist, cor_N)
+ggplot(df_theta, aes(dist, cor_N)) + geom_line() + theme_bw() + xlab("Distance (km)") + ylab("Mean expected correlation") + geom_line(aes(dist, cor_high), lty = 2) + geom_line(aes(dist, cor_low), lty = 2) # + geom_point()  
+
+# Plot predictions
+df_observed <- df %>%
+  dplyr::filter(!is.na(pass_1))
+
+lambda_dt <- data.frame(Report7b$lambda_dt)
+names(lambda_dt) <- min(t_i):max(t_i)
+lambda_dt$child_b <- Inputs$Data$child_b
+lambda_dt <- left_join(dplyr::select(df_observed, child_b, child_name, parent_b, NodeLat, NodeLon, featureid), lambda_dt, by = "child_b")
+#lambda_dt$child_b <- as.character(lambda_dt$child_b)
+
+foo <- lambda_dt %>%
+  dplyr::select(-child_name, -parent_b, -NodeLat, -NodeLon, -featureid) %>%
+  tidyr::gather(key = "year", value = lambda, -child_b, convert = T)
+foo$lambda <- as.numeric(foo$lambda)
+
+child_list <- unique(df_observed$child_b)
+bar <- dplyr::filter(foo, child_b %in% child_list[1:20])
+
+ggplot(bar, aes(year, lambda, group = child_b, colour = child_b)) + geom_line() + geom_point()
+
+
+# plot observed vs. predicted counts
+chat_ip <- Report7b$chat_ip
+bar <- data.frame(chat_ip, row = 1:nrow(chat_ip))
+bar <- gather(bar, key = row, value = chat, convert = TRUE)
+sna <- data.frame(c_ip)
+fu <- sna %>% gather(pass, count)
+df_counts <- data.frame(fu, bar)
+df_counts <- dplyr::filter(df_counts, complete.cases(df_counts))
+ggplot(df_counts, aes(count, chat)) + geom_point() + geom_abline(aes(0,1), colour = "blue")
+
+rmse <- function(error, na.rm = T) {
+  sqrt(mean(error^2, na.rm = T))
 }
-format(SD_table, digits = 2, scientific = 5)
+rmse(df_counts$)
+
+
+
+N_dt <- data.frame(Report3b$N_dt)
+names(N_dt) <- min(t_i):max(t_i)
+N_dt$child_b <- Inputs$Data$child_b
+#lambda_dt$child_b <- as.character(lambda_dt$child_b)
+
+N_ip <- data.frame(N = Report3b$N_ip[ , 1])
+N_ip$child_b <- df$child_b
+N_ip$year <- df$year
+N_ip <- N_ip %>%
+  dplyr::arrange(child_b, year)
+tail(N_ip, 50)
+df_observed <- df %>%
+  dplyr::filter(!is.na(pass_1))
+N_ip <- left_join(dplyr::select(df_observed, child_name, child_b, parent_b, NodeLat, NodeLon, featureid, pass_1), N_ip, by = "child_b")
+
+child_list <- unique(df_observed$child_b)
+bar <- dplyr::filter(N_ip, child_b %in% child_list[1:20])
+
+ggplot(bar, aes(year, N, group = child_b, colour = child_b)) + geom_line() + geom_point() #+ geom_line(aes(year, pass_1))
+
+# Spatial model
+# plot predictions
+lambda_dt <- data.frame(Report3b$lambda_dt)
+names(lambda_dt) <- min(t_i):max(t_i)
+lambda_dt$child_b <- Inputs$Data$child_b
+lambda_dt <- left_join(lambda_dt, dplyr::select(df, child_name, parent_b, NodeLat, NodeLon, featureid), by = "child_b")
+lambda_dt <- left_join(dplyr::select(df_observed, child_name, child_b, parent_b, NodeLat, NodeLon, featureid, pass_1), lambda_dt, by = "child_b")
+
+foo <- lambda_dt %>%
+  dplyr::select(-child_name, -parent_b, -NodeLat, -NodeLon, -featureid, -pass_1) %>%
+  group_by(child_b) %>%
+  tidyr::gather(key = "year", value = lambda, -child_b, convert = T)
+foo <- left_join(foo, N_ip[ , c("child_b", "year", "N")]) 
+
+foo <- foo %>%
+  dplyr::rename(lambda_hat = lambda) %>%
+  dplyr::mutate(lambda_stoc = lambda_hat*exp(rnorm(nrow(foo), 0, Report3b$sigmaIID)),
+                N_hat = ifelse(is.na(N), lambda_stoc, N))
+
+# plot time series for subset of sites
+child_list <- unique(foo$child_b)
+bar <- dplyr::filter(foo, child_b %in% child_list[1:10]) %>%
+  dplyr::mutate(child_b = as.character(child_b))
+
+ggplot(bar, aes(year, N_hat, group = child_b, colour = child_b)) + geom_line() + geom_point() + theme_bw() #+ geom_line(aes(year, pass_1))
+ggplot(bar, aes(year, N, group = child_b, colour = child_b)) + geom_line() + geom_point() + theme_bw() 
+
 
 # save
 save.image(file = "Output/W_Susquehanna.RData")
+
+
+
+
+
+
+
+
+
+
+
+
 
 ############### OLD STUFF Below ##############
 

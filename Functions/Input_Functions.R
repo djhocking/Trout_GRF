@@ -5,7 +5,7 @@ rmatrix = function( nrow=1, ncol=1, mean=0, sd=1, ... ){
 
 
 # Make inputs
-makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version) {
+makeInput <- function(family, c_i = NULL, c_ip = NULL, Options_vec, X, t_i, version) {
   
   # convert 3-pass counts to abundance using Carle & Strub 1978 methods
   if(Version=="OU_GMRF_v1b") {
@@ -36,7 +36,7 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version)
   if(Version%in%c("OU_GMRF_v1e")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
   if(Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f", "OU_GMRF_v1h")) {
     YearSet = min(t_i):max(t_i)
-    Data = list( "Options_vec"=options, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b']) # d_i and child_b redundant?
+    Data = list( "Options_vec"=Options_vec, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=family[,'child_b']-1, "X_ij"=X, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b']) # d_i and child_b redundant?
   }
   
   ############### Sanity checks on inputs ##############

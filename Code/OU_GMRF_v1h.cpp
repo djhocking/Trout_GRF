@@ -141,17 +141,17 @@ template<class Type>
     }
     
     // Detection probability
-    matrix<Type> detectprob_ip(n_i,3);
-    for (int i=0; i<n_i; i++){
-      detectprob_ip(i,0) = 1.0 - exp(-1 * (detectrate * extradetectrate_i(i)));
-      detectprob_ip(i,1) = (1-detectprob_ip(i,0)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
-      detectprob_ip(i,2) = (1-detectprob_ip(i,0)) * (1-detectprob_ip(i,1)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
-    }  
-    
-    // Random variation in detection probability
-    for (int i=0; i<n_i; i++){
-      if(Options_vec(3)==1) jnll_comp(3) -= dnorm( log_extradetectrate_i(i), Type(0.0), extradetectionSD, true );
-    }
+  matrix<Type> detectprob_ip(n_i,3);
+  for (int i=0; i<n_i; i++){
+    detectprob_ip(i,0) = 1.0 - exp(-1 * (detectrate * extradetectrate_i(i)));
+    detectprob_ip(i,1) = (1-detectprob_ip(i,0)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
+    detectprob_ip(i,2) = (1-detectprob_ip(i,0)-detectprob_ip(i,1)) * (1.0 - exp(-1 * (detectrate * extradetectrate_i(i))));
+  }  
+  
+  // Random variation in detection probability
+  for (int i=0; i<n_i; i++){
+    if(Options_vec(3)==1) jnll_comp(3) -= dnorm( log_extradetectrate_i(i), Type(0.0), extradetectionSD, true );
+  }
     
     // Covariates
     vector<Type> eta_i(n_i);
@@ -166,11 +166,17 @@ template<class Type>
         
     // Likelihood contribution from observations
     matrix<Type> lambda_ip(n_i,3);
+    matrix<Type> N_ip(n_i,3);
+    matrix<Type> chat_ip(n_i,3);
     for (int i=0; i<n_i; i++){
       for (int p=0; p<3; p++){
         lambda_ip(i,p) = exp( log_mean + Epsiloninput_d(d_i(i)) + eta_i(i) + Delta_t(t_i(i)) + Nu_dt(d_i(i),t_i(i)) );
         if( !isNA(c_ip(i,p)) ){                
-          if(Options_vec(4)==1) jnll_comp(4) -= dpois(c_ip(i,p), lambda_ip(i,p)*detectprob_ip(i,p)*exp(lognormal_overdispersed_i(i)), true);
+          if(Options_vec(4)==1) {
+            N_ip(i,p) = lambda_ip(i,p)*exp(lognormal_overdispersed_i(i));
+            jnll_comp(4) -= dpois(c_ip(i,p), N_ip(i,p)*detectprob_ip(i,p), true);
+            chat_ip(i,p) = N_ip(i,p)*detectprob_ip(i,p);
+          }
         }
       }}
     
@@ -182,6 +188,7 @@ template<class Type>
     REPORT( rho_st );
     REPORT( rho_t_b );
     REPORT( SD_b );
+    REPORT( SDinput );
     REPORT( SDinput_b );
     REPORT( theta );
     REPORT( theta_st );
@@ -201,15 +208,21 @@ template<class Type>
     REPORT( sigmaIID );
     REPORT( lognormal_overdispersed_i );
     REPORT( SDinput_t_b );
+    REPORT( SDinput_st );
     REPORT( temp_b );
     REPORT( Nu_dt );
     REPORT( lambda_dt );
+    REPORT( N_ip );
+    REPORT( chat_ip );
+    REPORT( extradetectionSD );
     
     // ADREPORT( lambda_ip);
     ADREPORT( gamma_j );
     ADREPORT( theta );
     ADREPORT( theta_st );
     ADREPORT( rhot );
+    ADREPORT( log_theta );
+    ADREPORT( SDinput );
     
     return jnll;
   }

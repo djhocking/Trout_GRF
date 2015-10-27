@@ -375,5 +375,7 @@ for(i in 2:nrow(aic_table)) {
 }
 aic_table
 
+SD7b$par.fixed
+
 save.image("Output/W_Susquehanna_YOY.RData")
 save(Report7b, opt7b, SD7b, SD_table, aic_table, file = "Output/W_Susquehanna_YOY_Summary.RData")

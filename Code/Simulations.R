@@ -45,9 +45,10 @@ compile( paste0("Code/", Version,".cpp") )
 # vary theta, SD, sigmaIID, log_mean, and sample_pct for spatial/non-spatial
 spatial_cor <- c("high", "med", "low")
 theta_vec <- c(0.5, 1, 5)
-SD_vec <- c(0.1, 0.5, 1)
+SD_vec <- c(0.1, 0.25, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
 sigmaIID_vec <- c(0, 1, 2)
-mean_N <- c(5, 10, 50)
+mean_N <- c(5, 10, 100)
+spatial_vec <- c(TRUE, FALSE)
 
 sample_pct_vec <- c(1, 0.5, 0.25, 0.1, 0.05) # only do this for a couple of above scenarios
 
@@ -98,6 +99,9 @@ for(i in 1:length(sample_pct_vec)) {
   ggsave(filename = paste0("Output/Figures/pct", sample_pct_vec[i], ".pdf"), plot = g)
 }
 
+df_err <- data.frame(Percent = sample_pct_vec, RMSE = df_rmse)
+format(df_err, digits = 3)
+
 coefs <- data.frame(parameter = names(mod$SD$value), true = c(gamma_j, theta_vec[2], 1, 0, NA, SD_vec[1]), matrix(unlist(df_coef), length(df_sd[[1]]), length(sample_pct_vec)))
 names(coefs) <- c("parameter",
                   "true",
@@ -107,7 +111,7 @@ names(coefs) <- c("parameter",
                   paste0("pct", sample_pct_vec[4]),
                   paste0("pct", sample_pct_vec[5])
 )
-coefs
+format(coefs, digits = 3)
 
 data.frame(parameter = names(mod$SD$value), matrix(unlist(df_sd), length(df_sd[[1]]), length(sample_pct_vec)))
 
@@ -146,6 +150,7 @@ df_rmse <- NA
 counter <- 0
 mod2 <- list()
 set.seed(19876544)
+# adjust so don't have a new random sample when comparing spatial and non-spatial models
 for(i in 1:length(theta_vec)) { 
   for(j in 1:length(SD_vec)) { # theta must be larger than SD?
     for(k in 1:length(mean_N)) {
@@ -257,6 +262,8 @@ for(i in 1:length(theta_vec)) {
     }
   }
 }
+
+table_full$model <- 1:nrow(table_full)
 
 # format full table
 table_full <- table_full %>%

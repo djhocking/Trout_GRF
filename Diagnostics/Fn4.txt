@@ -1,0 +1,11 @@
+Called from: .rs.breakOnError(TRUE)
+iter: 1  value: -2638032 mgc: 224217.1 ustep: 1 
+iter: 2  value: -2638032 mgc: 1.142172 ustep: 1 
+iter: 3  value: -2638032 mgc: 0.005044108 ustep: 1 
+iter: 4  value: -2638032 mgc: 1.000147e-07 ustep: 1 
+mgc: 6.893403e-08 
+outer mgc:  51.85799 
+Called from: (function () 
+{
+    .rs.breakOnError(TRUE)
+})()

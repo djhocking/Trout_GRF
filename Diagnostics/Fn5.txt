@@ -1,0 +1,626 @@
+           Fn log_theta_st log_SD_st rho_st log_sigmaIID log_mean
+[1,] 4342.223            0         0      0            0        0
+     log_extradetectionSD rhot log_sigmat gamma_j gamma_j gamma_j gamma_j
+[1,]                    0    0          0       0       0       0       0
+     log_detectrate
+[1,]      -1.609438
+           Fn log_theta_st log_SD_st rho_st log_sigmaIID log_mean
+[1,] 4342.223            0         0      0            0        0
+     log_extradetectionSD rhot log_sigmat gamma_j gamma_j gamma_j gamma_j
+[1,]                    0    0          0       0       0       0       0
+     log_detectrate
+[1,]      -1.609438
+           Fn log_theta_st   log_SD_st      rho_st log_sigmaIID  log_mean
+[1,] 3895.822   0.01059974 -0.02196398 0.005437668  -0.04494595 0.0886376
+     log_extradetectionSD     rhot log_sigmat    gamma_j      gamma_j    gamma_j
+[1,]            0.7841074 0.260453  0.2682042 0.04131822 -0.001880482 0.05292835
+        gamma_j log_detectrate
+[1,] 0.04152943      -1.131245
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3710.209   0.09177886 -0.1883191 0.01616196   -0.3716436 0.2447751
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.3778572 0.8052999  0.7309635 0.1683319 0.02826331 0.1563548
+       gamma_j log_detectrate
+[1,] 0.1194854     -0.7781846
+      Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN    0.2139811 -0.4398367 0.03001741   -0.7618547 0.2659213
+     log_extradetectionSD     rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.1225862 1.201202  0.6941525 0.2837545 0.09577508 0.1534182
+         gamma_j log_detectrate
+[1,] -0.03075874    -0.06742236
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3690.972    0.1039991 -0.2134709 0.01754751   -0.4106647 0.2468897
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.3523301 0.8448901  0.7272824 0.1798742 0.03501449 0.1560611
+      gamma_j log_detectrate
+[1,] 0.104461     -0.7071084
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3650.415    0.1182652 -0.2435788 0.02068086   -0.4574415 0.2504554
+     log_extradetectionSD      rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]            0.3039566 0.9311205  0.7193433 0.2032561 0.048649 0.1552781
+        gamma_j log_detectrate
+[1,] 0.08732791     -0.5464413
+      Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1610634 -0.3339026 0.03008092   -0.5977718 0.2611525
+     log_extradetectionSD     rhot log_sigmat   gamma_j    gamma_j  gamma_j
+[1,]            0.1588361 1.189812  0.6955257 0.2734016 0.08955253 0.152929
+        gamma_j log_detectrate
+[1,] 0.03592878    -0.06443991
+      Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1401407 -0.2903481 0.02769119   -0.5294045 0.2542353
+     log_extradetectionSD     rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.1606816 1.149572  0.7058966 0.2459088 0.07610366 0.1548464
+        gamma_j log_detectrate
+[1,] 0.06613751     -0.2624693
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3641.748    0.1204527 -0.2482557 0.02138189   -0.4646378 0.2508334
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.2896291 0.9529657  0.7179986 0.2075213 0.05139447 0.1552349
+        gamma_j log_detectrate
+[1,] 0.08520887     -0.5180441
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3634.332    0.1245139 -0.2569695 0.0227989   -0.4780442 0.2514229
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]               0.2611 0.9999773  0.7159318 0.2160893 0.05700907 0.1552065
+        gamma_j log_detectrate
+[1,] 0.08137222      -0.463477
+          Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3619.25    0.1306105 -0.2696612 0.02350119    -0.497698 0.2534581
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]             0.249594 0.9530631  0.7096141 0.2222219 0.05984802 0.1545405
+        gamma_j log_detectrate
+[1,] 0.07357941     -0.4057643
+           Fn log_theta_st log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3612.671    0.1343541 -0.277456 0.02394098   -0.5097679 0.2547059
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.2422991 0.9534436  0.7057377 0.2259945 0.06162045 0.1541343
+        gamma_j log_detectrate
+[1,] 0.06880985     -0.3701396
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3594.007    0.1456622 -0.3009916 0.02523744   -0.5462105 0.2584824
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.2210743 0.9534238  0.6940033 0.2372527 0.06686669 0.1528916
+        gamma_j log_detectrate
+[1,] 0.05435313     -0.2632673
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3538.258    0.1908942 -0.3951324 0.0304232   -0.6919785 0.2735882
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]            0.1361763 0.9533446  0.6470666 0.2822846 0.08785131 0.1479206
+          gamma_j log_detectrate
+[1,] -0.003472856       0.164215
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3542.742    0.2611725 -0.5414021 0.03848048   -0.9184629 0.2970586
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j  gamma_j
+[1,]           0.00426758 0.9532216  0.5741396 0.3522522 0.1204558 0.140197
+         gamma_j log_detectrate
+[1,] -0.09331898      0.8284084
+      Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1759992 -0.3694808 0.04954177   -0.6623336 0.2788178
+     log_extradetectionSD    rhot log_sigmat   gamma_j  gamma_j   gamma_j   gamma_j
+[1,]            -0.389057 1.24461  0.6417755 0.3177067 0.132638 0.1731686 0.1113585
+     log_detectrate
+[1,]      0.3363505
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3523.896    0.1894047 -0.3925673 0.03233506    -0.689014 0.2741111
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]           0.08365298 0.9824712  0.6465375 0.2858268 0.09232998 0.1504454
+         gamma_j log_detectrate
+[1,] 0.008010275      0.1814286
+      Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1850917 -0.3849463 0.03668522   -0.6799741 0.2749042
+     log_extradetectionSD     rhot log_sigmat   gamma_j   gamma_j  gamma_j
+[1,]          -0.02961557 1.014433  0.6480542 0.2964527 0.1034783 0.156092
+        gamma_j log_detectrate
+[1,] 0.02902444      0.2219473
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3521.251    0.1889734 -0.3918052 0.03277007     -0.68811 0.2741904
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]           0.07232612 0.9856673  0.6466892 0.2868894 0.09344481 0.1510101
+        gamma_j log_detectrate
+[1,] 0.01011169      0.1854804
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3516.081    0.1880308 -0.3901319 0.03366555   -0.6861152 0.2743452
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]           0.04915402 0.9886921  0.6470968 0.2892052 0.09578731 0.1521757
+        gamma_j log_detectrate
+[1,] 0.01426393      0.1939158
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3503.541    0.1852031 -0.3851121 0.03635196   -0.6801307 0.2748095
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]          -0.02036229 0.9977665  0.6483195 0.2961527 0.1028148 0.1556728
+        gamma_j log_detectrate
+[1,] 0.02672066      0.2192217
+      Fn log_theta_st log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN     0.176754 -0.370113 0.04437897   -0.6622491 0.2761967
+     log_extradetectionSD     rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]           -0.2280768 1.024881  0.6519729 0.3169118 0.123813 0.1661219
+        gamma_j log_detectrate
+[1,] 0.06394131      0.2948357
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3485.982     0.192076 -0.3992333 0.04160962   -0.6998348 0.2819534
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]          -0.07661168 0.9858722  0.6455326 0.2894926 0.1077769 0.1651744
+        gamma_j log_detectrate
+[1,] 0.08478227      0.2733377
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3456.193     0.197611 -0.4111811 0.05352405   -0.7221309 0.3077579
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]           -0.2203979 0.9757086  0.6678494 0.2752207 0.1011408 0.1915654
+       gamma_j log_detectrate
+[1,] 0.1430338      0.3952042
+         Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3437.4    0.2111967 -0.4391712 0.07098421   -0.7690945 0.3495826
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]           -0.3947401 0.9756894   0.702714 0.2443796 0.08660865 0.2325792
+       gamma_j log_detectrate
+[1,] 0.2442501      0.5678089
+           Fn log_theta_st log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3363.079    0.1603702  -0.34295 0.08156122   -0.6530508 0.3518372
+     log_extradetectionSD      rhot log_sigmat   gamma_j    gamma_j   gamma_j
+[1,]           -0.7313107 0.9750911  0.7096588 0.2820442 0.09856552 0.1936736
+         gamma_j log_detectrate
+[1,] -0.06018704      0.5299587
+      Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1095977 -0.2671225 0.2020859    -0.710675 0.5913757
+     log_extradetectionSD    rhot log_sigmat   gamma_j   gamma_j    gamma_j
+[1,]           -0.9852307 1.01111  0.7869906 0.2823276 0.2546536 0.06101987
+        gamma_j log_detectrate
+[1,] 0.03365534      0.7027886
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3355.501    0.1578185 -0.3382172 0.08394424    -0.647758 0.3521886
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]           -0.7711396 0.9862436  0.7102184 0.2866165 0.1046372 0.1976648
+         gamma_j log_detectrate
+[1,] -0.03831903      0.5357693
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3344.124    0.1522935 -0.3280393 0.08884944   -0.6364644 0.3528107
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j  gamma_j
+[1,]            -0.851497 0.9564856  0.7127595 0.296901 0.1171665 0.205089
+          gamma_j log_detectrate
+[1,] -0.001210266      0.5461311
+      Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1490333 -0.3223936 0.09332233   -0.6309123 0.3537819
+     log_extradetectionSD     rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]           -0.9281511 1.010577  0.7115806 0.3006511 0.1235371 0.2092919
+        gamma_j log_detectrate
+[1,] 0.01926338      0.5531185
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3342.644    0.1519674 -0.3274747 0.08929673   -0.6359092 0.3529079
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]           -0.8591625 0.9618947  0.7126416 0.297276 0.1178036 0.2055093
+         gamma_j log_detectrate
+[1,] 0.000837099      0.5468298
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3339.818    0.1512851 -0.3262912 0.09021607   -0.6347423 0.3530945
+     log_extradetectionSD      rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]           -0.8746873 0.9724355   0.712493 0.2980758 0.119126 0.2063589
+         gamma_j log_detectrate
+[1,] 0.004868195      0.5482054
+      Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] NaN     0.149238 -0.3227409 0.0929741   -0.6312415 0.3536545
+     log_extradetectionSD     rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]           -0.9212617 1.004058  0.7120473 0.3004751 0.1230934 0.2089079
+        gamma_j log_detectrate
+[1,] 0.01696148      0.5523321
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3335.442    0.1497012 -0.3235279 0.09222194   -0.6319847 0.3534465
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j  gamma_j
+[1,]           -0.9074789 0.9904404  0.7126355 0.3000517 0.1221429 0.208174
+        gamma_j log_detectrate
+[1,] 0.01292434      0.5509347
+      Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1471724 -0.3191162 0.09542439    -0.627582 0.3540086
+     log_extradetectionSD     rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]           -0.9598322 1.019186   0.712863 0.3032063 0.1269595 0.2110719
+        gamma_j log_detectrate
+[1,] 0.02578635      0.5552923
+           Fn log_theta_st  log_SD_st     rho_st log_sigmaIID  log_mean
+[1,] 3332.876    0.1477861 -0.3207943 0.09664616    -0.629316 0.3582416
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]           -0.9349971 0.9670913  0.7150351 0.292405 0.1184697 0.2085212
+        gamma_j log_detectrate
+[1,] 0.01873779      0.5568624
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID log_mean
+[1,] 3328.655    0.1442591 -0.3180404 0.1127619   -0.6270277 0.376467
+     log_extradetectionSD    rhot log_sigmat   gamma_j    gamma_j  gamma_j
+[1,]           -0.9900179 0.99518  0.7143917 0.2612007 0.09905215 0.204922
+        gamma_j log_detectrate
+[1,] 0.02898522      0.5685932
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3326.214    0.1398977 -0.3176694 0.1405827   -0.6217032 0.4078104
+     log_extradetectionSD      rhot log_sigmat  gamma_j    gamma_j   gamma_j
+[1,]            -1.012482 0.9662466  0.6834142 0.233955 0.07081429 0.1892569
+        gamma_j log_detectrate
+[1,] 0.03824713       0.560595
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3323.525    0.1321079 -0.3164692 0.1898377   -0.6165446 0.4503886
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.018728 0.9781118  0.6248188 0.3346734 0.1399278 0.1844364
+        gamma_j log_detectrate
+[1,] 0.03764021      0.5248851
+      Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1256225 -0.3056091 0.1993533   -0.6084711 0.4521743
+     log_extradetectionSD     rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]            -1.138007 1.039701  0.6277281 0.3294885 0.144819 0.1931444
+        gamma_j log_detectrate
+[1,] 0.04641157      0.5997771
+          Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3321.84    0.1314593 -0.3153832 0.1907893   -0.6157372 0.4505672
+     log_extradetectionSD      rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]            -1.030656 0.9842707  0.6251097 0.3341549 0.140417 0.1853072
+        gamma_j log_detectrate
+[1,] 0.03851735      0.5323743
+          Fn log_theta_st log_SD_st    rho_st log_sigmaIID log_mean
+[1,] 3318.89    0.1297861 -0.312538 0.1929944   -0.6134715  0.45094
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]             -1.05766 0.9873058  0.6261045 0.3334988 0.1418882 0.1873597
+        gamma_j log_detectrate
+[1,] 0.04047874      0.5463492
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3314.328    0.1247663 -0.3040022 0.1996096   -0.6066745 0.4520585
+     log_extradetectionSD      rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]            -1.138674 0.9964111   0.629089 0.3315305 0.146302 0.1935171
+       gamma_j log_detectrate
+[1,] 0.0463629       0.588274
+           Fn log_theta_st log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3312.424    0.1188996  -0.30704 0.2630107   -0.6088661 0.5454058
+     log_extradetectionSD     rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.154137 0.974806  0.5972967 0.3510681 0.1627456 0.2014125
+        gamma_j log_detectrate
+[1,] 0.03972251      0.6026173
+           Fn log_theta_st log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3308.456    0.1086448 -0.297626 0.3039693   -0.6003035 0.5669391
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.187347 0.9776352  0.5272296 0.2949236 0.1230125 0.2011463
+        gamma_j log_detectrate
+[1,] 0.05501264      0.5571278
+      Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] NaN    0.1030807 -0.2894212 0.3172812   -0.6003674 0.5695877
+     log_extradetectionSD    rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.294179 1.02737  0.5332538 0.3103554 0.1390934 0.2087614
+        gamma_j log_detectrate
+[1,] 0.04796103      0.5826788
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3307.624    0.1080884 -0.2968055 0.3053005   -0.6003099 0.5672039
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]             -1.19803 0.9826086   0.527832 0.2964668 0.1246206 0.2019078
+        gamma_j log_detectrate
+[1,] 0.05430747      0.5596829
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3306.076    0.1066429 -0.2945914 0.3083383   -0.5999197 0.5677583
+     log_extradetectionSD      rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]             -1.22145 0.9826573  0.5294662 0.3003192 0.128493 0.2036902
+        gamma_j log_detectrate
+[1,] 0.05292895      0.5636475
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3302.259    0.1023065 -0.2879492 0.3174519   -0.5987493 0.5694216
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.291712 0.9828031  0.5343687 0.3118763 0.1401104 0.2090374
+        gamma_j log_detectrate
+[1,] 0.04879336      0.5755415
+          Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3298.67   0.09101182 -0.2706487 0.3411891   -0.5957008 0.5737536
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.474718 0.9831831  0.5471379 0.3419783 0.1703692 0.2229649
+        gamma_j log_detectrate
+[1,] 0.03802173      0.6065207
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3298.221   0.03103777 -0.2068397 0.5901635   -0.6593353 0.6302894
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]            -1.483045 0.9988941  0.5181175 0.333833 0.2146933 0.2784844
+        gamma_j log_detectrate
+[1,] 0.02207908      0.5527084
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3292.107   0.01363776 -0.1926451 0.7036346   -0.6753551 0.7048701
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.488481 0.9814969  0.4779182 0.3452204 0.1991006 0.2747346
+        gamma_j log_detectrate
+[1,] 0.02300694      0.5459105
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3288.425 -0.007035253 -0.1696053 0.8385816   -0.7005134 0.7261587
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]            -1.492669 0.9825185  0.4673656 0.364326 0.1760055 0.2576302
+        gamma_j log_detectrate
+[1,] 0.02522899      0.5462428
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.06920995 -0.1001904 1.243408   -0.7754661 0.7901096
+     log_extradetectionSD      rhot log_sigmat   gamma_j  gamma_j   gamma_j
+[1,]            -1.504731 0.9824315  0.4354713 0.4222571 0.107114 0.2062888
+      gamma_j log_detectrate
+[1,] 0.032097      0.5426843
+      Fn log_theta_st  log_SD_st  rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.04585811 -0.1267805 1.11185   -0.7475148 0.7720842
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.500662 0.9844727  0.4437144 0.3974522 0.1379258 0.2292398
+        gamma_j log_detectrate
+[1,] 0.02809156      0.5465686
+           Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] 3287.426  -0.01090753 -0.1653402 0.865912    -0.705238 0.7307437
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]            -1.493485 0.9828454  0.4650111 0.367608 0.1721916 0.2547992
+        gamma_j log_detectrate
+[1,] 0.02550176      0.5464413
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3284.976  -0.01864993 -0.1568118 0.9205742   -0.7146811 0.7399176
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.495114 0.9834857  0.4602987 0.3741738 0.1645664 0.2491403
+      gamma_j log_detectrate
+[1,] 0.026048      0.5468194
+      Fn log_theta_st log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.04188241 -0.131218 1.084559   -0.7429988 0.7674435
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.499995 0.9853429  0.4461565 0.3938863 0.1416925 0.2321587
+        gamma_j log_detectrate
+[1,] 0.02769338      0.5478769
+      Fn log_theta_st log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.03413479 -0.139755 1.029899   -0.7335668 0.7582655
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.498373 0.9847641  0.4508739 0.3873058 0.1493161 0.2378224
+        gamma_j log_detectrate
+[1,] 0.02714069      0.5475728
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3284.389  -0.02019822 -0.1551065 0.9315068     -0.71657 0.7417522
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]             -1.49544 0.9836155  0.4593564 0.3754865 0.1630414 0.2480087
+        gamma_j log_detectrate
+[1,] 0.02615707      0.5468969
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3283.086  -0.02329481 -0.1516957 0.9533719   -0.7203478 0.7454214
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]            -1.496092 0.9838751  0.4574718 0.378112 0.1599914 0.2457455
+        gamma_j log_detectrate
+[1,] 0.02637523      0.5470518
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.03258465 -0.1414633 1.018967   -0.7316811 0.7564292
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j  gamma_j
+[1,]            -1.498048 0.9846531  0.4518178 0.3859886 0.1508413 0.238956
+        gamma_j log_detectrate
+[1,] 0.02702978      0.5475156
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.759  -0.02948799 -0.1448742 0.9971021   -0.7279034 0.7527599
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497396 0.9843942  0.4537025 0.3833629 0.1538913 0.2412192
+        gamma_j log_detectrate
+[1,] 0.02681155      0.5473615
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.04806756 -0.1244096 1.128293   -0.7505701 0.7747754
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.501309 0.9859514  0.4423947 0.3991158 0.1355913 0.2276402
+        gamma_j log_detectrate
+[1,] 0.02812054      0.5482904
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.04187436 -0.1312311 1.084563   -0.7430145 0.7674369
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.500005 0.9854324   0.446164 0.3938648 0.1416913 0.2321666
+        gamma_j log_detectrate
+[1,] 0.02768421      0.5479808
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.03072663 -0.1435099 1.005848   -0.7294145 0.7542276
+     log_extradetectionSD     rhot log_sigmat   gamma_j   gamma_j  gamma_j
+[1,]            -1.497657 0.984498  0.4529487 0.3844131 0.1526713 0.240314
+        gamma_j log_detectrate
+[1,] 0.02689882      0.5474234
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.676  -0.02961186 -0.1447377 0.9979767   -0.7280545 0.7529067
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497423 0.9844046  0.4536271 0.3834679 0.1537693 0.2411287
+        gamma_j log_detectrate
+[1,] 0.02682028      0.5473677
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.506  -0.02985958 -0.1444649 0.9997259   -0.7283567 0.7532002
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]            -1.497475 0.9844254  0.4534764 0.383678 0.1535253 0.2409476
+        gamma_j log_detectrate
+[1,] 0.02683773        0.54738
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.03060276 -0.1436463 1.004974   -0.7292634 0.7540809
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497631 0.9844877  0.4530241 0.3843081 0.1527933 0.2404045
+        gamma_j log_detectrate
+[1,] 0.02689009      0.5474172
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.03035504 -0.1439192 1.003224   -0.7289612 0.7537873
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497579 0.9844669  0.4531748 0.3840981 0.1530373 0.2405855
+        gamma_j log_detectrate
+[1,] 0.02687264      0.5474048
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.02990913 -0.1444103 1.000076   -0.7284172 0.7532589
+     log_extradetectionSD      rhot log_sigmat gamma_j   gamma_j   gamma_j
+[1,]            -1.497485 0.9844295  0.4534462 0.38372 0.1534765 0.2409114
+        gamma_j log_detectrate
+[1,] 0.02684122      0.5473825
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.502  -0.02986454 -0.1444594 0.9997609   -0.7283628 0.7532061
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j  gamma_j
+[1,]            -1.497476 0.9844258  0.4534733 0.3836822 0.1535205 0.240944
+        gamma_j log_detectrate
+[1,] 0.02683808      0.5473803
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.495  -0.02987445 -0.1444485 0.9998309   -0.7283749 0.7532178
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497478 0.9844266  0.4534673 0.3836906 0.1535107 0.2409368
+        gamma_j log_detectrate
+[1,] 0.02683878      0.5473808
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.02990417 -0.1444158 1.000041   -0.7284111 0.7532531
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497484 0.9844291  0.4534492 0.3837158 0.1534814 0.2409151
+        gamma_j log_detectrate
+[1,] 0.02684087      0.5473823
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.482  -0.02989426 -0.1444267 0.9999708    -0.728399 0.7532413
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497482 0.9844283  0.4534553 0.3837074 0.1534912 0.2409223
+        gamma_j log_detectrate
+[1,] 0.02684018      0.5473818
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.02995372 -0.1443612 1.000391   -0.7284716 0.7533118
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497495 0.9844332  0.4534191 0.3837578 0.1534326 0.2408788
+        gamma_j log_detectrate
+[1,] 0.02684436      0.5473848
+      Fn log_theta_st log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN   -0.0299339 -0.144383 1.000251   -0.7284474 0.7532883
+     log_extradetectionSD      rhot log_sigmat  gamma_j   gamma_j   gamma_j
+[1,]             -1.49749 0.9844316  0.4534311 0.383741 0.1534521 0.2408933
+        gamma_j log_detectrate
+[1,] 0.02684297      0.5473838
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID log_mean
+[1,] 3279.479  -0.02989823 -0.1444223 0.9999988   -0.7284039 0.753246
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844286  0.4534528 0.3837107 0.1534873 0.2409194
+        gamma_j log_detectrate
+[1,] 0.02684046       0.547382
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID  log_mean
+[1,] NaN  -0.02990616 -0.1444136 1.000055   -0.7284135 0.7532554
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497485 0.9844293   0.453448 0.3837175 0.1534795 0.2409136
+        gamma_j log_detectrate
+[1,] 0.02684101      0.5473824
+      Fn log_theta_st  log_SD_st   rho_st log_sigmaIID log_mean
+[1,] NaN  -0.02989902 -0.1444214 1.000004   -0.7284048 0.753247
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844287  0.4534524 0.3837114 0.1534865 0.2409188
+        gamma_j log_detectrate
+[1,] 0.02684051       0.547382
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989831 -0.1444222 0.9999994    -0.728404 0.7532461
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844286  0.4534528 0.3837108 0.1534872 0.2409193
+        gamma_j log_detectrate
+[1,] 0.02684046       0.547382
+      Fn log_theta_st  log_SD_st rho_st log_sigmaIID  log_mean log_extradetectionSD
+[1,] NaN  -0.02989847 -0.1444221      1   -0.7284042 0.7532463            -1.497483
+          rhot log_sigmat   gamma_j  gamma_j   gamma_j    gamma_j log_detectrate
+[1,] 0.9844286  0.4534527 0.3837109 0.153487 0.2409192 0.02684047       0.547382
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989832 -0.1444222 0.9999995    -0.728404 0.7532461
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844286  0.4534528 0.3837108 0.1534872 0.2409193
+        gamma_j log_detectrate
+[1,] 0.02684046       0.547382
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479   -0.0298983 -0.1444222 0.9999994    -0.728404 0.7532461
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844287  0.4534528 0.3837108 0.1534872 0.2409193
+        gamma_j log_detectrate
+[1,] 0.02684046       0.547382
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989828 -0.1444223 0.9999994    -0.728404 0.7532461
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844287  0.4534528 0.3837108 0.1534872 0.2409194
+        gamma_j log_detectrate
+[1,] 0.02684045      0.5473821
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID log_mean
+[1,] 3279.479  -0.02989823 -0.1444223 0.9999995   -0.7284039 0.753246
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844289  0.4534528 0.3837107 0.1534873 0.2409194
+        gamma_j log_detectrate
+[1,] 0.02684045      0.5473822
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID log_mean
+[1,] 3279.479  -0.02989818 -0.1444224 0.9999995   -0.7284039 0.753246
+     log_extradetectionSD     rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.984429  0.4534529 0.3837107 0.1534873 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684044      0.5473823
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999995   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844291  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+      Fn log_theta_st  log_SD_st rho_st log_sigmaIID  log_mean log_extradetectionSD
+[1,] NaN  -0.02989812 -0.1444225      1   -0.7284039 0.7532459            -1.497483
+          rhot log_sigmat   gamma_j   gamma_j   gamma_j    gamma_j log_detectrate
+[1,] 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824
+           Fn log_theta_st  log_SD_st    rho_st log_sigmaIID  log_mean
+[1,] 3279.479  -0.02989812 -0.1444225 0.9999996   -0.7284039 0.7532459
+     log_extradetectionSD      rhot log_sigmat   gamma_j   gamma_j   gamma_j
+[1,]            -1.497483 0.9844292  0.4534529 0.3837106 0.1534874 0.2409195
+        gamma_j log_detectrate
+[1,] 0.02684043      0.5473824

@@ -14,6 +14,9 @@ Related_Papers/
 *.tiff
 W_Susquehanna.RData
 Output/*.RData
+prismtmp/
+Output/Figures/
+Presentations/
 
 #KO Ignore
 gisFiles/

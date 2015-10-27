@@ -481,7 +481,7 @@ aic_table$delta_AIC <- 0
 for(i in 2:nrow(aic_table)) {
   aic_table$delta_AIC[i] <- aic_table$AIC[i] - aic_table$AIC[1]
 }
-aic_table
+format(aic_table, digits=3)
 
 # Convergence 
 df_convergence <- data.frame(model = 1:8, 
@@ -638,6 +638,8 @@ bar <- dplyr::filter(foo, child_b %in% child_list[1:10]) %>%
 ggplot(bar, aes(year, N_hat, group = child_b, colour = child_b)) + geom_line() + geom_point() + theme_bw() #+ geom_line(aes(year, pass_1))
 ggplot(bar, aes(year, N, group = child_b, colour = child_b)) + geom_line() + geom_point() + theme_bw() 
 
+
+SD7b$par.fixed
 
 # save
 save.image(file = "Output/W_Susquehanna.RData")

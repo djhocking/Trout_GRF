@@ -154,6 +154,7 @@ mod3$opt$convergence # 0 equal converged successfully
 data.frame(Parameter = names(mod3$SD$value), Estimate = mod3$SD$value, SD = mod3$SD$sd)
 mod3$SD$par.fixed
 
+save(mod3_White_River = mod3, mod1_White_River = mod1, aic_table_White_River = aic_table, file = "Output/White_River_Summary.RData")
 
 
 Model <- c("Obs", "Temporal", "Spatial", "Spatiotemporal", "Temporal + ST", "S+T+ST", "Spatial + Temporal")

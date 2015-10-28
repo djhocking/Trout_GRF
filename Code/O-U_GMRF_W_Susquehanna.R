@@ -58,7 +58,7 @@ compile( paste0("Code/", Version,".cpp") )
 Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -89,7 +89,7 @@ SD1b <- sdreport(obj1, bias.correct=FALSE )
 Options_vec_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -120,7 +120,7 @@ SD2b <- sdreport(obj2, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -150,7 +150,7 @@ SD3b <- sdreport(obj3, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -185,7 +185,7 @@ SD4_lbfgsb<- sdreport(obj4)
 Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -219,7 +219,7 @@ SD5b <- sdreport(obj5, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -250,7 +250,7 @@ SD6b <- sdreport(obj6, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF" = 1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -281,7 +281,7 @@ SD7b <- sdreport(obj7, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -344,7 +344,7 @@ X_ij <- as.matrix(dplyr::select(covs, length_std))
 Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -373,7 +373,7 @@ X_ij <- as.matrix(dplyr::select(covs, length_std))
 Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -397,7 +397,7 @@ X_ij <- as.matrix(dplyr::select(covs, length_std))
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -423,7 +423,7 @@ X_ij <- as.matrix(dplyr::select(covs, length_std))
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))

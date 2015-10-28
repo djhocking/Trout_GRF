@@ -7,7 +7,9 @@ gc()
 #######################
 library(TMB)
 library(dplyr)
+library(minqa)
 source("Functions/Input_Functions.R")
+source("Functions/runOUGMRF.R")
 
 # Diagnose problems of convergence and SD estimation
 DiagnosticDir <- "Diagnostics/"
@@ -23,7 +25,7 @@ load("Data/Prepared_Data_White_River.RData")
 
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
 covs <- X_ij
-X_ij <- as.matrix(dplyr::select(covs, length_std))
+X_ij <- as.matrix(dplyr::select(covs, length_std, temp_summer_std, prcp_winter_std))
 
 # df = dataframe with all data including sites with multiple passes (multiple instances of each child)
 # family = dataframe with unique child rows. Other columns are parents of each child, lat, lon, and other data associated with each child node.
@@ -65,146 +67,44 @@ compile( paste0("Code/", Version,".cpp") )
 
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
-# Make object
-dyn.load( dynlib(paste0("Code/", Version )))
-obj1 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report1 = obj1$report()
-
-# First run
-obj1$fn( obj1$par )
-# Check for parameters that don't do anything
-Which = which( obj1$gr( obj1$par )==0 )
-
-# Run model
-opt1 = nlminb(start=obj1$env$last.par.best[-c(obj1$env$random)], objective=obj1$fn, gradient=obj1$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt1[["final_gradient"]] = obj1$gr( opt1$par )
-opt1[["AIC"]] = 2*opt1$objective + 2*length(opt1$par)
-
-Report1 = obj1$report()
-SD1 = sdreport( obj1, bias.correct=TRUE )
+mod1 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 
 #----------------- Temporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
-# Make object
-dyn.load( dynlib(paste0("Code/", Version )))
-obj2 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj2$report()
-
-obj2$gr_orig = obj2$gr
-obj2$fn_orig = obj2$fn
-obj2$fn <- function( vec ){
-  Fn = obj2$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj2$par),NULL)), file=paste0(DiagnosticDir,"Fn2.txt"), append = TRUE )
-  return( Fn )
-}
-obj2$gr = function( vec ){
-  Gr = obj2$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj2$par),NULL)), file=paste0(DiagnosticDir,"gr2.txt"), append = TRUE )
-  return( Gr )
-}
-
-# First run
-obj2$fn( obj2$par )
-# Check for parameters that don't do anything
-Which = which( obj2$gr( obj2$par )==0 )
-
-# Run model
-opt2 = nlminb(start=obj2$env$last.par.best[-c(obj2$env$random)], objective=obj2$fn, gradient=obj2$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt2[["final_gradient"]] = obj2$gr( opt2$par )
-opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
-
-Report2 = obj2$report()
-SD2 = sdreport( obj2, bias.correct=FALSE )
+mod2 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 #----------------- Spatial Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
-# Make object
-dyn.load( dynlib(paste0("Code/", Version )))
-obj3 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj3$report()
-
-obj3$gr_orig = obj3$gr
-obj3$fn_orig = obj3$fn
-obj3$fn <- function( vec ){
-  Fn = obj3$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj3$par),NULL)), file=paste0(DiagnosticDir,"Fn3.txt"), append = TRUE )
-  return( Fn )
-}
-obj3$gr = function( vec ){
-  Gr = obj3$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj3$par),NULL)), file=paste0(DiagnosticDir,"gr3.txt"), append = TRUE )
-  return( Gr )
-}
-
-# First run
-obj3$fn( obj3$par )
-# Check for parameters that don't do anything
-Which = which( obj3$gr( obj3$par )==0 )
-
-# Run model
-opt3 = nlminb(start=obj3$env$last.par.best[-c(obj3$env$random)], objective=obj3$fn, gradient=obj3$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt3[["final_gradient"]] = obj3$gr( opt3$par )
-opt3[["AIC"]] = 2*opt3$objective + 2*length(opt3$par)
-
-Report3 = obj3$report()
-SD3 = sdreport( obj3, bias.correct=TRUE )
+mod3 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 
 #----------------- Spatiotemporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
-# Make object
-dyn.load( dynlib(paste0("Code/", Version )))
-obj4 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj4$report()
-
-obj4$gr_orig = obj4$gr
-obj4$fn_orig = obj4$fn
-obj4$fn <- function( vec ){
-  Fn = obj4$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj4$par),NULL)), file=paste0(DiagnosticDir,"Fn1.txt"), append = TRUE )
-  return( Fn )
-}
-obj4$gr = function( vec ){
-  Gr = obj4$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj4$par),NULL)), file=paste0(DiagnosticDir,"gr1.txt"), append = TRUE )
-  return( Gr )
-}
-# First run
-obj4$fn( obj4$par )
-# Check for parameters that don't do anything
-Which = which( obj4$gr( obj4$par )==0 )
-
-# Run model
-opt4 = nlminb(start=obj4$env$last.par.best[-c(obj4$env$random)], objective=obj4$fn, gradient=obj4$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt4[["final_gradient"]] = obj4$gr( opt4$par )
-opt4[["AIC"]] = 2*opt4$objective + 2*length(opt4$par)
-
-Report4 = obj4$report()
-SD4 = sdreport( obj4, bias.correct=TRUE )
+mod4 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 #----------------- Temporal + Spatiotemporal ------------------
@@ -214,37 +114,7 @@ Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "Detectabil
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
-# Make object
-dyn.load( dynlib(paste0("Code/", Version )))
-obj5 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj5$report()
-
-obj5$gr_orig = obj5$gr
-obj5$fn_orig = obj5$fn
-obj5$fn <- function( vec ){
-  Fn = obj5$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj5$par),NULL)), file=paste0(DiagnosticDir,"Fn5.txt"), append = TRUE )
-  return( Fn )
-}
-obj5$gr = function( vec ){
-  Gr = obj5$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj5$par),NULL)), file=paste0(DiagnosticDir,"gr5.txt"), append = TRUE )
-  return( Gr )
-}
-
-# First run
-obj5$fn( obj5$par )
-# Check for parameters that don't do anything
-Which = which( obj5$gr( obj5$par )==0 )
-
-# Run model
-opt5 = nlminb(start=obj5$env$last.par.best[-c(obj5$env$random)], objective=obj5$fn, gradient=obj5$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt5[["final_gradient"]] = obj5$gr( opt5$par )
-opt5[["AIC"]] = 2*opt5$objective + 2*length(opt5$par)
-
-ParHat <- obj5( opt5$par )
-Report5 = obj5$report()
-SD5 = sdreport( obj5, bias.correct=TRUE )
+mod5 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 
@@ -255,82 +125,37 @@ Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "Detectabil
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
-# Make object
-dyn.load( dynlib(paste0("Code/", Version )))
-obj6 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj6$report()
-
-obj6$gr_orig = obj6$gr
-obj6$fn_orig = obj6$fn
-obj6$fn <- function( vec ){
-  Fn = obj6$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"Fn6.txt"), append = TRUE )
-  return( Fn )
-}
-obj6$gr = function( vec ){
-  Gr = obj6$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj6$par),NULL)), file=paste0(DiagnosticDir,"gr6.txt"), append = TRUE )
-  return( Gr )
-}
-
-# First run
-obj6$fn( obj6$par )
-# Check for parameters that don't do anything
-Which = which( obj6$gr( obj6$par )==0 )
-
-# Run model
-opt6 = nlminb(start=obj6$env$last.par.best[-c(obj6$env$random)], objective=obj6$fn, gradient=obj6$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt6[["final_gradient"]] = obj6$gr( opt6$par )
-opt6[["AIC"]] = 2*opt6$objective + 2*length(opt6$par)
-
-Report6 = obj6$report()
-SD6 = sdreport( obj6, bias.correct=FALSE )
-
-save(obj6, Report6, SD6, file = "Output/Best_Model_Output.RData")
-
+mod6 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 #----------------- Spatial + Temporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
 Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
-# Make object
-dyn.load( dynlib(paste0("Code/", Version )))
-obj7 <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
-Report = obj7$report()
-
-obj7$gr_orig = obj7$gr
-obj7$fn_orig = obj7$fn
-obj7$fn <- function( vec ){
-  Fn = obj7$gr_orig(vec)
-  if( any(is.na(Fn ))) capture.output( matrix(Fn,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"Fn7.txt") )
-  return( Fn )
-}
-obj7$gr = function( vec ){
-  Gr = obj7$gr_orig(vec)
-  if( any(is.na(Gr))) capture.output( matrix(Gr,ncol=1,dimnames=list(names(obj7$par),NULL)), file=paste0(DiagnosticDir,"gr7.txt") )
-  return( Gr )
-}
-
-# First run
-obj7$fn( obj7$par )
-# Check for parameters that don't do anything
-Which = which( obj7$gr( obj7$par )==0 )
-
-# Run model
-opt7 = nlminb(start=obj7$env$last.par.best[-c(obj7$env$random)], objective=obj7$fn, gradient=obj7$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-opt7[["final_gradient"]] = obj7$gr( opt7$par )
-opt7[["AIC"]] = 2*opt7$objective + 2*length(opt7$par)
-
-Report7 = obj7$report()
-SD7 = sdreport( obj7, bias.correct=FALSE )
+mod7 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 
 #--------------- AIC -------------
+# Models successful: 1 & 3 (standard and spatial)
+aic_table <- data.frame(mod = c("Obs", "Spatial"), AIC = c(mod1$opt$AIC, mod3$opt$AIC)) 
+aic_table <- dplyr::arrange(aic_table, AIC)
+aic_table$delta_AIC <- 0
+for(i in 2:nrow(aic_table)) {
+  aic_table$delta_AIC[i] <- aic_table$AIC[i] - aic_table$AIC[1]
+}
+aic_table # spatial much better
+
+str(mod3)
+mod3$opt$convergence # 0 equal converged successfully
+data.frame(Parameter = names(mod3$SD$value), Estimate = mod3$SD$value, SD = mod3$SD$sd)
+mod3$SD$par.fixed
+
+
+
 Model <- c("Obs", "Temporal", "Spatial", "Spatiotemporal", "Temporal + ST", "S+T+ST", "Spatial + Temporal")
 M_num <- 1:length(Model)
 AIC <- c(opt1$AIC, opt2$AIC, opt3$AIC, opt4$AIC, opt5$AIC, opt6$AIC, opt7$AIC)

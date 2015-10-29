@@ -7,6 +7,8 @@ library(dplyr)
 library(lubridate)
 library(tidyr)
 
+source("Functions/helper_functions.R")
+
 #######################
 # Load data
 #######################
@@ -207,9 +209,7 @@ tail(df, 20)
 c_ip <- dplyr::select(df, starts_with("pass"))
 year <- as.factor(df$year)
 dummies <- model.matrix(~year)
-std <- function(data, var) {
-  var_std <- (data[ , c(var)] - mean(data[ , c(var)], na.rm = TRUE)) / sd(data[ , c(var)], na.rm = TRUE)
-}
+
 length_std <- (df$length_sample - mean(df$length_sample)) / sd(df$length_sample)
 width_std <- (df$width - mean(df$width)) / sd(df$width)
 temp_summer_std <- std(df, "temp_mean_summer_1")

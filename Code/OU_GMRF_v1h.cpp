@@ -16,6 +16,7 @@ template<class Type>
     using namespace density;
     
     // Options
+    DATA_VECTOR(CalcSD_lambda_ip);
     DATA_FACTOR( Options_vec );
     // Slot 0 : Include spatial variation (0=No, 1=Yes)
     // Slot 1 : Include temporal variation (0=No, 1=Yes)
@@ -28,12 +29,14 @@ template<class Type>
     DATA_INTEGER(n_i);   // Number of data points
     DATA_INTEGER(n_b);  // Number of branches in acyclic graph (b) (presumably n_b = n_d, i.e., including infinitely-long branch for root)
     DATA_INTEGER(n_t);  // Number of years
+    DATA_INTEGER(n_sd); // Number of points to estimate SD
     
     // Data
     DATA_MATRIX(c_ip);         // Count data
     DATA_FACTOR(d_i);         // Branch number b for each observationp
     DATA_MATRIX(X_ij);      // Covariate matrix for observation i and covariate j
     DATA_FACTOR(t_i);      // Covariate matrix for observation i and covariate j
+    DATA_VECTOR(offset_i); // Length or area of survey i to offset abundance and make comparable among site-visits
     
     // Inputs regarding branched network
     DATA_FACTOR(parent_b); // index of parent
@@ -41,6 +44,7 @@ template<class Type>
     DATA_VECTOR(dist_b);  // distance to parent
     
     // Fixed effects
+    PARAMETER_VECTOR(gamma_j);
     PARAMETER(log_theta);             // Autocorrelation (i.e. density dependence)
     PARAMETER(log_SD);
     PARAMETER(log_theta_st);         // Spatial correlation of spatiotemporal error
@@ -51,7 +55,6 @@ template<class Type>
     PARAMETER(log_extradetectionSD);
     PARAMETER(rhot);                  // Purely temporal autocorrelation
     PARAMETER(log_sigmat);
-    PARAMETER_VECTOR(gamma_j);
     PARAMETER(log_detectrate);
     
     // Random effects
@@ -80,6 +83,8 @@ template<class Type>
     Type sigmat = exp(log_sigmat);
     vector<Type> Delta_t(n_t);
     Delta_t = Deltainput_t * sigmat;
+    vector<Type> log_offset_i(n_i);
+    log_offset_i = log(offset_i);
     
     // Probability of GRF on network -- SPATIAL
     vector<Type> rho_b(n_b); 
@@ -155,14 +160,27 @@ template<class Type>
     
     // Covariates
     vector<Type> eta_i(n_i);
-    eta_i = X_ij * gamma_j.matrix();
+    eta_i = X_ij * gamma_j.matrix(); // + log(offset_i) where offset is unstandardized length or area or it could be converted to units that make sense fish per meter vs. fish per 100 m
     
     // log-predictions
     matrix<Type> lambda_dt(n_b,n_t);
+//    matrix<Type> density_dt(n_b,n_t);
+//    matrix<Type> log_N100_dt(5,n_t); // first 5 sites with data
+    int counter_d = 0;
     for(int d=0; d<n_b; d++){
-    for(int t=0; t<n_t; t++){
+    for(int t=0; t<n_t; t++){  
       lambda_dt(d,t) = exp( log_mean + Epsiloninput_d(d) + Delta_t(t) + Nu_dt(d,t) );
-    }}
+//      if( !isNA(c_ip(i,1)) ){  
+//        density_dt(d,t) = lambda_dt(d,t)*exp(lognormal_overdispersed_i(i));
+//        if( counter_d < 5 ){
+//          log_N100_dt(counter_d,t) = log(density_dt(d,t) * 100); // total hack - get SD for density of first 5 sites with observed data estimated in all years
+//          counter_d = counter_d + 1;
+//        }
+//      }
+//      else {
+//        density_dt(d,t) = lambda_dt(d,t);
+//      }
+    }}    
         
     // Likelihood contribution from observations
     matrix<Type> lambda_ip(n_i,3);
@@ -170,15 +188,25 @@ template<class Type>
     matrix<Type> chat_ip(n_i,3);
     for (int i=0; i<n_i; i++){
       for (int p=0; p<3; p++){
-        lambda_ip(i,p) = exp( log_mean + Epsiloninput_d(d_i(i)) + eta_i(i) + Delta_t(t_i(i)) + Nu_dt(d_i(i),t_i(i)) );
+        lambda_ip(i,p) = exp( log_mean + Epsiloninput_d(d_i(i)) + eta_i(i) + log_offset_i(i) + Delta_t(t_i(i)) + Nu_dt(d_i(i),t_i(i)) );
         if( !isNA(c_ip(i,p)) ){                
           if(Options_vec(4)==1) {
-            N_ip(i,p) = lambda_ip(i,p)*exp(lognormal_overdispersed_i(i));
-            jnll_comp(4) -= dpois(c_ip(i,p), N_ip(i,p)*detectprob_ip(i,p), true);
-            chat_ip(i,p) = N_ip(i,p)*detectprob_ip(i,p);
+            jnll_comp(4) -= dpois(c_ip(i,p), lambda_ip(i,p)*exp(lognormal_overdispersed_i(i))*detectprob_ip(i,p), true);
           }
         }
+        N_ip(i,p) = lambda_ip(i,p)*exp(lognormal_overdispersed_i(i));
+        chat_ip(i,p) = N_ip(i,p)*detectprob_ip(i,p);
       }}
+      
+          // predictions with SD - consider changing this for density in each year (density_dt - converted to fish per 100m)
+    vector<Type> SD_report(n_sd);
+    int counter = -1;
+    for(int i=0; i<n_i; i++){
+      if(CalcSD_lambda_ip(i)==1){
+        counter = counter + 1;
+        SD_report(counter) = N_ip(i,1);
+      }
+    }
     
     // Add up components
     jnll = jnll_comp.sum();
@@ -218,11 +246,12 @@ template<class Type>
     
     // ADREPORT( lambda_ip);
     ADREPORT( gamma_j );
-    ADREPORT( theta );
-    ADREPORT( theta_st );
+    ADREPORT( log_theta_st );
     ADREPORT( rhot );
     ADREPORT( log_theta );
     ADREPORT( SDinput );
+    ADREPORT( SD_report );
+   // ADREPORT( log_N100_dt );
     
     return jnll;
   }

@@ -5,7 +5,7 @@ rmatrix = function( nrow=1, ncol=1, mean=0, sd=1, ... ){
 
 
 # Make inputs
-makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version) {
+makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version, CalcSD_lambda_ip, offset_i = NULL) {
   
   # convert 3-pass counts to abundance using Carle & Strub 1978 methods
   if(Version=="OU_GMRF_v1b") {
@@ -36,7 +36,9 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version)
   if(Version%in%c("OU_GMRF_v1e")) Data = list( "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X_ij, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'])
   if(Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f", "OU_GMRF_v1h")) {
     YearSet = min(t_i):max(t_i)
-    Data = list( "Options_vec"=options, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b']) # d_i and child_b redundant?
+    n_sd = length(Calc_lambda_ip[which(Calc_lambda_ip != 0)])
+    if(is.null(offset_i)) offset_i <- rep(1, length.out = nrow(c_ip))
+    Data = list( "Options_vec"=options, "n_sd"=n_sd, "CalcSD_lambda_ip"=CalcSD_lambda_ip, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'], "offset_i"=offset_i) # d_i and child_b redundant?
   }
   
   ############### Sanity checks on inputs ##############
@@ -53,6 +55,25 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version)
     warning("Missing covariate values: replaced with mean")
   }
   
+  # offset must be a vector not a dataframe and of length n_i
+  if(class(Data$offset_i) != "numeric") {
+    stop("offset must be class numeric")
+  }
+  
+  if(length(Data$offset_i) != nrow(c_ip)) {
+    stop("offset must be numeric vector of length == nrow(c_ip)")
+  }
+  
+  # replace any missing offset values with the median
+  if( any(is.na(Data$offset_i)) ) {
+    Data$offset_i[is.na(Data$offset_i)] <- median(Data$offset_i, na.rm = TRUE)
+    warning("Missing offsets replaced with median")
+  }
+  # check that all offsets are positive
+  if(any(Data$offset_i <= 0)) {
+    stop("All offsets need to be positive values")
+  }
+  
   ###### make dist min = 10 m
   #Data$dist_b = ifelse(Data$dist_b < 0.01, 0.01, Data$dist_b)
   ######
@@ -66,6 +87,7 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version)
   if(Version=="OU_GMRF_v1d") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b))
   if(Version=="OU_GMRF_v1e") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=log(rep(1,Data$n_i)), "Epsiloninput_d"=rnorm(Data$n_b), "Deltainput_t"=rnorm(Data$n_t))
   if(Version=="OU_GMRF_v1f") Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_sp"=log(1), "log_SD_st"=log(1), "rho_sp"=0, "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
+  
   if(Version%in%c("OU_GMRF_v1h","OU_GMRF_v1g")) Params = list( "log_theta"=log(1), "log_SD"=log(1), "log_theta_st"=log(1), "log_SD_st"=log(1), "rho_st"=0, "log_sigmaIID"=log(1), "log_mean"=log(1), "log_extradetectionSD"=log(1), "rhot"=0, "log_sigmat"=log(1), "gamma_j"=rep(0,ncol(Data$X_ij)), "log_detectrate"=log(0.2), "log_extradetectrate_i"=rnorm(Data$n_i,sd=0.01), "lognormal_overdispersed_i"=rnorm(Data$n_i,sd=0.01), "Epsiloninput_d"=rnorm(Data$n_b,sd=0.01), "Deltainput_t"=rnorm(Data$n_t,sd=0.01), "Nu_dt"=rmatrix(Data$n_b,Data$n_t,sd=0.01))
   
   if(Version%in%c("OU_GMRF_v1a","OU_GMRF_v1b")) Random = c( "Epsiloninput_d" )

@@ -104,6 +104,7 @@ df_bkt_3_pass_yoy <- tidyr::complete(ungroup(bar), c(site_visit, site, date, yea
 
 # test that expands to correct size
 dim(df_bkt_adult)
+dim(df_bkt_yoy)
 dim(df_bkt_3_pass)[1] == length(unique(df_bkt_adult$site_visit)) * length(unique(df_bkt_adult$pass))
 str(df_bkt_3_pass)
 head(df_bkt_3_pass, 20)
@@ -127,8 +128,8 @@ df_bkt_3_pass_yoy <- df_bkt_3_pass_yoy %>%
 dim(df_bkt_3_pass_yoy)
 
 # combine covariate data back in
-df_trout <- left_join(df_bkt_3_pass, df_covs_visit) %>% distinct()
-df_trout_yoy <- left_join(df_bkt_3_pass_yoy, df_covs_visit) %>% distinct()
+df_trout <- left_join(df_covs_visit, df_bkt_3_pass) %>% distinct()
+df_trout_yoy <- left_join(df_covs_visit, df_bkt_3_pass_yoy) %>% distinct()
 
 # only use first visit each year? (possible that previous visit if close in time could change the abundance through emigration) - plus not sure how to handle it 
 df_trout <- dplyr::arrange(df_trout, site, year, date)
@@ -250,7 +251,7 @@ chunk.size <- 50
 n.loops <- ceiling(n.catches / chunk.size)
 
 # set up parallel backend & make database connection available to all workers
-nc <- min(c(detectCores()-1, 15)) # use the maximum number of cores minus 1 or up to 15 because max 16 database connections
+nc <- min(c(detectCores(), 15)) # use the maximum number of cores minus 1 or up to 15 because max 16 database connections
 cl <- makePSOCKcluster(nc)
 registerDoParallel(cl)
 
@@ -412,9 +413,18 @@ dbListConnections(drv)
 
 gc()
   
+saveRDS(climate, file = file.path(dir_out, "climate.RData"))
+
 climate$featureid <- as.character(climate$featureid)
 df <- left_join(df, climate)
 df_yoy <- left_join(df_yoy, climate)
+
+# remove data from pre-1981 because no daymet records for previous summer and fall
+
+df <- df %>%
+  dplyr::filter(year > 1980)
+df_yoy <- df_yoy %>%
+  dplyr::filter(year >1980)
 
 ################################################
 

@@ -5,7 +5,15 @@ rmatrix = function( nrow=1, ncol=1, mean=0, sd=1, ... ){
 
 
 # Make inputs
-makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version, CalcSD_lambda_ip, offset_i = NULL) {
+makeInput <- function(family, df = NULL, c_i = NULL, c_ip = NULL, options, X, t_i, version, CalcSD_lambda_ip, offset_i = NULL) {
+  
+  # included so don't have to redo for simulations
+  if(is.null(df)) {
+    df <- family
+    if(nrow(df) != nrow(c_ip)) {
+      stop("family must have the same number of rows as c_ip unless df specified")
+    }
+  }
   
   # convert 3-pass counts to abundance using Carle & Strub 1978 methods
   if(Version=="OU_GMRF_v1b") {
@@ -37,7 +45,10 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version,
   if(Version%in%c("OU_GMRF_v1g","OU_GMRF_v1f", "OU_GMRF_v1h")) {
     YearSet = min(t_i):max(t_i)
     n_sd = length(Calc_lambda_ip[which(Calc_lambda_ip != 0)])
-    if(is.null(offset_i)) offset_i <- rep(1, length.out = nrow(c_ip))
+    if(is.null(offset_i)) {
+      offset_i <- rep(1, length.out = nrow(c_ip))
+      warning("No offsets included")
+    }
     Data = list( "Options_vec"=options, "n_sd"=n_sd, "CalcSD_lambda_ip"=CalcSD_lambda_ip, "n_i"=dim(c_ip)[1], "n_b"=nrow(family), "n_t"=length(YearSet), "c_ip"=as.matrix(c_ip), "d_i"=df[,'child_b']-1, "X_ij"=X, "t_i"=t_i-min(t_i), "parent_b"=family[ ,'parent_b']-1, "child_b"=family[ ,'child_b']-1, "dist_b"=family[,'dist_b'], "offset_i"=offset_i) # d_i and child_b redundant?
   }
   
@@ -73,6 +84,9 @@ makeInput <- function(family, c_i = NULL, c_ip = NULL, options, X, t_i, version,
   if(any(Data$offset_i <= 0)) {
     stop("All offsets need to be positive values")
   }
+  
+  # check for correct dimensions
+  
   
   ###### make dist min = 10 m
   #Data$dist_b = ifelse(Data$dist_b < 0.01, 0.01, Data$dist_b)

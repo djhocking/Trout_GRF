@@ -13,6 +13,7 @@ library(minqa)
 library(optimx)
 library(ggplot2)
 source("Functions/Input_Functions.R")
+source("Functions/runOUGMRF.R")
 
 #######################
 # Load data
@@ -22,7 +23,9 @@ load("Data/Prepared_Data_W_Susquehanna.RData")
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
 #X_ij <- X_ij[ , c("length_std", "effort_std")]
 covs <- X_ij
-X_ij <- as.matrix(dplyr::select(covs, length_std, forest_std, surfcoarse_std))
+X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_summer_1, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_summer_1, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
+
+offset <-  as.numeric(df_yoy$length_sample)
 
 # df = dataframe with all data including sites with multiple passes (multiple instances of each child)
 # family = dataframe with unique child rows. Other columns are parents of each child, lat, lon, and other data associated with each child node.
@@ -53,12 +56,19 @@ if(FALSE) {
 }
 compile( paste0("Code/", Version,".cpp") )
 
+# initial site-years to get SD for lambda (cycle through just for best model)
+start <- 1
+end <- 2
+Calc_lambda_ip <- rep(NA, length.out = nrow(c_ip))
+Calc_lambda_ip[start:end] <- 1
+Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
+
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -86,10 +96,10 @@ SD1b <- sdreport(obj1, bias.correct=FALSE )
 
 #----------------- Temporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -117,10 +127,10 @@ SD2b <- sdreport(obj2, bias.correct=FALSE )
 
 #----------------- Spatial Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -147,10 +157,10 @@ SD3b <- sdreport(obj3, bias.correct=FALSE )
 
 #----------------- Spatiotemporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -182,10 +192,10 @@ SD4_lbfgsb<- sdreport(obj4)
 
 #----------------- Temporal + Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -216,10 +226,10 @@ SD5b <- sdreport(obj5, bias.correct=FALSE )
 
 #----------------- Spatial Temporal Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -250,7 +260,7 @@ SD6b <- sdreport(obj6, bias.correct=FALSE )
 Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF" = 1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -278,10 +288,10 @@ SD7b <- sdreport(obj7, bias.correct=FALSE )
 
 #----------------- Spatial + Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip_yoy, Options_vec = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -325,18 +335,131 @@ SD_table <- data.frame(Parameter = names(SD3$value),
                        SD1 = SD1$sd, 
                        SD2 = SD2$sd, 
                        SD3 = SD3b$sd,
-                       #SD4 = SD4r_lbfgsb$sd, 
-                       #SD5 = SD5r_lbfgsb$sd, 
+                       #SD4 = SD4b$sd, 
+                       #SD5 = SD5b$sd, 
                        #SD6 = SD6$sd, # fails
                        SD7 = SD7$sd,
-                       SD8 = SD8$sd, #
+                       #SD8 = SD8$sd, #
                        stringsAsFactors = FALSE)
 for(i in 1:ncol(as.matrix(X_ij))) {
   SD_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
 }
 format(SD_table, digits = 2, scientific = 5)
  
-# essentially no information about theta from any model
+
+############## most models fail - try reduced models ############
+
+
+#----------------- Spatial Only ------------------
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
+
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod3r <- runOUGMRF(Inputs)
+
+Mod3r$SD$sd # fails
+
+# Further Reduce
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod3r2 <- runOUGMRF(Inputs)
+Mod3r2$SD$sd # success
+
+
+#----------------- Spatiotemporal Only ------------------
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
+
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod4r <- runOUGMRF(Inputs)
+
+str(Mod4r) # fails
+
+# Further Reduce
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod4r2 <- runOUGMRF(Inputs)
+str(Mod4r2)  # fails
+
+# final reduction
+X_ij <- as.matrix(dplyr::select(covs, forest))
+
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod4r3 <- runOUGMRF(Inputs)
+str(Mod4r3) # fails
+
+
+
+#----------------- Spatial + Temporal ------------------
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
+
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF" = 1)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod7r <- runOUGMRF(Inputs)
+Mod7r$SD$sd # success
+
+#----------------- Spatial + Spatiotemporal ------------------
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod8r <- runOUGMRF(Inputs)
+str(Mod8r) # fails
+
+# Further Reduce
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod8r2 <- runOUGMRF(Inputs)
+str(Mod8r2)
+
+# final reduction - no time-varying covs
+X_ij <- as.matrix(dplyr::select(covs, forest))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod8r3 <- runOUGMRF(Inputs)
+str(Mod8r3) # fails
+
+#--------------------------------------------
 
 # AIC
 Model <- c("Obs", 
@@ -345,8 +468,8 @@ Model <- c("Obs",
            # "Spatiotemporal", 
            # "Temporal + ST", 
            # "S+T+ST", 
-           "Spatial + Temporal", 
-           "Spatial + ST"
+           "Spatial + Temporal"#, 
+          # "Spatial + ST"
 ) #
 M_num <- c(1,
            2,
@@ -354,17 +477,17 @@ M_num <- c(1,
            #4,
            #5,
            #6,
-           7,
-           8
+           7#,
+          # 8
 )
 AIC <- c(opt1b$AIC, 
          opt2b$AIC, 
-         opt3b$AIC, #, 
+         Mod3r2$opt$AIC, #, 
          #opt4b$AIC, 
          #opt5b$AIC, 
          #opt6b$AIC, 
-         opt7b$AIC, 
-         opt8b$AIC
+         Mod7r$opt$AIC #, 
+        # opt8b$AIC
 ) # 
 aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
 names(aic_table) <- c("M_num", "Model", "AIC")
@@ -375,7 +498,129 @@ for(i in 2:nrow(aic_table)) {
 }
 aic_table
 
-SD7b$par.fixed
+# no additional spatial autocorrelation - maybe some temporal
+
+# compare models with reduced covariates for best models and best model with no overdispersion
+
+#----------- reduced Obs models w/no spatial ----------------
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
+
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod1r <- runOUGMRF(Inputs)
+Mod1r$SD$sd
+
+# Further Reduce
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod1r2 <- runOUGMRF(Inputs)
+Mod1r2$SD$sd
+
+# final reduction - no time-varying covs
+X_ij <- as.matrix(dplyr::select(covs, forest))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod1r3 <- runOUGMRF(Inputs)
+Mod1r2$SD$sd
+
+
+#----------- reduced temporal AR1 models w/no spatial ----------------
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
+
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod2r <- runOUGMRF(Inputs)
+Mod2r$SD$sd
+
+# Further Reduce
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod2r2 <- runOUGMRF(Inputs)
+Mod2r2$SD$sd
+
+# final reduction - no time-varying covs
+X_ij <- as.matrix(dplyr::select(covs, forest))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod2r3 <- runOUGMRF(Inputs)
+Mod2r3$SD$sd
+
+#---------------------------
+
+# AIC
+Model <- c("Obs", 
+           "Temporal", 
+           "Spatial",#, 
+           # "Spatiotemporal", 
+           # "Temporal + ST", 
+           # "S+T+ST", 
+           "Spatial + Temporal"#, 
+           # "Spatial + ST"
+) #
+M_num <- c("1",
+           "1r",
+           "1r2",
+           "1r3",
+           "2",
+           "2r",
+           "2r2",
+           "2r3"
+)
+k <- c(Mod1r$opt$k,
+       )
+AIC <- c(opt1b$AIC, 
+         Mod1r$opt$AIC, 
+         Mod1r2$opt$AIC,
+         Mod1r3$opt$AIC,
+         opt2b$AIC,
+         Mod2r$opt$AIC,
+         Mod2r2$opt$AIC,
+         Mod2r3$opt$AIC
+) # 
+aic_table2 <- data.frame(M_num, AIC, stringsAsFactors = FALSE)
+names(aic_table2) <- c("M_num", "AIC")
+aic_table2 <- dplyr::arrange(aic_table2, AIC)
+aic_table2$delta_AIC <- 0
+for(i in 2:nrow(aic_table2)) {
+  aic_table2$delta_AIC[i] <- aic_table2$AIC[i] - aic_table2$AIC[1]
+}
+aic_table2
+
+# better to keep all fixed effects
+
+
+
+SD2b$par.fixed
 
 save.image("Output/W_Susquehanna_YOY.RData")
-save(Report7b, opt7b, SD7b, SD_table, aic_table, file = "Output/W_Susquehanna_YOY_Summary.RData")
+save(Report2b, opt2b, SD2b, SD_table, aic_table, df = df, file = "Output/W_Susquehanna_YOY_Summary.RData")
+saveRDS(df_yoy = df_yoy,
+        family = family, df = df_yoy,
+        Report2b=Report2b, 
+        opt2b=opt2b, 
+        SD2b=SD2b, 
+        SD_table=SD_table, 
+        aic_table=aic_table, 
+        file = "Output/W_Susquehanna_YOY_Summary_RDS.RData")
+
+
+
+
+
+

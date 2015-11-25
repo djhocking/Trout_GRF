@@ -76,10 +76,10 @@ Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
 
 #----------------- Observation-Detection Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -103,7 +103,6 @@ opt1b[["AIC"]] = 2*opt1b$fval + 2*length(opt1b$par)
 SD1b <- sdreport(obj1, bias.correct=FALSE )
 
 summary(SD1b, "fixed", p.value = TRUE)
-
 (coef_table1 <- makeCoefTable(SD1b, colnames(as.matrix(X_ij))))
 
 #--------------------------------------------------
@@ -111,10 +110,10 @@ summary(SD1b, "fixed", p.value = TRUE)
 
 #----------------- Temporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -143,12 +142,12 @@ SD2b <- sdreport(obj2, bias.correct=FALSE )
 
 #------------ temporal without temporal covariates---------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse))
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -178,13 +177,13 @@ SD2bb <- sdreport(obj2, bias.correct=FALSE )
 #--------------------------------------------------
 
 #----------------- Spatial Only ------------------
-X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_summer_1, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_summer_1, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
+X_ij <- as.matrix(dplyr::select(as.data.frame(covs), forest, surfcoarse, temp_mean_summer_1, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_summer_1, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
 
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -213,10 +212,10 @@ SD3b <- sdreport(obj3, bias.correct=FALSE )
 
 #----------------- Spatiotemporal Only ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -248,10 +247,10 @@ SD4_lbfgsb<- sdreport(obj4)
 
 #----------------- Temporal + Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -282,10 +281,10 @@ SD5b <- sdreport(obj5, bias.correct=FALSE )
 
 #----------------- Spatial Temporal Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -313,10 +312,10 @@ SD6b <- sdreport(obj6, bias.correct=FALSE )
 
 #----------------- Spatial + Temporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF" = 1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF" = 1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -339,15 +338,18 @@ Report7b = obj7$report(obj7$env$last.par.best)
 opt7b[["AIC"]] = 2*opt7b$fval + 2*length(opt7b$par)
 SD7b <- sdreport(obj7, bias.correct=FALSE )
 
+(summary7 <- summary(SD7b, "fixed", p.value = TRUE))
+
+(coef_table7 <- makeCoefTable(SD7b, colnames(as.matrix(X_ij))))
 #--------------------------------------------------
 
 
 #----------------- Spatial + Spatiotemporal ------------------
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -391,11 +393,11 @@ SD_table <- data.frame(Parameter = names(SD3$value),
                        SD1 = SD1b$sd, 
                        SD2 = SD2b$sd, 
                        SD3 = SD3b$sd, 
-                       #SD4 = SD4b$sd, 
+                       SD4 = SD4b$sd, 
                        SD5 = SD5b$sd, 
                        SD6 = SD6b$sd, # fails ports and bobyqa
                        SD7 = SD7b$sd,
-                       SD8 = SD8b$sd, # fails ports and bobyqa
+                      # SD8 = SD8b$sd, # fails ports and bobyqa
                        stringsAsFactors = FALSE)
 for(i in 1:ncol(as.matrix(X_ij))) {
   SD_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
@@ -414,10 +416,10 @@ format(SD_table, digits = 2, scientific = 5) # models 4 & 6 fail
 # reduce covariates and try
 X_ij <- as.matrix(dplyr::select(covs, length_std))
 
-Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -443,10 +445,10 @@ SD4r_bobyqa <- sdreport(obj4r, bias.correct=FALSE )
 # reduce covariates and try
 X_ij <- as.matrix(dplyr::select(covs, length_std))
 
-Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -467,10 +469,10 @@ SD5r_lbfgsb<- sdreport(obj5r)
 # reduce covariates and try
 X_ij <- as.matrix(dplyr::select(covs, length_std))
 
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -493,10 +495,10 @@ SD6r_lbfgsb<- sdreport(obj6r)
 # reduce covariates and try
 X_ij <- as.matrix(dplyr::select(covs, length_std))
 
-Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
 
 # Make object
 dyn.load( dynlib(paste0("Code/", Version )))
@@ -523,29 +525,29 @@ SD8r_lbfgsb$sd # fail
 Model <- c("Obs", 
            "Temporal", 
            "Spatial",#, 
-          # "Spatiotemporal", 
+           "Spatiotemporal", 
            "Temporal + ST", 
           # "S+T+ST", 
-           "Spatial + Temporal",
-           "Spatial + ST"
+           "Spatial + Temporal"#,
+           #"Spatial + ST"
 ) #
 M_num <- c(1,
            2,
            3, #,
-           #4,
+           4,
            5,
            #6,
-           7,
-           8
+           7#,
+           #8
 )
 AIC <- c(opt1$AIC, 
          opt2$AIC, 
          opt3$AIC, #, 
-         #opt4$AIC, 
+         opt4$AIC, 
          opt5$AIC, 
          #opt6$AIC, 
-         opt7$AIC, 
-         opt8$AIC
+         opt7$AIC#, 
+         #opt8$AIC
          ) # 
 aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
 names(aic_table) <- c("M_num", "Model", "AIC")

@@ -17,6 +17,7 @@ runOUGMRF <- function(inputs) {
     opt1[["Param"]] = names( opt1$par )
     opt1[["final_gradient"]] = obj1$gr( opt1$par )
     opt1[["AIC"]] = 2*opt1$objective + 2*length(opt1$par)
+    opt1[["k"]] = length(opt1$par)
     Report1 = obj1$report()
     Report1[["Optimizer"]] <- "nlminb"
     SD1 = sdreport( obj1, bias.correct=FALSE )
@@ -29,6 +30,7 @@ runOUGMRF <- function(inputs) {
       Report1 = obj1$report()
       Report1[["Optimizer"]] <- "bobyqa"
       opt1[["Param"]] = names( opt1$par )
+      opt1[["k"]] = length(opt1$par)
       opt1[["AIC"]] = 2*opt1$fval + 2*length(opt1$par)
       SD1 <- sdreport(obj1, bias.correct=FALSE )
     }

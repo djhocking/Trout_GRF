@@ -69,10 +69,90 @@ compile( paste0("Code/", Version,".cpp") )
 # Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
 Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=1)
 
-# Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+start <- 1
+end <- 10
+Calc_lambda_ip <- rep(NA, length.out = nrow(c_ip))
+Calc_lambda_ip[start:end] <- 1
+Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
 
-mod1 <- runOUGMRF(inputs = Inputs)
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+
+inputs = Inputs
+dyn.load( dynlib(paste0("Code/", Version )))
+obj1 <- MakeADFun(data=inputs$Data, parameters=inputs$Params, random=inputs$Random, map=inputs$Map, hessian=TRUE, inner.control=list(maxit=1000) )
+
+# First run
+obj1$fn( obj1$par )
+
+# set initial so return and booleans don't fail
+opt1 <- NULL
+Report1 <- NULL
+SD1 <- NULL
+
+try({
+  # Run model
+  opt1 = nlminb(start=obj1$env$last.par.best[-c(obj1$env$random)], objective=obj1$fn, gradient=obj1$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+  opt1[["Param"]] = names( opt1$par )
+  opt1[["final_gradient"]] = obj1$gr( opt1$par )
+  opt1[["AIC"]] = 2*opt1$objective + 2*length(opt1$par)
+  Report1 = obj1$report()
+  Report1[["Optimizer"]] <- "nlminb"
+  SD1 = sdreport( obj1, bias.correct=TRUE )
+  
+  # Use BOBYQA optimization if PORTS fails
+  #if(is.null(SD1)) {
+  if(opt1$convergence == 1 | max(abs(opt1$final_gradient)) > 0.001 | is.null(SD1)) {
+    opt1 <- bobyqa(par = obj1$env$last.par.best[-c(obj1$env$random)], fn = obj1$fn)
+    opt1[["convergence"]] <- opt1$ierr
+    Report1 = obj1$report()
+    Report1[["Optimizer"]] <- "bobyqa"
+    opt1[["Param"]] = names( opt1$par )
+    opt1[["AIC"]] = 2*opt1$fval + 2*length(opt1$par)
+    SD1 <- sdreport(obj1, bias.correct=TRUE )
+  }
+})
+
+foo <- data.frame(N = Report1$N_ip[,1], lambda = Report1$lambda_ip[,1], N_min = rowSums(c_ip))
+foo
+  
+N_sd <- rep(NA, length.out = nrow(c_ip))
+SD <- data.frame(var = names(SD1$value), sd = SD1$sd)
+SD <- dplyr::filter(SD, var == "SD_report")
+N_sd[which(Calc_lambda_ip == 1)] <- SD$sd
+
+foo <- data.frame(N = Report1$N_ip[,1], lambda = Report1$lambda_ip[,1], N_min = rowSums(c_ip), N_sd = N_sd, c_i1 = c_ip[,1], chat_i1 = Report1$chat_ip[,1])
+foo
+
+# get next set of SD
+start <- 391
+end <- 398
+Calc_lambda_ip <- rep(NA, length.out = nrow(c_ip))
+Calc_lambda_ip[start:end] <- 1
+Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
+
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+inputs = Inputs
+dyn.load( dynlib(paste0("Code/", Version )))
+
+obj1 <- MakeADFun(data=inputs$Data, parameters=inputs$Params, random=inputs$Random, map=inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj1$fn( obj1$par )
+
+obj1$env$data$calcSD_Lambda_ip <- Calc_lambda_ip
+
+SD1 <- sdreport(obj1, bias.correct=TRUE ) # seems have to rerun the whole model each time
+
+SD <- data.frame(var = names(SD1$value), sd = SD1$sd)
+SD <- dplyr::filter(SD, var == "SD_report")
+N_sd[which(Calc_lambda_ip == 1)] <- SD$sd
+
+foo <- data.frame(N = Report1$N_ip[,1], lambda = Report1$lambda_ip[,1], N_min = rowSums(c_ip), N_sd = N_sd, c_i1 = c_ip[,1], chat_i1 = Report1$chat_ip[,1])
+foo
+
+
+  mod1 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------
 
 
@@ -91,7 +171,7 @@ mod2 <- runOUGMRF(inputs = Inputs)
 Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1)
 
 # Make inputs
-Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
 
 mod3 <- runOUGMRF(inputs = Inputs)
 #--------------------------------------------------

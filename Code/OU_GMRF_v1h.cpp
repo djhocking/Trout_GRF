@@ -24,6 +24,7 @@ template<class Type>
     // Slot 3 : Include log_extradetectrate_i variation (0=No, 1=Yes)
     // Slot 4 : Observation model (1=Poisson)
     // Slot 5 : Include lognormal_overdispersed_i (0=No, 1=Yes)
+    // Slot 6 : Output SD of abundancem N_i (0=No, 1=Yes) - only use Yes for small datasets
     
     // Sizes
     DATA_INTEGER(n_i);   // Number of data points
@@ -44,7 +45,6 @@ template<class Type>
     DATA_VECTOR(dist_b);  // distance to parent
     
     // Fixed effects
-    PARAMETER_VECTOR(gamma_j);
     PARAMETER(log_theta);             // Autocorrelation (i.e. density dependence)
     PARAMETER(log_SD);
     PARAMETER(log_theta_st);         // Spatial correlation of spatiotemporal error
@@ -55,6 +55,7 @@ template<class Type>
     PARAMETER(log_extradetectionSD);
     PARAMETER(rhot);                  // Purely temporal autocorrelation
     PARAMETER(log_sigmat);
+    PARAMETER_VECTOR(gamma_j);
     PARAMETER(log_detectrate);
     
     // Random effects
@@ -204,7 +205,7 @@ template<class Type>
     for(int i=0; i<n_i; i++){
       if(CalcSD_lambda_ip(i)==1){
         counter = counter + 1;
-        SD_report(counter) = N_ip(i,1);
+        SD_report(counter) = log(N_ip(i,1));
       }
     }
     
@@ -252,6 +253,14 @@ template<class Type>
     ADREPORT( SDinput );
     ADREPORT( SD_report );
    // ADREPORT( log_N100_dt );
-    
+//   if( Options_vec(6)==1 ) {
+////    vector<Type> log_N_i(n_i);
+//    vector<Type> N_i(n_i);
+//    N_i = N_ip.col(1);
+////    log_N_i = log(N_i);
+////     ADREPORT( log_N_i );
+//    ADREPORT( N_i );
+//   }
+
     return jnll;
   }

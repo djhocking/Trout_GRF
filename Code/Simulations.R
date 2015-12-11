@@ -16,6 +16,14 @@ source("Functions/simOUGMRF.R")
 source("Functions/runOUGMRF.R")
 source("Functions/summary_functions.R")
 
+# 1. Proof it works
+# Spatial model varying theta and sigma. I think it makes sense to compare these to a non-spatial model (sorry a sort of 3rd axis). Do you think we need to vary sigma since it affects the spatial correlation but as a constant and not in relation to distance? I don't think we need to test temporal or spatiotemporal components here.
+# 
+# 2. Power analysis
+# spatiotemporal model varying the number of years and sites with data
+# 
+# 3. Performance on axis
+# I'm unsure if this is necessary for this paper but I could vary the detection rate as you suggest holding everything else constant in a spatial model. This would be relevant for other fish species, other taxa (stream salamanders), and *maybe* YOY vs adults.
 
 dir_out <- "Output"
 
@@ -471,5 +479,297 @@ save.image(file = file.path(dir_out, "Sim_Results_Full.RData"))
 
 
 
+# relation of sigma_b and rho_b
 
+df_sigma <- data.frame(SD_b_hat = mod2[[35]]$Report$SDinput_b, 
+                       N_i = mod2[[35]]$Report$N_ip[, 1], 
+                       dist = family$dist_b,
+                       rho_b = mod2[[35]]$Report$rho_b)
+
+ggplot(df_sigma, aes(dist, SD_b_hat)) + geom_point()
+
+ggplot(df_sigma, aes(dist, rho_b)) + geom_point()
+
+ggplot(df_sigma, aes(SD_b_hat, rho_b)) + geom_point()
+
+# ability to recover SDinput_b - since combo of SDinput and theta which are not recovered well
+df_sigma$SD_b <- ((mod2[[35]]$Report$SDinput^2)/(2*mod2[[35]]$Report$theta) * (1-exp(-2*mod2[[35]]$Report$theta*family$dist_b)))^0.5
+
+SD <- 0.25
+theta <- 0.5
+df_sigma$SD_b_input <- ((SD^2)/(2*theta) * (1-exp(-2*theta*family$dist_b)))^0.5
+
+ggplot(df_sigma, aes(SD_b, SD_b_hat)) + geom_point()
+
+ggplot(df_sigma, aes(SD_b_input, SD_b_hat)) + geom_abline(intercept = 0, slope = 1, colour = "blue") + geom_point()
+
+
+
+
+n_iters <- 100
+theta_hat <- rep(NA, length.out = n_iters)
+SD_hat <- rep(NA, length.out = n_iters)
+for(i in 1:n_iters) {
+network <- simOUGMRF(family = family, 
+                     theta = 0.2, # adult estimate from sp + t model
+                     SD = 0.1, # adult estimate from sp + t model
+                     mean_N = 40,
+                     gamma = gamma_j,
+                     X_ij = X_ij,
+                     p = p,
+                     sample_pct = sample_pct_vec[1],
+                     spatial = TRUE
+)
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1)
+
+Calc_lambda_ip <- rep(0, length.out = nrow(network$c_ip))
+
+# Make inputs
+Inputs <- makeInput(family = family, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+
+try({
+# run model
+mod_out <- runOUGMRF(inputs = Inputs)
+
+#str(mod_out$Report)
+
+theta_hat[i] <- mod_out$Report$theta
+SD_hat[i] <- mod_out$Report$SDinput
+})
+
+}
+df_reps <- data.frame(theta_hat, SD_hat)
+df_reps[which(df_reps$theta > 100), ] <- NA
+format(df_reps, digits = 2, scientific = FALSE)
+
+summary(df_reps)
+
+
+
+# what if the distance is on a different scale?
+family2 <- family
+faimly2$dist <- family$dist/10
+n_iters <- 100
+theta_hat <- rep(NA, length.out = n_iters)
+SD_hat <- rep(NA, length.out = n_iters)
+for(i in 1:n_iters) {
+  network <- simOUGMRF(family = family2, 
+                       theta = 0.2, # adult estimate from sp + t model
+                       SD = 0.1, # adult estimate from sp + t model
+                       mean_N = 40,
+                       gamma = gamma_j,
+                       X_ij = X_ij,
+                       p = p,
+                       sample_pct = sample_pct_vec[1],
+                       spatial = TRUE
+  )
+  
+  Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1)
+  
+  Calc_lambda_ip <- rep(0, length.out = nrow(network$c_ip))
+  
+  # Make inputs
+  Inputs <- makeInput(family = family2, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+  
+  try({
+    # run model
+    mod_out <- runOUGMRF(inputs = Inputs)
+    
+    #str(mod_out$Report)
+    
+    theta_hat[i] <- mod_out$Report$theta
+    SD_hat[i] <- mod_out$Report$SDinput
+  })
+  
+}
+df_reps2 <- data.frame(theta_hat, SD_hat)
+df_reps2[which(df_reps2$theta > 100), ] <- NA
+format(df_reps2, digits = 2, scientific = FALSE)
+
+summary(df_reps2)
+
+# multiple by 10
+family3 <- family
+faimly3$dist <- family$dist*10
+n_iters <- 100
+theta_hat <- rep(NA, length.out = n_iters)
+SD_hat <- rep(NA, length.out = n_iters)
+for(i in 1:n_iters) {
+  network <- simOUGMRF(family = family2, 
+                       theta = 0.2, # adult estimate from sp + t model
+                       SD = 0.1, # adult estimate from sp + t model
+                       mean_N = 40,
+                       gamma = gamma_j,
+                       X_ij = X_ij,
+                       p = p,
+                       sample_pct = sample_pct_vec[1],
+                       spatial = TRUE
+  )
+  
+  Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1)
+  
+  Calc_lambda_ip <- rep(0, length.out = nrow(network$c_ip))
+  
+  # Make inputs
+  Inputs <- makeInput(family = family3, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+  
+  try({
+    # run model
+    mod_out <- runOUGMRF(inputs = Inputs)
+    
+    #str(mod_out$Report)
+    
+    theta_hat[i] <- mod_out$Report$theta
+    SD_hat[i] <- mod_out$Report$SDinput
+  })
+  
+}
+df_reps3 <- data.frame(theta_hat, SD_hat)
+df_reps3[which(df_reps3$theta > 100), ] <- NA
+format(df_reps3, digits = 2, scientific = FALSE)
+
+summary(df_reps3)
+
+
+
+
+# multiple by 10
+family4 <- family
+family4$dist <- family$dist
+n_iters <- 100
+theta_hat <- rep(NA, length.out = n_iters)
+SD_hat <- rep(NA, length.out = n_iters)
+sig_b_rmse <- rep(NA, length.out = n_iters)
+N_rmse <- rep(NA, length.out = n_iters)
+theta <- 1
+SD <- 0.5
+for(i in 1:n_iters) {
+  network <- simOUGMRF(family = family4, 
+                       theta = theta, # adult estimate from sp + t model
+                       SD = SD, # adult estimate from sp + t model
+                       mean_N = 40,
+                       gamma = gamma_j,
+                       X_ij = X_ij,
+                       p = p,
+                       sample_pct = sample_pct_vec[1],
+                       spatial = TRUE
+  )
+  
+  Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1)
+  
+  Calc_lambda_ip <- rep(0, length.out = nrow(network$c_ip))
+  
+  # Make inputs
+  Inputs <- makeInput(family = family4, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+  
+  try({
+    # run model
+    mod_out <- runOUGMRF(inputs = Inputs)
+    
+    #str(mod_out$Report)
+    
+    sig_b <- sqrt((SD^2)/(2 * theta) * (1 - exp(-1 * theta * family$dist_b)))
+    
+    if(mod_out$opt$convergence == 1) {
+      theta_hat[i] <- NA
+      SD_hat[i] <- NA
+      N_rmse[i] <- NA
+      sig_b_rmse[i] <- NA
+      sigma_b <- data.frame(iter = i, sig_b = NA, sig_b_hat = NA)
+    } else {
+      theta_hat[i] <- mod_out$Report$theta
+      SD_hat[i] <- mod_out$Report$SDinput
+      N_rmse[i] <- rmse(network$N_i - mod_out$Report$N_ip[,1])
+      sig_b_rmse[i] <- rmse(sig_b - mod_out$Report$SDinput_b)
+      sigma_b <- data.frame(iter = i, sig_b = sig_b, sig_b_hat = mod_out$Report$SDinput_b)
+      #plot(sig_b, mod_out$Report$SDinput_b, type = "p")
+    }
+    if(i == 1) {
+      df_sig_4 <- sigma_b
+    } else {
+      df_sig_4 <- dplyr::bind_rows(df_sig, sigma_b)
+    }
+  })
+  
+}
+df_reps4 <- data.frame(theta_hat, SD_hat, N_rmse, sig_b_rmse)
+df_reps4[which(df_reps4$theta > 100), ] <- NA
+format(df_reps4, digits = 2, scientific = FALSE)
+
+summary(df_reps4)
+
+ggplot(df_reps4, aes(theta_hat, SD_hat)) + geom_point() + geom_point(aes(x=theta, y=SD), colour = "red", size = 4)
+
+ggplot(df_sig, aes(sig_b, sig_b_hat)) + geom_point(aes(colour = iter)) + scale_color_gradient() + geom_abline(intercept = 0, slope = 1, colour = "red")
+
+
+# multiple by 10
+family5 <- family
+family5$dist <- family$dist/100
+n_iters <- 100
+theta_hat <- rep(NA, length.out = n_iters)
+SD_hat <- rep(NA, length.out = n_iters)
+sig_b_rmse <- rep(NA, length.out = n_iters)
+N_rmse <- rep(NA, length.out = n_iters)
+theta <- 10
+SD <- 5
+for(i in 1:n_iters) {
+  network <- simOUGMRF(family = family5, 
+                       theta = theta, # adult estimate from sp + t model
+                       SD = SD, # adult estimate from sp + t model
+                       mean_N = 40,
+                       gamma = gamma_j,
+                       X_ij = X_ij,
+                       p = p,
+                       sample_pct = sample_pct_vec[1],
+                       spatial = TRUE
+  )
+  
+  Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1)
+  
+  Calc_lambda_ip <- rep(0, length.out = nrow(network$c_ip))
+  
+  # Make inputs
+  Inputs <- makeInput(family = family5, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+  
+  try({
+    # run model
+    mod_out <- runOUGMRF(inputs = Inputs)
+    
+    #str(mod_out$Report)
+    
+    sig_b <- sqrt((SD^2)/(2 * theta) * (1 - exp(-1 * theta * family$dist_b)))
+    
+    if(mod_out$opt$convergence == 1) {
+      theta_hat[i] <- NA
+      SD_hat[i] <- NA
+      N_rmse[i] <- NA
+      sig_b_rmse[i] <- NA
+      sigma_b <- data.frame(iter = i, sig_b = NA, sig_b_hat = NA)
+    } else {
+    theta_hat[i] <- mod_out$Report$theta
+    SD_hat[i] <- mod_out$Report$SDinput
+    N_rmse[i] <- rmse(network$N_i - mod_out$Report$N_ip[,1])
+    sig_b_rmse[i] <- rmse(sig_b - mod_out$Report$SDinput_b)
+    sigma_b <- data.frame(iter = i, sig_b = sig_b, sig_b_hat = mod_out$Report$SDinput_b)
+    #plot(sig_b, mod_out$Report$SDinput_b, type = "p")
+    }
+    if(i == 1) {
+      df_sig_5 <- sigma_b
+    } else {
+      df_sig_5 <- dplyr::bind_rows(df_sig_5, sigma_b)
+    }
+  })
+  
+}
+df_reps5 <- data.frame(theta_hat, SD_hat, N_rmse, sig_b_rmse)
+df_reps5[which(df_reps5$theta > 100), ] <- NA
+format(df_reps5, digits = 2, scientific = FALSE)
+
+summary(df_reps5)
+
+ggplot(df_reps5, aes(theta_hat, SD_hat)) + geom_point() + geom_point(aes(x=theta, y=SD), colour = "red", size = 5)
+
+ggplot(df_sig, aes(sig_b, sig_b_hat)) + geom_point(aes(colour = iter)) + scale_color_gradient() + geom_abline(intercept = 0, slope = 1, colour = "red")
 

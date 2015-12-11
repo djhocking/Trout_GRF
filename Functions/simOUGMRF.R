@@ -1,6 +1,8 @@
 
 # Generate Data
 simOUGMRF <- function(family, theta, SD, mean_N, gamma, X_ij, p, sample_pct, spatial = TRUE) {
+
+  #------------ Spatial -------------
   # object
   condSD_b = x_b = rep(NA, nrow(family))
   
@@ -25,6 +27,9 @@ simOUGMRF <- function(family, theta, SD, mean_N, gamma, X_ij, p, sample_pct, spa
     if( all(!is.na(x_b)) ) break()
   }
   
+  #-------------- Spatiotemporal -------------------
+  
+  # ------------- Deterministic --------------------
   # Covariates
   eta_i <- gamma_j * X_ij
   eta_i <- rowSums(eta_i)
@@ -35,6 +40,7 @@ simOUGMRF <- function(family, theta, SD, mean_N, gamma, X_ij, p, sample_pct, spa
     N_i = rpois( length(x_b), lambda=exp(log_mean+eta_i))
   }
   
+  #-------------- Observation Process --------------
   # Simulate binomial observation (count) process
   c_ip_full <- matrix(NA, length(N_i), length(p))
   for(a in 1:length(N_i)) {
@@ -43,6 +49,7 @@ simOUGMRF <- function(family, theta, SD, mean_N, gamma, X_ij, p, sample_pct, spa
     }
   }
   
+  #---------------- Temporal Autocorrelation AR1 ----------
   # temporal - no temporal variability currently
   t_i <- rep(2000, times = length(N_i))
   

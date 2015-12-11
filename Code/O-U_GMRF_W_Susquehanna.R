@@ -29,7 +29,7 @@ rmse <- function(error, na.rm = T) {
 #######################
 # Load data
 #######################
-load("Data/Prepared_Data_W_Susquehanna.RData")
+load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
 
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
 #X_ij <- X_ij[ , c("length_std", "effort_std")]
@@ -127,9 +127,9 @@ Which = which( obj2$gr( obj2$par )==0 )
 # Run model
 opt2 = nlminb(start=obj2$env$last.par.best[-c(obj2$env$random)], objective=obj2$fn, gradient=obj2$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt2[["final_gradient"]] = obj2$gr( opt2$par )
-opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
-Report2 = obj2$report()
-SD2 = sdreport( obj2, bias.correct=FALSE )
+# opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
+# Report2 = obj2$report()
+# SD2 = sdreport( obj2, bias.correct=FALSE )
 
 
 # 
@@ -161,9 +161,9 @@ Which = which( obj2$gr( obj2$par )==0 )
 # Run model
 opt2 = nlminb(start=obj2$env$last.par.best[-c(obj2$env$random)], objective=obj2$fn, gradient=obj2$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt2[["final_gradient"]] = obj2$gr( opt2$par )
-opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
-Report2 = obj2$report()
-SD2 = sdreport( obj2, bias.correct=FALSE )
+# opt2[["AIC"]] = 2*opt2$objective + 2*length(opt2$par)
+# Report2 = obj2$report()
+# SD2 = sdreport( obj2, bias.correct=FALSE )
 
 
 # 
@@ -197,9 +197,9 @@ Which = which( obj3$gr( obj3$par )==0 )
 # Run model
 opt3 = nlminb(start=obj3$env$last.par.best[-c(obj3$env$random)], objective=obj3$fn, gradient=obj3$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt3[["final_gradient"]] = obj3$gr( opt3$par )
-opt3[["AIC"]] = 2*opt3$objective + 2*length(opt3$par)
-Report3 = obj3$report()
-SD3 = sdreport( obj3, bias.correct=FALSE )
+# opt3[["AIC"]] = 2*opt3$objective + 2*length(opt3$par)
+# Report3 = obj3$report()
+# SD3 = sdreport( obj3, bias.correct=FALSE )
 
 opt3b <- bobyqa(par = obj3$env$last.par.best[-c(obj3$env$random)], fn = obj3$fn)
 Report3b = obj3$report()
@@ -230,9 +230,9 @@ Which = which( obj4$gr( obj4$par )==0 )
 # Run model (nlminb is slow)
 opt4 = nlminb(start=obj4$env$last.par.best[-c(obj4$env$random)], objective=obj4$fn, gradient=obj4$gr, control=list(eval.max=1e4, iter.max=1e4, trace=4, rel.tol=1e-14) )
 opt4[["final_gradient"]] = obj4$gr( opt4$par )
-opt4[["AIC"]] = 2*opt4$objective + 2*length(opt4$par)
-Report4 = obj4$report()
-SD4 = sdreport( obj4, bias.correct=FALSE )
+# opt4[["AIC"]] = 2*opt4$objective + 2*length(opt4$par)
+# Report4 = obj4$report()
+# SD4 = sdreport( obj4, bias.correct=FALSE )
 
 opt4b <- bobyqa(par = obj4$env$last.par.best[-c(obj4$env$random)], fn = obj4$fn)
 Report4b = obj4$report()
@@ -267,9 +267,9 @@ Which = which( obj5$gr( obj5$par )==0 )
 # Run model
 opt5 = nlminb(start=obj5$env$last.par.best[-c(obj5$env$random)], objective=obj5$fn, gradient=obj5$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt5[["final_gradient"]] = obj5$gr( opt5$par )
-opt5[["AIC"]] = 2*opt5$objective + 2*length(opt5$par)
-Report5 = obj5$report()
-SD5 = sdreport( obj5, bias.correct=FALSE )
+# opt5[["AIC"]] = 2*opt5$objective + 2*length(opt5$par)
+# Report5 = obj5$report()
+# SD5 = sdreport( obj5, bias.correct=FALSE )
 
 opt5b <- bobyqa(par = obj5$env$last.par.best[-c(obj5$env$random)], fn = obj5$fn)
 Report5b = obj5$report()
@@ -299,9 +299,9 @@ Which = which( obj6$gr( obj6$par )==0 )
 # Run model
 opt6 = nlminb(start=obj6$env$last.par.best[-c(obj6$env$random)], objective=obj6$fn, gradient=obj6$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt6[["final_gradient"]] = obj6$gr( opt6$par )
-opt6[["AIC"]] = 2*opt6$objective + 2*length(opt6$par)
-Report6 = obj6$report()
-SD6 = sdreport( obj6, bias.correct=FALSE )
+# opt6[["AIC"]] = 2*opt6$objective + 2*length(opt6$par)
+# Report6 = obj6$report()
+# SD6 = sdreport( obj6, bias.correct=FALSE )
 
 opt6b <- bobyqa(par = obj6$env$last.par.best[-c(obj6$env$random)], fn = obj6$fn)
 Report6b = obj6b$report()
@@ -329,9 +329,9 @@ Which = which( obj7$gr( obj7$par )==0 )
 # Run model
 opt7 = nlminb(start=obj7$env$last.par.best[-c(obj7$env$random)], objective=obj7$fn, gradient=obj7$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt7[["final_gradient"]] = obj7$gr( opt7$par )
-opt7[["AIC"]] = 2*opt7$objective + 2*length(opt7$par)
-Report7 = obj7$report()
-SD7 = sdreport( obj7, bias.correct=FALSE )
+# opt7[["AIC"]] = 2*opt7$objective + 2*length(opt7$par)
+# Report7 = obj7$report()
+# SD7 = sdreport( obj7, bias.correct=FALSE )
 
 opt7b <- bobyqa(par = obj7$env$last.par.best[-c(obj7$env$random)], fn = obj7$fn)
 Report7b = obj7$report(obj7$env$last.par.best)
@@ -366,9 +366,9 @@ Which = which( obj8$gr( obj8$par )==0 )
 # Run model
 opt8 = nlminb(start=obj8$env$last.par.best[-c(obj8$env$random)], objective=obj8$fn, gradient=obj8$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
 opt8[["final_gradient"]] = obj8$gr( opt8$par )
-opt8[["AIC"]] = 2*opt8$objective + 2*length(opt8$par)
-Report8 = obj8$report()
-SD8 = sdreport( obj8, bias.correct=FALSE )
+# opt8[["AIC"]] = 2*opt8$objective + 2*length(opt8$par)
+# Report8 = obj8$report()
+# SD8 = sdreport( obj8, bias.correct=FALSE )
 
 opt8b <- bobyqa(par = obj8$env$last.par.best[-c(obj8$env$random)], fn = obj8$fn)
 Report8b = objb$report(obj8$env$last.par.best)
@@ -389,25 +389,21 @@ c(opt1b$ierr, opt2b$ierr, opt3b$ierr, opt4b$ierr, opt5b$ierr, opt6b$ierr, opt7b$
 
 #------------------------------------------------
 
-SD_table <- data.frame(Parameter = names(SD3$value), 
+SD_table <- data.frame(Parameter = names(SD1$value), 
                        SD1 = SD1b$sd, 
                        SD2 = SD2b$sd, 
-                       SD3 = SD3b$sd, 
+                       #SD3 = SD3b$sd, 
                        SD4 = SD4b$sd, 
                        SD5 = SD5b$sd, 
                        SD6 = SD6b$sd, # fails ports and bobyqa
                        SD7 = SD7b$sd,
-                      # SD8 = SD8b$sd, # fails ports and bobyqa
+                       SD8 = SD8b$sd,
                        stringsAsFactors = FALSE)
 for(i in 1:ncol(as.matrix(X_ij))) {
   SD_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
 }
 
-for(i in 1:length(cov_names)) {
-  SD_table$Parameter[i] <- cov_names[i]
-}
-
-format(SD_table, digits = 2, scientific = 5) # models 4 & 6 fail
+format(SD_table, digits = 2, scientific = 5) # 
 
 
 
@@ -524,29 +520,29 @@ SD8r_lbfgsb$sd # fail
 #--------------- AIC -------------
 Model <- c("Obs", 
            "Temporal", 
-           "Spatial",#, 
+        #   "Spatial",#, 
            "Spatiotemporal", 
            "Temporal + ST", 
           # "S+T+ST", 
-           "Spatial + Temporal"#,
-           #"Spatial + ST"
+           "Spatial + Temporal"
+        #   "Spatial + ST"
 ) #
 M_num <- c(1,
            2,
-           3, #,
+          # 3, #,
            4,
            5,
            #6,
-           7#,
-           #8
+           7
+          # 8
 )
-AIC <- c(opt1$AIC, 
-         opt2$AIC, 
-         opt3$AIC, #, 
-         opt4$AIC, 
-         opt5$AIC, 
+AIC <- c(opt1b$AIC, 
+         opt2b$AIC, 
+         #opt3$AIC, #, 
+         opt4b$AIC, 
+         opt5b$AIC, 
          #opt6$AIC, 
-         opt7$AIC#, 
+         opt7b$AIC
          #opt8$AIC
          ) # 
 aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
@@ -673,6 +669,18 @@ SD7b$par.fixed
 # save
 save.image(file = "Output/W_Susquehanna.RData")
 
+save(Report4b, opt4b, SD4b, SD_table, family, covs, aic_table, t_i, df = df, file = "Output/W_Susquehanna_Summary.RData")
+
+saveRDS(list(df = df,
+        family = family,
+        Report4b=Report4b, 
+        opt4b=opt4b, 
+        SD4b=SD4b, 
+        t_i = t_i,
+        SD_table=SD_table, 
+        aic_table=aic_table,
+        covs = covs),
+        file = "Output/W_Susquehanna_Summary_RDS.RData")
 
 
 

@@ -18,12 +18,16 @@ source("Functions/runOUGMRF.R")
 #######################
 # Load data
 #######################
-load("Data/Prepared_Data_W_Susquehanna.RData")
+load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
+
+# df_yoy$date <- as.Date(df_yoy$date)
+# df_yoy$month <- month(df_yoy$date)
+# c_ip_yoy[which(df_yoy$month < 6), c("pass_1", "pass_2", "pass_3")] <- NA
 
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
 #X_ij <- X_ij[ , c("length_std", "effort_std")]
 covs <- X_ij
-X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_summer_1, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_summer_1, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
+X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
 
 offset <-  as.numeric(df_yoy$length_sample)
 
@@ -335,11 +339,11 @@ SD_table <- data.frame(Parameter = names(SD3$value),
                        SD1 = SD1$sd, 
                        SD2 = SD2$sd, 
                        SD3 = SD3b$sd,
-                       #SD4 = SD4b$sd, 
-                       #SD5 = SD5b$sd, 
-                       #SD6 = SD6$sd, # fails
+                       SD4 = SD4b$sd, 
+                       SD5 = SD5b$sd, 
+                       SD6 = SD6$sd, # fails
                        SD7 = SD7$sd,
-                       #SD8 = SD8$sd, #
+                       SD8 = SD8$sd, #
                        stringsAsFactors = FALSE)
 for(i in 1:ncol(as.matrix(X_ij))) {
   SD_table$Parameter[i] <- colnames(as.matrix(X_ij))[i]
@@ -386,7 +390,9 @@ Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Opt
 
 Mod4r <- runOUGMRF(Inputs)
 
-str(Mod4r) # fails
+str(Mod4r)
+Mod4r$opt$convergence
+Mod4r$SD$sd
 
 # Further Reduce
 X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
@@ -398,7 +404,9 @@ Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "Detectabil
 Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 Mod4r2 <- runOUGMRF(Inputs)
-str(Mod4r2)  # fails
+str(Mod4r2)
+Mod4r2$opt$convergence
+Mod4r2$SD$sd
 
 # final reduction
 X_ij <- as.matrix(dplyr::select(covs, forest))
@@ -410,9 +418,59 @@ Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "Detectabil
 Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 Mod4r3 <- runOUGMRF(Inputs)
-str(Mod4r3) # fails
+str(Mod4r3) 
+Mod4r3$opt$convergence
+Mod4r3$SD$sd
+
+#----------------- Temporal + ST ------------------
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
+
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF" = 1)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod5r <- runOUGMRF(Inputs)
+Mod5r$SD$sd # Fail
+
+# Further Reduce
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod5r2 <- runOUGMRF(Inputs)
+str(Mod5r2)
+Mod5r2$opt$convergence
+Mod5r2$SD$sd # Fails
+
+# Final Reduction
+X_ij <- as.matrix(dplyr::select(covs, forest))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod5r3 <- runOUGMRF(Inputs)
+str(Mod5r3)
+Mod5r3$opt$convergence
+Mod5r3$SD$sd # Fails
 
 
+#----------------- Spatial Temporal Spatiotemporal Reduced ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Final Reduction
+X_ij <- as.matrix(dplyr::select(covs, forest))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod6r3 <- runOUGMRF(Inputs)
+str(Mod6r3)
+Mod6r3$opt$convergence
+Mod6r3$SD$sd # Fails
 
 #----------------- Spatial + Temporal ------------------
 X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
@@ -425,6 +483,28 @@ Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Opt
 
 Mod7r <- runOUGMRF(Inputs)
 Mod7r$SD$sd # success
+
+# Further Reduce
+X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod7r2 <- runOUGMRF(Inputs)
+str(Mod7r2)
+Mod7r2$opt$convergence
+Mod7r2$SD$sd # success
+
+# final reduction - no time-varying covs
+X_ij <- as.matrix(dplyr::select(covs, forest))
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
+
+Mod7r3 <- runOUGMRF(Inputs)
+str(Mod7r3)
+Mod7r3$opt$convergence
+Mod7r3$SD$sd 
 
 #----------------- Spatial + Spatiotemporal ------------------
 X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_winter, temp_mean_spring, prcp_mean_winter, prcp_mean_spring))
@@ -440,54 +520,75 @@ str(Mod8r) # fails
 # Further Reduce
 X_ij <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
 
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
-
 # Make inputs
 Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 Mod8r2 <- runOUGMRF(Inputs)
 str(Mod8r2)
+Mod8r2$opt$convergence
+Mod8r2$SD$sd # success
 
 # final reduction - no time-varying covs
 X_ij <- as.matrix(dplyr::select(covs, forest))
-
-Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
 
 # Make inputs
 Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, offset_i = offset, CalcSD_lambda_ip = Calc_lambda_ip)
 
 Mod8r3 <- runOUGMRF(Inputs)
-str(Mod8r3) # fails
+str(Mod8r3)
+Mod8r3$opt$convergence
+Mod8r3$SD$sd 
 
 #--------------------------------------------
+
 
 # AIC
 Model <- c("Obs", 
            "Temporal", 
-           "Spatial",#, 
-           # "Spatiotemporal", 
-           # "Temporal + ST", 
+           "Spatial",
+           "Spatial reduced",
+           "Spatial reduced 2",
+           "Spatiotemporal",
+           "Spatiotemporal reduced",
+           # "Spatiotemporal reduced 2",
+           "Spatiotemporal reduced 3",
+            "Temporal + ST", 
            # "S+T+ST", 
-           "Spatial + Temporal"#, 
-          # "Spatial + ST"
+           "Spatial + Temporal", 
+           "Spatial + Temporal reduced", 
+           "Spatial + ST reduced 3",
+           "Spatial + ST reduced 3"
 ) #
-M_num <- c(1,
-           2,
-           3,
-           #4,
-           #5,
+M_num <- c("1",
+           "2",
+           "3",
+           "3r",
+           "3r2",
+           "4",
+           "4r",
+          # "4r2",
+           "4r3",
+           "5",
            #6,
-           7#,
-          # 8
+           "7",
+           "7r",
+           "8r2",
+           "8r3"
 )
 AIC <- c(opt1b$AIC, 
-         opt2b$AIC, 
-         Mod3r2$opt$AIC, #, 
-         #opt4b$AIC, 
-         #opt5b$AIC, 
-         #opt6b$AIC, 
-         Mod7r$opt$AIC #, 
-        # opt8b$AIC
+             opt2b$AIC, 
+             opt3b$AIC,
+             Mod3r$opt$AIC, #, 
+             Mod3r2$opt$AIC,
+         opt4b$AIC,
+             Mod4r$opt$AIC,
+            # Mod4r2$opt$AIC,
+             Mod4r3$opt$AIC,
+         opt5b$AIC,
+             opt7b$AIC,
+             Mod7r$opt$AIC, 
+             Mod8r2$opt$AIC,
+             Mod8r3$opt$AIC
 ) # 
 aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
 names(aic_table) <- c("M_num", "Model", "AIC")
@@ -564,13 +665,26 @@ Mod2r3$SD$sd
 #---------------------------
 
 # AIC
-Model <- c("Obs", 
-           "Temporal", 
-           "Spatial",#, 
+Model <- c("Obs",
+           "Obs reduced",
+           "Obs reduced 2",
+           "Obs reduced 3",
+           "Temporal",
+           "Temporal reduced",
+           "Temporal reduced 2",
+           "Temporal reduced 3",
+           "Spatiotemporal",
+           "Spatiotemporal reduced",
+           #"Spatiotemporal reduced 2",
+           "Spatiotemporal reduced 3",
+           #"Spatial",#, 
            # "Spatiotemporal", 
            # "Temporal + ST", 
            # "S+T+ST", 
-           "Spatial + Temporal"#, 
+           "Spatial + Temporal",
+           "Spatial + Temporal reduced",
+           "Spatial + Temporal reduced 2",
+           "Spatial + Temporal reduced 3"
            # "Spatial + ST"
 ) #
 M_num <- c("1",
@@ -580,10 +694,17 @@ M_num <- c("1",
            "2",
            "2r",
            "2r2",
-           "2r3"
+           "2r3",
+           "4",
+           "4r",
+          # "4r2",
+           "4r3",
+           "7",
+           "7r",
+           "7r2",
+           "7r3"
 )
-k <- c(Mod1r$opt$k,
-       )
+#k <- c(Mod1r$opt$k)
 AIC <- c(opt1b$AIC, 
          Mod1r$opt$AIC, 
          Mod1r2$opt$AIC,
@@ -591,7 +712,15 @@ AIC <- c(opt1b$AIC,
          opt2b$AIC,
          Mod2r$opt$AIC,
          Mod2r2$opt$AIC,
-         Mod2r3$opt$AIC
+         Mod2r3$opt$AIC,
+         opt4b$AIC,
+         Mod4r$opt$AIC,
+         #Mod4r2$opt$AIC,
+         Mod4r3$opt$AIC,
+         opt7b$AIC,
+         Mod7r$opt$AIC,
+         Mod7r2$opt$AIC,
+         Mod7r3$opt$AIC
 ) # 
 aic_table2 <- data.frame(M_num, AIC, stringsAsFactors = FALSE)
 names(aic_table2) <- c("M_num", "AIC")
@@ -603,20 +732,31 @@ for(i in 2:nrow(aic_table2)) {
 aic_table2
 
 # better to keep all fixed effects
+X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
+Parameters = colnames(as.matrix(X_ij))
+
+X_r2 <- as.matrix(dplyr::select(covs, forest, temp_mean_spring, prcp_mean_winter))
+Parameters_r2 <- colnames(as.matrix(X_r2))
 
 
+summary(SD7b, "fixed", p.value = TRUE)
+SD7b$par.fixed
 
-SD2b$par.fixed
+Mod5 <- list(Report = Report5b, opt = opt5b, SD = SD5b)
 
 save.image("Output/W_Susquehanna_YOY.RData")
-save(Report2b, opt2b, SD2b, SD_table, aic_table, df = df, file = "Output/W_Susquehanna_YOY_Summary.RData")
-saveRDS(df_yoy = df_yoy,
-        family = family, df = df_yoy,
-        Report2b=Report2b, 
-        opt2b=opt2b, 
-        SD2b=SD2b, 
+save(Mod5, SD_table, aic_table, aic_table2, covs, X_ij, Parameters, df = df_yoy, family, file = "Output/W_Susquehanna_YOY_Summary.RData")
+
+saveRDS(list(df_yoy = df_yoy,
+        family = family,
+        Report5=Mod5$Report, 
+        opt5=Mod5$opt, 
+        SD5=Mod5$SD, 
         SD_table=SD_table, 
+        Parameters = Parameters,
+        covs = covs,
         aic_table=aic_table, 
+        aic_table2 = aic_table2),
         file = "Output/W_Susquehanna_YOY_Summary_RDS.RData")
 
 

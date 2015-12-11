@@ -20,11 +20,21 @@ dir_out <- "Output"
 # Load data
 #######################
 
-family <- read.csv( "Data/West_Susquehanna_3pass_Network.csv", stringsAsFactors = FALSE)
+family <- read.csv( "Data/W_Susquehanna_Peterson_3pass_Network.csv", stringsAsFactors = FALSE)
 colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
 
 df_fish <- read.csv("Data/West_Susquehanna_3pass.csv", stringsAsFactors = FALSE)
+df_fish_MR <- read.csv("Data/Lincoln_Petersen_MR.csv", stringsAsFactors = FALSE)
+
+# just use first pass from lincoln-peterson MR data
+df_fish_MR <- df_fish_MR %>%
+  dplyr::filter(EffortNumber == 1)
+
+# combine with 3-pass data
+df_fish$method <- "removal"
+df_fish_MR$method <- "MR"
+df_fish <- dplyr::bind_rows(df_fish, df_fish_MR)
 
 #######################
 # Prep Trout Data
@@ -77,30 +87,30 @@ df_covs_visit <- df_fish %>%
                    width = mean(width, na.rm = T),
                    effort = mean(SiteEffortHours, na.rm = T))
 
-# First try use three passes for adults only for years with block nets
+# Assign Stage
 df_bkt_adult <- df_fish %>%
   dplyr::mutate(stage = ifelse(sizebin >= 100, "adult", "yoy")) %>%
   dplyr::filter(species == "Brook Trout" & stage == "adult") %>%
-  dplyr::group_by(site_visit, site, year, date, pass) %>%
+  dplyr::group_by(site_visit, site, year, date, pass, method) %>%
   dplyr::summarise(count = sum(catch))
 
 df_bkt_yoy <- df_fish %>%
   dplyr::mutate(stage = ifelse(sizebin < 100, "yoy", "adult")) %>%
   dplyr::filter(species == "Brook Trout" & stage == "yoy") 
 df_bkt_yoy <- df_bkt_yoy %>%
-  dplyr::group_by(site_visit, site, year, date, pass) %>%
+  dplyr::group_by(site_visit, site, year, date, pass, method) %>%
   dplyr::summarise(count = sum(catch))
 
 # expand to 3-pass for all visits
 foo <- df_bkt_adult %>%
   dplyr::ungroup() %>%
-  dplyr::select(site_visit, site, date, year, pass, count)
-df_bkt_3_pass <- tidyr::complete(ungroup(foo), c(site_visit, site, date, year), pass, fill = list(count = 0))
+  dplyr::select(site_visit, site, date, year, pass, method, count)
+df_bkt_3_pass <- tidyr::complete(ungroup(foo), c(site_visit, site, date, year, method), pass, fill = list(count = 0))
 
 bar <- df_bkt_yoy %>%
   dplyr::ungroup() %>%
-  dplyr::select(site_visit, site, date, year, pass, count)
-df_bkt_3_pass_yoy <- tidyr::complete(ungroup(bar), c(site_visit, site, date, year), pass, fill = list(count = 0))
+  dplyr::select(site_visit, site, date, year, pass, method, count)
+df_bkt_3_pass_yoy <- tidyr::complete(ungroup(bar), c(site_visit, site, date, year, method), pass, fill = list(count = 0))
 
 # test that expands to correct size
 dim(df_bkt_adult)
@@ -131,6 +141,18 @@ dim(df_bkt_3_pass_yoy)
 df_trout <- left_join(df_covs_visit, df_bkt_3_pass) %>% distinct()
 df_trout_yoy <- left_join(df_covs_visit, df_bkt_3_pass_yoy) %>% distinct()
 
+# Fill zeros for sites where no fish were caught but it was visited
+df_trout[is.na(df_trout)] <- 0
+df_trout_yoy[is.na(df_trout_yoy)] <- 0
+
+# replace 0 in second and third pass MR with NA
+df_trout[which(df_trout$method == "MR"), c("pass_2", "pass_3")] <- NA
+df_trout_yoy[which(df_trout_yoy$method == "MR"), c("pass_2", "pass_3")] <- NA
+
+# Don't use sites over 1km in length as untrustworthy
+df_trout[which(df_trout$length_sample >= 1000), c("pass_1", "pass_2", "pass_3")] <- NA
+df_trout_yoy[which(df_trout_yoy$length_sample >= 1000), c("pass_1", "pass_2", "pass_3")] <- NA
+
 # only use first visit each year? (possible that previous visit if close in time could change the abundance through emigration) - plus not sure how to handle it 
 df_trout <- dplyr::arrange(df_trout, site, year, date)
 df_trout$shift_site <- c(NA, df_trout$site[1:nrow(df_trout)-1])
@@ -148,6 +170,11 @@ df <- left_join(family, df_trout, by = c("child_name" = "site"))
 str(df)
 df_yoy <- left_join(family, df_trout_yoy, by = c("child_name" = "site"))
 str(df_yoy)
+
+foo <- unique(family$child_name)
+bar <- unique(c(df_trout$site, df_trout_yoy$site))
+
+sna <- bar %in% foo
 
 # need to add dates and other variables for nodes without measurements for covariates - do for other covariates after standardizing
 df[is.na(df$date), "date"] <- "2010-08-01"
@@ -183,10 +210,26 @@ df_yoy <- df_yoy %>%
 df_loc <- read.csv("Data/occupancySitesSusqWest_Threepass.csv", header = TRUE, stringsAsFactors = FALSE)
 df_loc$featureid <- as.numeric(gsub(",", "", df_loc$FEATUREID))
 
-df <- left_join(df, df_loc[ , c("featureid", "GIS_Key")], by = c("child_name" = "GIS_Key")) %>%
+df_loc2 <- read.csv("Data/occupancySitesSusqWest_Petersen.csv", header = TRUE, stringsAsFactors = FALSE)
+df_loc2$featureid <- as.numeric(gsub(",", "", df_loc2$FEATUREID))
+
+dim(df_loc)
+length(unique(df_loc$GIS_Key))
+dim(df_loc2)
+length(unique(df_loc2$GIS_Key))
+
+df_loc2 <- df_loc2 %>%
+  dplyr::filter(!(GIS_Key %in% unique(df_loc$GIS_Key)))
+
+df_locs <- bind_rows(df_loc, df_loc2) %>%
+  distinct()
+dim(df_locs)
+length(unique(df_locs$GIS_Key))
+
+df <- left_join(df, df_locs[ , c("featureid", "GIS_Key")], by = c("child_name" = "GIS_Key")) %>%
   dplyr::mutate(featureid = ifelse(is.na(featureid), gsub("^N_", "", child_name), featureid))
 
-df_yoy <- left_join(df_yoy, df_loc[ , c("featureid", "GIS_Key")], by = c("child_name" = "GIS_Key")) %>%
+df_yoy <- left_join(df_yoy, df_locs[ , c("featureid", "GIS_Key")], by = c("child_name" = "GIS_Key")) %>%
   dplyr::mutate(featureid = ifelse(is.na(featureid), gsub("^N_", "", child_name), featureid))
 
 featureids <- unique(df$featureid)
@@ -194,7 +237,7 @@ featureid_string <- paste(shQuote(featureids), collapse = ", ")
 
 # connect to database
 drv <- dbDriver("PostgreSQL")
-con <- dbConnect(drv, dbname='sheds', host='felek.cns.umass.edu', user=options('SHEDS_USERNAME'), password=options('SHEDS_PASSWORD'))
+con <- dbConnect(drv, dbname='sheds', host='osensei.cns.umass.edu', user=options('SHEDS_USERNAME'), password=options('SHEDS_PASSWORD'))
 
 param_list <- c("forest", 
                 "herbaceous", 
@@ -205,7 +248,7 @@ param_list <- c("forest",
                 "allonnet",
                 "alloffnet",
                 "surfcoarse"
-                )
+)
 
 cov_list_string <- paste(shQuote(param_list), collapse = ", ")
 
@@ -262,14 +305,14 @@ cat("Monitoring progress of prediction loop in parallel", file=logFile, append=F
 ########## Run Parallel Loop ########## 
 # start loop
 climate <- foreach(i = 1:n.loops, 
-        .inorder=FALSE, 
-        .combine = rbind,
-        .packages=c("DBI", 
-                    "RPostgreSQL",
-                    "dplyr",
-                    "tidyr",
-                    "lubridate")#,
-        #.export=ls(envir=globalenv())
+                   .inorder=FALSE, 
+                   .combine = rbind,
+                   .packages=c("DBI", 
+                               "RPostgreSQL",
+                               "dplyr",
+                               "tidyr",
+                               "lubridate")#,
+                   #.export=ls(envir=globalenv())
 ) %dopar% {
   
   #try({
@@ -397,7 +440,7 @@ climate <- foreach(i = 1:n.loops,
     left_join(precip_sd)
   
   return(climate_summary)
-#})
+  #})
   
   #saveRDS(metrics.lat.lon, file = paste0(data_dir, "/derived_site_metrics.RData"))
   #write.table(metrics.lat.lon, file = paste0(data_dir, "/derived_site_metrics.csv"), sep = ',', row.names = F)
@@ -412,7 +455,7 @@ dbUnloadDriver(drv)
 dbListConnections(drv)
 
 gc()
-  
+
 saveRDS(climate, file = file.path(dir_out, "climate.RData"))
 
 climate$featureid <- as.character(climate$featureid)
@@ -431,6 +474,11 @@ df_yoy <- df_yoy %>%
 # Separate count data
 c_ip <- dplyr::select(df, starts_with("pass"))
 c_ip_yoy <- dplyr::select(df_yoy, starts_with("pass"))
+
+# YOY not captured well until maybe June so make earlier samples NA for YOY.
+df_yoy$date <- as.Date(df_yoy$date)
+df_yoy$month <- month(df_yoy$date)
+c_ip_yoy[which(df_yoy$month < 6), c("pass_1", "pass_2", "pass_3")] <- NA
 
 # pull out years if want to use as fixed effects
 year <- as.factor(df$year)
@@ -461,4 +509,4 @@ df_stds <- data.frame(var = names(means), mean = as.numeric(means), sd = as.nume
 t_i <- df$year
 
 # save
-save(c_ip, c_ip_yoy, X_ij, df_stds, t_i, df, df_yoy, family, file = "Data/Prepared_Data_W_Susquehanna.RData")
+save(c_ip, c_ip_yoy, X_ij, df_stds, t_i, df, df_yoy, family, file = "Data/Prepared_Data_W_Susquehanna_Combined.RData")

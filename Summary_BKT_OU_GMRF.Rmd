@@ -1,0 +1,448 @@
+---
+title: "Summary of Simulations and Analysis of Brook Trout Data"
+author: "Daniel Hocking"
+date: "November 20, 2015"
+output: html_document
+---
+
+
+```{r load libraries, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(TMB)
+suppressPackageStartupMessages(library(dplyr))
+library(tidyr)
+library(ggplot2)
+source("Functions/summary_functions.R")
+
+```
+
+## Effects of Sampling Density
+
+```{r load sample density, echo=FALSE, results='hide'}
+density_inputs <- readRDS("Output/survey_density_input.RData")
+density_results <- readRDS("Output/survey_density_results.RData")
+```
+
+### Methods
+
+To understand how well the model worked and how much data is necessary to fit the model, I simulated data on the White River network from VT. The network is a HUC8 (01080105) with 335 confluence and terminal nodes and in additional 25 nodes from survey locations. The mean hydrologic distance between nodes was 1.13 km with a range of 0.016 to 5.13 km.
+
+I varied the proportion of the nodes surveyed as: `r density_inputs$sample_pct_vec`, which corresponds to `r density_inputs$sample_pct_vec*length(density_inputs$network$x_b)` survey locations, respectively. I assumed constant moderate spatial autocorrelation with $\theta =$ `r density_inputs$theta` and $\sigma_{OU} =$ `r density_inputs$SD` and simulated the network with a mean of `r density_inputs$mean_N` fish per location (node). This is a typical expected density of adult brook trout for a 100 m stream reach in this area. I included one covariate on abundance ($\gamma =$ `r density_inputs$gamma`), which was not spatially correlated. The detection probability was assumed to be constant across sites and represented 3-pass depletion sampling (75% probability of individual detection per pass: $p_{pass} =$ `r density_inputs$p`).
+
+### Results
+
+Mean estimates of abundance improved with increasing sample size. This is evidenced by the decreasing root mean squared error (RMSE) with increasing sample size.
+
+```{r rmse density, echo=FALSE}
+format(density_results$df_err, digits = 2)
+
+N_means <- density_results$coef_means %>%
+  dplyr::filter(grepl("N_", param)) %>%
+  dplyr::select(-param) %>%
+  colMeans() # not very interesting
+
+```
+
+Not surprisingly, the precision of the abundance estimates increased with sample size. The mean standard deviations of the abundance estimates were:
+
+```{r, echo=FALSE}
+sd_pct_N <- density_results$sd_pct %>%
+  dplyr::filter(grepl("N_", param)) %>%
+  dplyr::select(-param) %>%
+  dplyr::summarise_each(funs(mean))
+
+format(sd_pct_N, digits = 3)
+```
+
+However, there was some bias in all scenarios with the model overestimating abundance when true abundance was low and underestimating when abundance was high. This bais was much greater at low sample sizes.
+
+![](Output/Figures/pct1.pdf)
+![](Output/Figures/pct0.5.pdf)
+![](Output/Figures/pct0.25.pdf)
+![](Output/Figures/pct0.1.pdf)
+![](Output/Figures/pct0.05.pdf)
+
+
+The coefficient on abundance was recovered very well at all survey densities, with the execption of a moderate underestimation when only 5% of the sites were sampled.
+
+```{r density coef means, echo=FALSE}
+coef_means <- density_results$coef_means %>%
+  dplyr::filter(!grepl("N_", param),
+                !(param %in% c("log_theta_st",
+                               "rhot",
+                               "SD_report")))
+format(coef_means, digits = 2)
+```
+
+However, the uncertainty in the estimate decreased with sample size.
+ 
+```{r density coef sd, echo=FALSE}
+sd_pct_coef <- density_results$sd_pct %>%
+  dplyr::filter(!grepl("N_", param),
+                !(param %in% c("log_theta_st",
+                               "rhot",
+                               "SD_report")))
+format(sd_pct_coef, digits = 2)
+```
+
+As seen above the correlation decay rate with distance, $\theta$, and the variability in correlation, $\sigma_{OU}$ were not recovered well at all in the simulations. It is likely that these parameters are not separable. However, in combination, they may improve estimates compared to nonspatially explicit models. This motivated additional simulations (see below).
+
+### Discussion
+
+It is unclear how important the density of sampling is (this was randomly distibuted within the network) and whether percent of the nodes is more important than just the absolute number (or density) of sampled sites.
+
+I don't know that it's really worth doing extensive simulations to get at the differences unless we wanted to write a separate paper on optimal sample design.
+
+I also did not include any random site-level overdispersion or any temporal patterns.
+
+
+## Effect of Spatial Correlation and Population Size
+
+```{r load sim results, echo=FALSE, results='hide'}
+sim_inputs <- readRDS("Output/spatial_sims_input.RData")
+sim_table <- readRDS("Output/Sim_Table.RData")
+```
+
+To understand how our spatial model performs compared to a conventional non-spatially explicit model, we simulated data in the same network described above varying the spatial nature of the data. We simulated data with and without spatial structure. When spatial structure was present it followed an Ornstein-Uhlenbeck process and we varied all combinations of $\theta$ (`r sim_inputs$theta_vec`) and $\sigma_{OU}$ (`r sim_inputs$SD_vec`). We also varied these in combination with the mean population size across the network (`r sim_inputs$mean_N`).
+
+We checked for model convergence then compared AIC and RMSE as well as the ability to recover the covariate effect (coefficient) and the standard deviation of the coefficient.
+
+### Results
+
+(large theta and small SD_ou = higher spatial correlation)
+
+Not surprisingly, we found that spatial models always perform better on spatially autocorrelated data compared with non-spatial models. With spatial data, both the spatial and nonspatial modesl converged 96% of the time. When the data had no spatial correlation, the nonspatial model converged 100% of the time whereas the spatial model only converged in 26% of cases.
+
+```{r sim table fit, echo=FALSE}
+tab1 <- dplyr::select(sim_table, -resid_mean, -theta_hat, -SD_ou_hat, -coef_hat, -coef_sd, -coef_true, -model)
+format(tab1, digits = 2)
+
+tab1_sum <- tab1 %>%
+  dplyr::group_by(spatial, sp_mod) %>%
+  dplyr::select(-theta, -SD_ou, -mean_N) %>%
+  dplyr::summarise_each(funs(mean(., na.rm = TRUE)))
+format(tab1_sum, digits = 2)
+```
+
+In contrast, the coefficient of abundance was recovered about equally well using spatial and non-spatial models. This was the case for both the mean estimate and the variance of the coefficient estimate. We only used a single covariate and had not overdispersion, therefore this result might not be the same with more complex data. 
+
+As with the sampling density simulations, $\theta$ and $\sigma_{OU}$ were not estimated well at all. It is likely the parameters are not separable, but together they do appear to significantly improve estimates of abundance.
+
+```{r sim table fit 2, echo=FALSE}
+tab2 <- dplyr::select(sim_table, -AIC, -rmse, -resid_mean, -coef_true, -model)
+format(dplyr::select(tab2, -coef_hat, -coef_sd), digits = 2)
+
+tab2_sum <- tab2 %>%
+  dplyr::group_by(spatial, sp_mod) %>%
+  dplyr::select(-mean_N) %>%
+  dplyr::summarise_each(funs(mean(., na.rm = TRUE)))
+format(tab2_sum, digits = 2)
+
+tab3_sum <- tab2 %>%
+  dplyr::group_by(theta, SD_ou, mean_N) %>%
+  dplyr::filter(spatial == TRUE, sp_mod == 1, converge == 1) %>%
+    dplyr::select(-spatial, -sp_mod, -converge, -coef_hat, -coef_sd) %>%
+  dplyr::summarise_each(funs(mean(., na.rm = TRUE)))
+format(tab3_sum, digits = 2)
+
+tab4_sum <- tab2 %>%
+  dplyr::group_by(theta, SD_ou) %>%
+  dplyr::select(-mean_N) %>%
+  dplyr::filter(spatial == TRUE, sp_mod == 1) %>%
+  dplyr::summarise_each(funs(mean(., na.rm = TRUE)))
+format(tab4_sum, digits = 2)
+```
+
+Plots to check for bias:
+
+![](Output/Figures/model_34.pdf)
+![](Output/Figures/model_36.pdf)
+![](Output/Figures/model_33.pdf)
+![](Output/Figures/model_35.pdf)
+
+Unlike with the previous simulations, there is no bias in the abundance estimates from the spatial model. The difference might be larger mean abundance and/or stronger spatial autocorrelation in the data.
+
+### Discussion
+
+All data were assumed to have come from a single year. There was no temporal or spatiotemporal variation in our simulations. Additionally, we did not vary abundance randomly by site beyond the Poisson distribution (no random IID overdispersion) nor did we vary the probability of detection.
+
+Spatial models clearly do better when there is unaccounted for spatial correlation in the data. This is likely to be the case in many stream fish datasets. The difference increases with higher levels of correlation. When there is no spatial correlation, the spatial model often fails to converge. When it does converge the non-spatial model generally has a lower AIC. When there was no underlying spatial correlation, the estimates of abundance and coefficients from the spatial model also showed no systematic bias and minimal difference in the error compared with the nonspatial model. This suggests that there is little if any risk of using a spatially explicit model and comparing it to a nonspatial model. 
+
+This method does not require special GIS skills or extensive processing. The only information needed beyond that of a traditional model is hydrologic distances between each downstream point and the nearest upstream confluences or points of interest.
+
+It currently doesn't seem worth doing more complicated simulations for a first paper. It would muddle the message too much. The question is whether any simulations are necessary. Also, I only ran a single realization of each simulation. If we think this is a valuable part of a manuscript we would want to decide if that's enough or if we need to do many iterations of the simulations
+
+
+
+## Applied to West Susquehanna Data
+
+Data from the PA Fish and Boat Commission.
+
+### Adults
+
+```{r load west susquehanna adult results, echo=FALSE, results='hide'}
+adult_inputs <- readRDS("Output/spatial_sims_input.RData")
+#adult_results <- readRDS("Output/W_Susquehanna_Summary_RDS.RData")
+load("Output/W_Susquehanna_Summary.RData")
+```
+
+### Methods
+
+Data from the PA Fish and Boat Commission.
+
+### Results
+
+```{r adult aic, echo=FALSE}
+format(aic_table, digits = 2)
+```
+
+Coefficients of the top model:
+
+```{r adult best model summary, echo=FALSE}
+LCI <- SD4b$value - (1.96 * SD4b$sd) # lower CI rough estimate for best model
+UCI <- SD4b$value + (1.96 * SD4b$sd)
+
+coef_table <- data.frame(Parameter = names(SD4b$value), Estimate = SD4b$value, SD = SD4b$sd, LCI, UCI, stringsAsFactors = FALSE)
+coef_table$Parameter <- SD_table$Parameter
+
+format(coef_table, digits = 2, scientific = 4)
+```
+
+### Plot adult observed vs expected
+
+```{r observed vs expected adult, echo=FALSE}
+c_ip <- df %>%
+  dplyr::select(starts_with("pass"))
+
+chat_ip <- Report4b$chat_ip
+bar <- data.frame(chat_ip, row = 1:nrow(chat_ip))
+bar <- tidyr::gather(bar, key = row, value = chat, convert = TRUE)
+sna <- data.frame(c_ip)
+fu <- sna %>% gather(pass, count)
+df_counts <- data.frame(fu, bar)
+df_counts <- dplyr::filter(df_counts, complete.cases(df_counts))
+ggplot(df_counts, aes(count, chat)) + geom_point() + geom_abline(aes(0,1), colour = "blue") + theme_bw() + xlab("Observed adult counts per pass") + ylab("Expected adult counts per pass")
+
+rmse <- function(error, na.rm = T) {
+  sqrt(mean(error^2, na.rm = T))
+}
+rmse <- rmse(df_counts$count - df_counts$chat)
+
+```
+
+The RMSE of observed - expected adult counts is `r format(rmse, digits=2)`. There is no observed bias in the predicted counts compared with the observed counts.
+
+### Plot adult predictions
+
+Mean predicted abundance over time at each site with observed data (not currently adjusted using the site-visit level overdispersion).
+
+```{r plot adult predictions, echo=FALSE}
+# Plot predictions
+length_sample <- df$length_sample
+length_sample[which(is.na(length_sample))] <- median(df$length_sample, na.rm = TRUE)
+df$N <- Report4b$N_ip[ , 1]/length_sample
+
+df_observed <- df %>%
+  dplyr::filter(!is.na(pass_1))
+
+lambda_dt <- data.frame(Report4b$lambda_dt)
+names(lambda_dt) <- min(t_i):max(t_i)
+lambda_dt$child_b <- family$child_b
+lambda_dt <- left_join(dplyr::select(df_observed, child_b, child_name, parent_b, NodeLat, NodeLon, featureid), lambda_dt, by = "child_b")
+#lambda_dt$child_b <- as.character(lambda_dt$child_b)
+
+lambda_long <- lambda_dt %>%
+  dplyr::select(-child_name, -parent_b, -NodeLat, -NodeLon, -featureid) %>%
+  tidyr::gather(key = year, value = lambda, -child_b, convert = T) %>%
+  distinct()
+lambda_long$lambda <- as.numeric(lambda_long$lambda)
+# 
+# child_list <- unique(df_observed$child_b)
+# bar <- dplyr::filter(foo, child_b %in% child_list[1:20])
+
+N_adult <- lambda_long %>%
+  dplyr::left_join(dplyr::select(df, child_b, year, N)) %>%
+  dplyr::mutate(N_100 = ifelse(is.na(N), lambda*100, N*100))
+
+# lambda dt across all sites
+ggplot(N_adult, aes(year, N_100, group = child_b, colour = child_b)) + geom_line(alpha = 0.5) + ylab("Abundance of adult Brook Trout per 100 m") + xlab("Year") + theme_bw() # + geom_jitter(position = position_jitter(width = .1), alpha = 0.5) 
+```
+
+### Average density (per 100 m) over time at observed sites
+
+On average, are the populations in this large watershed stable, increasing, or decreasing?
+
+```{r population trend, echo=FALSE}
+lambda_sum <- lambda_long %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarise(density_100 = mean(lambda)*100)
+
+# confidence intervals will be challenging
+ggplot(lambda_sum, aes(year, density_100)) + geom_line() + ylab("Mean abundance of adult Brook Trout per 100 m") + xlab("Year") + theme_bw()
+
+```
+
+
+Site specific abundance predictions when data is available. Many sites only visited once (points with no lines). Not a very informative plot other than to get a feel for the sampling.
+
+```{r plot adult predictions site specific, echo=FALSE}
+# Plot predictions
+ggplot(df_observed, aes(year, N, group = child_b, colour = child_b)) + geom_point() + geom_line() + ylab("Abundance of adult Brook Trout per 100 m") + xlab("Year") + theme_bw() # + geom_jitter(position = position_jitter(width = .1), alpha = 0.5) 
+```
+
+
+## YOY
+
+```{r load west susquehanna yoy results, echo=FALSE, results='hide'}
+#adult_results <- readRDS("W_Susquehanna_Summary.RData")
+load("Output/W_Susquehanna_YOY_Summary.RData")
+```
+
+### Results
+
+Compare YOY models that converged:
+
+```{r yoy aic, echo=FALSE}
+format(aic_table, digits = 2)
+format(aic_table2, digits = 2)
+```
+
+Model 5 (temporal + spatiotemporal) is the best. The models with an `r` mean that the number of time-varying (seasonal) covariates was reduced. The $\Delta AIC$ was greater than 2 between top and next model.
+
+Coefficients of the top model:
+
+(not sure how valid these CI are, I just used 1.96 x SD)
+
+```{r yoy best model summary, echo=FALSE}
+Report5 <- Mod5$Report
+opt5 <- Mod5$opt
+SD5 <- Mod5$SD
+
+LCI <- SD5$value - (1.96 * SD5$sd) # lower CI rough estimate for best model
+UCI <- SD5$value + (1.96 * SD5$sd)
+
+coef_table_yoy <- data.frame(Parameter = names(SD5$value), Estimate = SD5$value, SD = SD5$sd, LCI, UCI, stringsAsFactors = FALSE)
+for(i in 1:length(Parameters)) {
+  coef_table_yoy[i, ]$Parameter <- Parameters[i]
+}
+
+format(coef_table_yoy, digits = 2, scientific = 5)
+```
+
+### Plot yoy observed vs expected
+
+```{r observed vs expected yoy, echo=FALSE}
+c_ip <- df_yoy %>%
+  dplyr::select(starts_with("pass"))
+
+chat_ip <- Report5$chat_ip
+bar <- data.frame(chat_ip)
+bar <- bar %>% gather(pass, chat)
+sna <- data.frame(c_ip)
+fu <- sna %>% gather(pass, count)
+df_counts <- data.frame(fu, bar)
+df_counts <- dplyr::filter(df_counts, complete.cases(df_counts))
+ggplot(df_counts, aes(count, chat)) + geom_point() + geom_abline(aes(0,1), colour = "blue") + theme_bw() + xlab("Observed YOY counts per pass") + ylab("Expected YOY counts per pass")
+
+rmse <- function(error, na.rm = T) {
+  sqrt(mean(error^2, na.rm = T))
+}
+rmse_yoy <- rmse(df_counts$count - df_counts$chat)
+
+```
+
+The RMSE of observed - expected YOY counts is `r format(rmse_yoy, digits=2)`. There is no observed bias in the predicted counts compared with the observed counts.
+
+### Plot yoy predictions
+
+```{r plot yoy predictions, echo=FALSE}
+# Plot predictions
+df_yoy$N <- (Mod5$Report$N_ip[ , 1])/(df_yoy$length_sample)*100
+
+df_observed <- df_yoy %>%
+  dplyr::filter(!is.na(pass_1))
+
+lambda_dt <- data.frame(Report5$lambda_dt)
+names(lambda_dt) <- min(df_yoy$year):max(df_yoy$year)
+lambda_dt$child_b <- family$child_b
+lambda_dt <- left_join(dplyr::select(df_observed, child_b, child_name, parent_b, NodeLat, NodeLon, featureid), lambda_dt, by = "child_b")
+#lambda_dt$child_b <- as.character(lambda_dt$child_b)
+
+lambda_long <- lambda_dt %>%
+  dplyr::select(-child_name, -parent_b, -NodeLat, -NodeLon, -featureid) %>%
+  tidyr::gather(key = "year", value = lambda, -child_b, convert = T) %>%
+  distinct()
+lambda_long$lambda <- as.numeric(lambda_long$lambda)*100
+
+N_yoy <- lambda_long %>%
+  dplyr::left_join(dplyr::select(df_yoy, child_b, year, N)) %>%
+  dplyr::mutate(N_100 = ifelse(is.na(N), lambda, N))
+
+# lambda dt identical across all sites right now
+ggplot(N_yoy, aes(year, N_100, group = child_b, colour = child_b)) + geom_line(alpha = 0.5) + ylab("Abundance of Brook Trout YOY per 100 m") + xlab("Year") + theme_bw()
+```
+
+Site specific abundance predictions when data is available. Many sites only visited once (points with no lines). Not a very informative plot other than to get a feel for the sampling.
+
+```{r plot yoy predictions site specific, echo=FALSE}
+# Plot predictions
+ggplot(df_observed, aes(year, N, group = child_b, colour = child_b)) + geom_point() + geom_line() + ylab("Abundance of YOY Brook Trout per 100 m") + xlab("Year") + theme_bw() # + geom_jitter(position = position_jitter(width = .1), alpha = 0.5) 
+```
+
+
+## Discussion
+
+Comparison of the coefficients for the best Adult (spatiotemporal) and YOY (spatiotemporal) models:
+
+```{r compare adult and yoy coefs, echo = FALSE}
+coefs_adult <- as.data.frame(t(coef_table$Estimate))
+names(coefs_adult) <- coef_table$Parameter
+coefs_yoy <- as.data.frame(t(coef_table_yoy$Estimate))
+names(coefs_yoy) <- coef_table_yoy$Parameter
+
+coef_means <- t(bind_rows(coefs_adult, coefs_yoy))
+Parameter <- row.names(coef_means)
+dimnames(coef_means) <- NULL
+coef_means <- as.data.frame(coef_means)
+coef_means$Parameter <- Parameter
+coef_means <- coef_means %>%
+  dplyr::select(Parameter, Adult = V1, YOY = V2)
+
+model_sds <- data.frame(Parameter = c("sigmaIID", "sigmat"), 
+           Adult = c(Report4b$sigmaIID, Report4b$sigmat), 
+           YOY = c(Mod5$Report$sigmaIID, Mod5$Report$sigmat))
+
+coef_means <- bind_rows(coef_means, model_sds) %>%
+  dplyr::filter(!(Parameter %in% c("log_theta", "SDinput", "SD_report")))
+
+format(coef_means, digits = 1)
+```
+
+The models find what we would expect based on previous research. Forest cover has a positive effect on both adults and YOY (remarkably similar). Summer temperatures had negative effects on adult abundance and fall had a positive effect, whereas only spring temperature had an effect on YOY (negative). Mean precipitation effects were not strong with only spring precipitation having a significant positive effect on adult abundance.
+
+As expected adult populations showed less random variability (`sigmaIID` representing lognormal site-year overdispersion) than YOY.
+
+Since the parameters $\theta$ and $\sigma_{OU}$ from the Ornstein-Uhlenbeck process did not appear seperable, I'm not sure exactly what to make of the spatiotemporal part of the model. Should this just be interpreted based on maps over time?
+
+For seasonal covariates (precipitation and temperature), I broke up the seasons as:
+
+* winter: Jan, Feb, Mar
+* spring: Apr, May, Jun
+* summer: Jul, Aug, Sep
+* fall:   Oct, Nov, Dec
+
+I could do this differently but I use the summer and fall of the previous year so it was much easier to not be mixing years within a season. This involves querying the massive Daymet database of daily temperatures then summarizing by year and season, then joining with the data. It takes a couple hours to run and would be more complext to mix seasons across years. However, if we thought that was important, I could do that.
+
+I also didn't try a lot of reduced parameter models for the adults. I did it for the YOY because so many of the models failed to converge with all the temporally varying covariates, whereas they did converge with the adult data.
+
+One other option would be to include the mean expected abundance of YOY as a covariate in the adult models (since recruitment->stock is stronger for brook trout than the stock-recuit relationship in all past studies). One drawback of this is that it would be a pain to include any uncertainty in the YOY abundance in this framework.
+
+I also could easily run these scripts for Brown Trout (and maybe Rainbow but not sure if there'd be sufficient data) for multi-species comparisons. That would take very little of my time, just some comuting time. 
+
+I could also run it for other watersheds for comparison. The challenge here is organizing the data and finding watersheds with sufficient data. I ran it for the White River Watershed in VT (which the simulations are based on) but there is very little observed trout data and based on the simulations, it's likely it would be insufficient for inference. I think this could be a secondary project if of interest (not for this paper).
+
+I also don't have a model that uses HUC as a random effect, which is what model people would do now. I also think this is a longer term comparison to see if HUC does a sufficient job in accounting for spatial correlation (and what HUC level 8, 10, 12).
+
+The one other thing that could be done now or later (I'd prefer later) is the inclusion of alternative data times. Right now the model requires multi-pass deletion sampling. However, the PA Fish and Boat Commission switch sampling methods from year to year and site to site. I threw out about half the data from this watershed because half of it used batch mark-recapture intended for Lincoln-Petersen estimators. It should be possible to add an indicator for sampling method and depending on that it uses a different likelihood based on a different data structure and dectection process. This would double the amount of data and get longer, more continuous time series. Alternatively, for a quick solution, I could reduced the mark-recapture to 1 pass sampling. I think this would be fine in the model but throws out lots of good information about detection. I don't think we'd get particularly different results if we include this data either way since we are not dealing with explicit stock-recruit (or recruit-stock) relationships. It would be more important for a Dail-Madsen type model, imo.
+
+The main question for now is what we want to include in the (first) manuscript? What is the story?
+

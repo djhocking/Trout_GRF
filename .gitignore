@@ -12,6 +12,10 @@ Related_Papers/
 *.jpeg
 *.tif
 *.tiff
+Summary_BKT_OU_GMRF.html
+Output/Summary_BKT_OU_GMRF.html
+Diagnostics/
+Diagnostics/log_file.txt
 W_Susquehanna.RData
 Output/*.RData
 prismtmp/

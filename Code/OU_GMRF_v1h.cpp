@@ -230,6 +230,7 @@ template<class Type>
     REPORT( eta_i);
     REPORT( lambda_ip );
     REPORT( Delta_t );
+    REPORT( Deltainput_t );
     REPORT( rhot );
     REPORT( sigmat );
     REPORT( jnll_comp );

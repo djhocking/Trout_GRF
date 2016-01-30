@@ -261,5 +261,7 @@ yoy_aic <- data.frame(model = c("yoy_st",
 yoy_aic
 adult_aic
 
+save.image("Output/W_Susquehanna_Stock_Recruit.RData")
+
 # compare predictions from stock-recruit and base model
 

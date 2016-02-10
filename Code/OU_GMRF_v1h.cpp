@@ -209,16 +209,22 @@ template<class Type>
       }
     }
     
+    vector<Type> N_i(n_i);
+    for(int i=0; i<n_i; i++){
+      N_i(i) = N_ip(i,1);
+    }
+    Type mean_N = N_i.sum() / N_i.size();
+    
     // Add up components
     jnll = jnll_comp.sum();
     
     // Spatial field summaries
     REPORT( rho_b );
     REPORT( rho_st );
-    REPORT( rho_t_b );
+   // REPORT( rho_t_b );
     REPORT( SD_b );
     REPORT( SDinput );
-    REPORT( SDinput_b );
+   // REPORT( SDinput_b );
     REPORT( theta );
     REPORT( theta_st );
     REPORT( Epsiloninput_d );
@@ -237,22 +243,26 @@ template<class Type>
     REPORT( jnll );
     REPORT( sigmaIID );
     REPORT( lognormal_overdispersed_i );
-    REPORT( SDinput_t_b );
-    REPORT( SDinput_st );
+    //REPORT( SDinput_t_b );
+    //REPORT( SDinput_st );
     REPORT( temp_b );
     REPORT( Nu_dt );
     REPORT( lambda_dt );
     REPORT( N_ip );
     REPORT( chat_ip );
     REPORT( extradetectionSD );
+    REPORT( mean_N );
     
     // ADREPORT( lambda_ip);
     ADREPORT( gamma_j );
     ADREPORT( log_theta_st );
+    ADREPORT( theta_st );
     ADREPORT( rhot );
     ADREPORT( log_theta );
-    ADREPORT( SDinput );
-    ADREPORT( SD_report );
+    //ADREPORT( SDinput );
+  //  ADREPORT( SDinput_t_b );
+  //  ADREPORT( SD_report );
+    ADREPORT( mean_N );
    // ADREPORT( log_N100_dt );
 //   if( Options_vec(6)==1 ) {
 ////    vector<Type> log_N_i(n_i);

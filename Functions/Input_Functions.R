@@ -60,6 +60,12 @@ makeInput <- function(family, df = NULL, c_i = NULL, c_ip = NULL, options, X, t_
     Data$dist_b = ifelse( Data$dist_b<(max(Data$dist_b,na.rm=TRUE)/1e4), (max(Data$dist_b,na.rm=TRUE)/1e4), Data$dist_b)
     warning("Negative distances fixed to lower bound")
   }
+  
+  # check for correct dimensions
+  if(nrow(Data$X_ij) != nrow(as.data.frame(Data$c_ip))) {
+    stop("covariates X_ij must be of the length as the observed data c_ip")
+  }
+  
   # If any covariates are missing
   if( any(is.na(Data$X_ij)) ) {
     Data$X_ij = ifelse(is.na(Data$X_ij), 0, Data$X_ij)
@@ -84,8 +90,7 @@ makeInput <- function(family, df = NULL, c_i = NULL, c_ip = NULL, options, X, t_
   if(any(Data$offset_i <= 0)) {
     stop("All offsets need to be positive values")
   }
-  
-  # check for correct dimensions
+
   
   
   ###### make dist min = 10 m

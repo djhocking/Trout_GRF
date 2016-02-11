@@ -82,8 +82,14 @@ dat <- data.frame(iter=integer(),
                   theta_hat=numeric(),
                   rhot=numeric(),
                   rhot_hat=numeric(),
+                  sigmat=numeric(),
+                  sigmat_hat=numieric(),
                   theta_st=numeric(),
                   theta_st_hat=numeric(),
+                  rho_st=numeric(),
+                  rho_st=numeric(),
+                  gamma_j=numeric(),
+                  gamma_j_hat=numeric(),
                   stringsAsFactors=FALSE)
 
 df_sims <- dat
@@ -200,8 +206,14 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "theta_hat"] <- NA_real_
           dat[counter, "rhot"] <- rhot
           dat[counter, "rhot_hat"] <- NA_real_
+          dat[counter, "sigmat"] <- SD_t
+          dat[counter, "sigmat_hat"] <- NA_real_
           dat[counter, "theta_st"] <- theta_st
           dat[counter, "theta_st_hat"] <- NA_real_
+          dat[counter, "rho_st"] <- rho
+          dat[counter, "rho_st_hat"] <- NA_real_
+          dat[counter, "gamma_j"] <- gamma_j
+          dat[counter, "gamma_j_hat"] <- NA_real_
         } else {
           try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
           N_se <- ifelse(is.null(N_se), NA_real_, N_se)
@@ -223,9 +235,14 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "theta_hat"] <- mod$Report$theta
           dat[counter, "rhot"] <- rhot
           dat[counter, "rhot_hat"] <- mod$Report$rhot
+          dat[counter, "sigmat"] <- SD_t
+          dat[counter, "sigmat_hat"] <- mod$Report$sigmat
           dat[counter, "theta_st"] <- theta_st
           dat[counter, "theta_st_hat"] <- mod$Report$theta_st
-          
+          dat[counter, "rho_st"] <- rho
+          dat[counter, "rho_st_hat"] <- mod$Report$rho_st
+          dat[counter, "gamma_j"] <- gamma_j
+          dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
         }
         #         mean(network$N_i)
         #         SD_means <- data.frame(param = names(mod$SD$value), 

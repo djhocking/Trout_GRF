@@ -216,6 +216,7 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "n_years"] <- n_years_vec[ti]
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
+          dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
           dat[counter, "N_se"] <- N_se
           dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
           dat[counter, "theta"] <- theta

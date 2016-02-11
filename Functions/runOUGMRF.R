@@ -13,18 +13,18 @@ runOUGMRF <- function(inputs) {
   
   try({
     # Run model
-    opt1 = nlminb(start=obj1$env$last.par.best[-c(obj1$env$random)], objective=obj1$fn, gradient=obj1$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
-    opt1[["Param"]] = names( opt1$par )
-    opt1[["final_gradient"]] = obj1$gr( opt1$par )
-    opt1[["AIC"]] = 2*opt1$objective + 2*length(opt1$par)
-    opt1[["k"]] = length(opt1$par)
-    Report1 = obj1$report()
-    Report1[["Optimizer"]] <- "nlminb"
-    SD1 = sdreport( obj1, bias.correct=FALSE )
-    
-    # Use BOBYQA optimization if PORTS fails
-    if(is.null(SD1)) {
-    if(opt1$convergence == 1 | max(abs(opt1$final_gradient)) > 0.001 | is.null(SD1)) {
+#     opt1 = nlminb(start=obj1$env$last.par.best[-c(obj1$env$random)], objective=obj1$fn, gradient=obj1$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+#     opt1[["Param"]] = names( opt1$par )
+#     opt1[["final_gradient"]] = obj1$gr( opt1$par )
+#     opt1[["AIC"]] = 2*opt1$objective + 2*length(opt1$par)
+#     opt1[["k"]] = length(opt1$par)
+#     Report1 = obj1$report()
+#     Report1[["Optimizer"]] <- "nlminb"
+#     SD1 = sdreport( obj1, bias.correct=FALSE )
+#     
+#     # Use BOBYQA optimization if PORTS fails
+#     #if(is.null(SD1)) {
+#     if(opt1$convergence == 1 | max(abs(opt1$final_gradient)) > 0.001 | is.null(SD1)) {
       opt1 <- bobyqa(par = obj1$env$last.par.best[-c(obj1$env$random)], fn = obj1$fn)
       opt1[["convergence"]] <- opt1$ierr
       Report1 = obj1$report()
@@ -33,8 +33,8 @@ runOUGMRF <- function(inputs) {
       opt1[["k"]] = length(opt1$par)
       opt1[["AIC"]] = 2*opt1$fval + 2*length(opt1$par)
       SD1 <- sdreport(obj1, bias.correct=TRUE )
-    }
-     }
+    #}
+     #}
     }) # end try - consider trycatch and having error return NULL or NA or something
     return(list(opt = opt1, Report = Report1, SD = SD1))
   #}) # end try - consider trycatch and having error return NULL or NA or something

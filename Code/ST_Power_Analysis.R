@@ -40,7 +40,7 @@ family = cbind( family, "child_b"=1:nrow(family) )
 mean_N <- 50
 n_years_vec <- c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
-sample_sites_vec <- c(10, 25, 50, 100, nrow(family))
+sample_sites_vec <- c(25, 50, 100, nrow(family))
 p <- c(0.75, 0.75, 0.75)
 theta <- 0.1
 SD <- 0.05
@@ -119,6 +119,7 @@ df_sims <- foreach(i = 1:n_sim,
                         #.export=ls(envir=globalenv(),
                         #          "indexDeployments")# shouldn't be needed after update package
 ) %dopar% {
+  #for(i in 1:2) {
   source("Functions/Input_Functions.R")
   source("Functions/simOUGMRF.R")
   source("Functions/simST.R")
@@ -202,8 +203,11 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "theta_st"] <- theta_st
           dat[counter, "theta_st_hat"] <- NA_real_
         } else {
-          N_se <- NA_real_
           try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
+          N_se <- ifelse(is.null(N_se), NA_real_, N_se)
+          if(!is.na(N_se)) {
+          N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
+          }
           df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
           try(df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1]))
           
@@ -212,12 +216,7 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "n_years"] <- n_years_vec[ti]
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
-          dat[counter, "mean_N_est"] <- mod$Report$mean_N
-          if(N_se == "NaN") {
-            dat[counter, "N_se"] <- NA_real_
-          } else {
-            dat[counter, "N_se"] <- N_se
-          }
+          dat[counter, "N_se"] <- N_se
           dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
           dat[counter, "theta"] <- theta
           dat[counter, "theta_hat"] <- mod$Report$theta

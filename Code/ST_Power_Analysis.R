@@ -250,10 +250,11 @@ df_sims <- foreach(i = 1:n_sim,
         #                                sd = as.numeric(mod$SD$sd), stringsAsFactors = F)
         
         #-------- save sim iter output -------
-        save(network, mod, dat, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData")) 
+        save(network, mod, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData")) 
       } # end spatial TF loop
     } # end site loop
   } # end year loop
+  write.csv(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".csv"), row.names = FALSE)
   return(dat)
 } # end sim iter
 stopCluster(cl)

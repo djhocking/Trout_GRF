@@ -95,55 +95,7 @@ saveRDS(df_sims, file = "Output/Power_Sim/STsim_Results.RData")
 write.csv(df_sims, file = "Output/Power_Sim/STsim_Results.csv", row.names = FALSE)
 
 str(df_sims)
-df_sim_summary <- df_sims %>%
-  dplyr::group_by(n_sites, n_years, spatialTF) %>%
-  dplyr::select(-iter) %>%
-  dplyr::summarise_each(funs(mean(., na.rm = T)))
-as.data.frame(df_sim_summary %>% dplyr::filter(spatialTF == 1)) 
 
-df_converged <- df_sims %>%
-  dplyr::group_by(n_sites, n_years, spatialTF) %>%
-  dplyr::filter(converged == TRUE) %>%
-  dplyr::mutate(n_sites_c = as.character(n_sites),
-                n_years_c = as.character(n_years),
-                spatialTF_c = as.character(spatialTF)) %>%
-  dplyr::filter(theta_hat > 25) # no way converged
-
-y_N <- ggplot(df_converged, aes(as.factor(n_years), mean_N_est)) + geom_boxplot(aes(fill = as.factor(spatialTF)))
-
-g <- ggplot(df_converged, aes(as.factor(n_sites), mean_N_est)) 
-g + geom_boxplot(aes(fill = as.factor(spatialTF)))
-
-y_theta <- ggplot(df_converged, aes(as.factor(n_years), theta_hat)) + geom_boxplot(aes(fill = as.factor(spatialTF)))
-
-y_N_se <- ggplot(df_converged, aes(as.factor(n_years), N_se)) + geom_boxplot(aes(fill = as.factor(spatialTF)))
-
-g <- ggplot(df_converged, aes(as.factor(n_sites), N_se)) 
-g + geom_boxplot(aes(fill = as.factor(spatialTF)))
-
-y_RMSE <- ggplot(df_converged, aes(as.factor(n_years), RMSE)) + geom_boxplot(aes(fill = as.factor(spatialTF)))
-
-g <- ggplot(df_converged, aes(as.factor(n_sites), RMSE)) 
-g + geom_boxplot(aes(fill = as.factor(spatialTF)))
-
-
-library(gridExtra)
-grid.arrange(y_N, y_N_se, y_theta, y_RMSE, ncol = 2, nrow = 2)
-
-
-
-theme_bw_journal <- function (base_family = "") {
-  theme_grey(base_family = base_family) %+replace% 
-    theme(axis.text = element_text(size = rel(0.8)), axis.ticks = element_line(colour = "black"), 
-          legend.key = element_rect(colour = "grey80"), panel.background = element_rect(fill = "white", 
-                                                                                        colour = NA), panel.border = element_rect(fill = NA, 
-                                                                                                                                  colour = "grey50"), panel.grid.major = element_line(colour = "grey90", 
-                                                                                                                                                                                      size = 0.2), panel.grid.minor = element_line(colour = "grey98", 
-                                                                                                                                                                                                                                   size = 0.5), strip.background = element_rect(fill = "grey80", 
-                                                                                                                                                                                                                                                                                colour = "grey50", size = 0.2))
-}
-
-theme_set(theme_bw_journal())
 
 
 

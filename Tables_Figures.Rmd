@@ -1,0 +1,112 @@
+---
+title: "Untitled"
+author: "Daniel J Hocking"
+date: "2/11/2016"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r}
+theme_bw_journal <- function (base_family = "") {
+  theme_grey(base_family = base_family) %+replace%
+  theme(
+  axis.text = element_text(size = rel(0.8)), axis.ticks = element_line(colour = "black"),
+  legend.key = element_rect(colour = "grey80"), panel.background = element_rect(fill = "white",
+  colour = NA), panel.border = element_rect(fill = NA,
+  colour = "grey50"), panel.grid.major = element_line(colour = "grey90",
+  size = 0.2), panel.grid.minor = element_line(colour = "grey98",
+  size = 0.5), strip.background = element_rect(
+  fill = "grey80",
+  colour = "grey50", size = 0.2
+  )
+  )
+  }
+  
+  theme_set(theme_bw_journal())
+```
+
+
+
+```{r, echo=FALSE}
+df_sim_summary <- df_sims %>%
+  dplyr::group_by(n_sites, n_years, spatialTF) %>%
+  dplyr::select(-iter) %>%
+  dplyr::summarise_each(funs(mean(., na.rm = T)))
+as.data.frame(df_sim_summary %>% dplyr::filter(spatialTF == 1)) 
+
+df_converged <- df_sims %>%
+  dplyr::group_by(n_sites, n_years, spatialTF) %>%
+  dplyr::filter(converged == TRUE) %>%
+  dplyr::mutate(n_sites_c = as.character(n_sites),
+                n_years_c = as.character(n_years),
+                spatialTF_c = as.character(spatialTF)) %>%
+  dplyr::filter(theta_hat < 25) # no way converged
+```
+
+
+```{r}
+df_spatial <- df_converged %>%
+  dplyr::filter(spatialTF == TRUE)
+
+
+y_N <- ggplot(df_converged, aes(as.factor(n_years), mean_N_est)) + geom_boxplot(aes(fill = as.factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "top")
+
+y_N_se <- ggplot(df_converged, aes(as.factor(n_years), N_se)) + geom_boxplot(aes(fill = as.factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position="none")
+
+y_RMSE <- ggplot(df_converged, aes(as.factor(n_years), RMSE)) + geom_boxplot(aes(fill = as.factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position="none")
+
+y_theta <- ggplot(df_converged, aes(as.factor(n_years), theta_hat)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none")
+
+y_rhot <- ggplot(df_converged, aes(n_years, rhot_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF"), outlier.shape = NA) + scale_fill_manual(values=c("#619CFF")) + scale_y_continuous(limits = quantile(df_converged$rhot_hat, probs = c(0.25, 1))) + theme(legend.position = "none")
+
+# 2. Save the legend
+#+++++++++++++++++++++++
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+
+legend <- get_legend(y_N)
+
+# 3. Remove the legend from the box plot
+#+++++++++++++++++++++++
+y_N <- y_N + theme(legend.position="none")
+
+# 4. Create a blank plot
+library(cowplot)
+blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
+  cowplot::theme_nothing()
+
+library(gridExtra)
+grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, ncol = 2, nrow = 3, widths = c(2.7, 2.7), heights = c(0.2, 2.5, 2.5))
+
+```
+
+
+```{r}
+ggplot(df_converged, aes(n_years, theta_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))
+
+g <- ggplot(df_converged, aes(as.factor(n_sites), mean_N_est)) 
+g + geom_boxplot(aes(fill = as.factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF"))
+
+g <- ggplot(df_converged, aes(as.factor(n_sites), N_se)) 
+g + geom_boxplot(aes(fill = as.factor(spatialTF)))
+
+g <- ggplot(df_converged, aes(as.factor(n_sites), RMSE)) 
+g + geom_boxplot(aes(fill = as.factor(spatialTF)))
+
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

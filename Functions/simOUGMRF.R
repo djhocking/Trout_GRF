@@ -44,8 +44,11 @@ simOUGMRF <- function(family, theta, SD, mean_N, gamma, X_ij, p, sample_pct, spa
   # Simulate binomial observation (count) process
   c_ip_full <- matrix(NA, length(N_i), length(p))
   for(a in 1:length(N_i)) {
-    for(b in 1:length(p)) {
-      c_ip_full[a,b] <- rbinom(1, N_i[a], p[b])
+    removals <- 0
+    c_ip_full[a,1] <- rbinom(1, N_i[a], p[1])
+    for(b in 2:length(p)) {
+      removals <- removals + c_ip_full[a,b-1]
+      c_ip_full[a,b] <- rbinom(1, N_i[a] - removals, p[b])
     }
   }
   

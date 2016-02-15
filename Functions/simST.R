@@ -88,12 +88,13 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
   #-------------- Observation Process --------------
   # Simulate binomial observation (count) process
   c_ip_full <- as.data.frame(matrix(NA, length(N_i), length(p)))
-  for(i in 1:length(N_i)) {
-    # for(b in 1:length(p)) { # just do for 3-pass removal sampling for now
-    c_ip_full[i,1] <- rbinom(1, N_i[i], p[1])
-    c_ip_full[i,2] <- rbinom(1, N_i[i] - c_ip_full[i,1], p[2])
-    c_ip_full[i,3] <- rbinom(1, N_i[i] - c_ip_full[i,1] - c_ip_full[i,2], p[3])
-    #}
+  for(a in 1:length(N_i)) {
+    removals <- 0
+    c_ip_full[a,1] <- rbinom(1, N_i[a], p[1])
+    for(b in 2:length(p)) {
+      removals <- removals + c_ip_full[a,b-1]
+      c_ip_full[a,b] <- rbinom(1, N_i[a] - removals, p[b])
+    }
   }
   
   return(list(x_bt = x_bt, N_i = N_i, c_ip = c_ip_full, t_i = t_i))

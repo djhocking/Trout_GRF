@@ -13,7 +13,7 @@ library(tidyr)
 library(ggplot2)
 source("Functions/Input_Functions.R")
 source("Functions/simOUGMRF.R")
-source("Functions/simST2.R")
+source("Functions/simST.R")
 source("Functions/runOUGMRF.R")
 source("Functions/summary_functions.R")
 
@@ -133,8 +133,6 @@ mod <- runOUGMRF(inputs = Inputs)
 
 #----------- summarize -----------
 
-df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1])
-
 if(class(mod) == "try-error") {
   dat[counter, "iter"] <- 1
   dat[counter, "n_sites"] <- sample_sites_vec[1]
@@ -148,29 +146,43 @@ if(class(mod) == "try-error") {
   dat[counter, "theta_hat"] <- NA_real_
   dat[counter, "rhot"] <- rhot
   dat[counter, "rhot_hat"] <- NA_real_
+  dat[counter, "sigmat"] <- SD_t
+  dat[counter, "sigmat_hat"] <- NA_real_
   dat[counter, "theta_st"] <- theta_st
   dat[counter, "theta_st_hat"] <- NA_real_
+  dat[counter, "rho_st"] <- rho
+  dat[counter, "rho_st_hat"] <- NA_real_
+  dat[counter, "gamma_j"] <- gamma_j
+  dat[counter, "gamma_j_hat"] <- NA_real_
 } else {
-  N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")]
+  try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
+  N_se <- ifelse(is.null(N_se), NA_real_, N_se)
+  if(!is.na(N_se)) {
+    N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
+  }
+  df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
+  try(df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1]))
   
   dat[counter, "iter"] <- 1
   dat[counter, "n_sites"] <- sample_sites_vec[1]
   dat[counter, "n_years"] <- n_years_vec[1]
   dat[counter, "spatialTF"] <- s - 1
   dat[counter, "mean_N"] <- mean(network$N_i)
-  dat[counter, "mean_N_est"] <- mod$Report$mean_N
-  if(N_se == "NaN") {
-    dat[counter, "N_se"] <- NA_real_
-  } else {
-    dat[counter, "N_se"] <- N_se
-  }
+  dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
+  dat[counter, "N_se"] <- N_se
   dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
   dat[counter, "theta"] <- theta
   dat[counter, "theta_hat"] <- mod$Report$theta
   dat[counter, "rhot"] <- rhot
   dat[counter, "rhot_hat"] <- mod$Report$rhot
+  dat[counter, "sigmat"] <- SD_t
+  dat[counter, "sigmat_hat"] <- mod$Report$sigmat
   dat[counter, "theta_st"] <- theta_st
   dat[counter, "theta_st_hat"] <- mod$Report$theta_st
+  dat[counter, "rho_st"] <- rho
+  dat[counter, "rho_st_hat"] <- mod$Report$rho_st
+  dat[counter, "gamma_j"] <- gamma_j
+  dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
 }
 
 N_est <- mod$Report$N_ip[ , 1]

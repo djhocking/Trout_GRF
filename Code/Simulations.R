@@ -55,10 +55,10 @@ compile( paste0("Code/", Version,".cpp") )
 
 # vary theta, SD, sigmaIID, log_mean, and sample_pct for spatial/non-spatial
 spatial_cor <- c("extremely high", "high", "medium", "low", "very low")
-theta_vec <- c(0.1, 0.25, 0.5, 1, 2, 3, 4, 5)
-SD_vec <- c(0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
+theta_vec <- c(0.25, 0.5, 1, 3, 5)
+SD_vec <- c(0.1, 0.2, 0.4, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
 sigmaIID_vec <- c(0)
-mean_N <- c(50)
+mean_N <- c(10)
 spatial_vec <- c(TRUE, FALSE)
 
 sample_pct_vec <- c(1) #
@@ -84,7 +84,7 @@ if(!file.exists("Output/Sim_Spatial/Data/")) {
   dir.create("Output/Sim_Spatial/Data/", recursive = TRUE)
 }
 
-n_sim <- 200
+n_sim <- 9
 
 library(foreach)
 library(doParallel)
@@ -286,6 +286,21 @@ closeAllConnections()
 
 save(df_sims, file = "Output/Sim_Spatial/Sim_Results.RData")
 write.csv(df_sims, file = "Output/Sim_Spatial/Sim_Results.csv", row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

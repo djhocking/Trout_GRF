@@ -41,7 +41,7 @@ as.data.frame(df_sim_summary %>% dplyr::filter(spatialTF == 1))
 
 df_converged <- df_sims %>%
   dplyr::group_by(n_sites, n_years, spatialTF) %>%
-  dplyr::filter(converged == TRUE) %>%
+  #dplyr::filter(converged == TRUE) %>%
   dplyr::mutate(n_sites_c = as.character(n_sites),
                 n_years_c = as.character(n_years),
                 spatialTF_c = as.character(spatialTF)) %>%
@@ -91,9 +91,9 @@ legend <- get_legend(y_N)
 y_N <- y_N + theme(legend.position="none")
 
 # Create a blank plot
-library(cowplot)
-blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
-  cowplot::theme_nothing()
+# library(cowplot)
+# blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
+#   cowplot::theme_nothing()
 
 # Create grid of plots
 library(gridExtra)
@@ -143,9 +143,9 @@ legend <- get_legend(s_N)
 s_N <- s_N + theme(legend.position="none")
 
 # Create a blank plot
-library(cowplot)
-blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
-  cowplot::theme_nothing()
+# library(cowplot)
+# blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
+#   cowplot::theme_nothing()
 
 # Create grid of plots
 library(gridExtra)

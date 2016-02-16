@@ -30,6 +30,9 @@ source("Functions/runOUGMRF.R")
 source("Functions/summary_functions.R")
 
 dir_out <- "Output"
+if(!file.exists("Output/Power_Sim/Data/")) {
+  dir.create("Output/Power_Sim/Data/", recursive = TRUE)
+}
 
 #######################
 # Load data
@@ -39,20 +42,20 @@ colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
 
 # Set Conditions
-mean_N <- 50
+mean_N <- 10
 n_years_vec <- c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
-sample_sites_vec <- c(25, 50, 100, nrow(family))
+sample_sites_vec <- c(25, 50, 100, 200, nrow(family))
 p <- c(0.75, 0.75, 0.75)
-theta <- 0.1
-SD <- 0.05
+theta <- 0.5
+SD <- 0.5
 rhot <- 0.5
-SD_t <- 0.1
-theta_st <- 0.1
-SD_st <- 0.05
+SD_t <- 1
+theta_st <- 0.5
+SD_st <- 0.2
 rho <- 0.8
 
-n_sim <- 200
+n_sim <- 9
 
 # Covariates
 # add spatially varying covariates constant in time
@@ -87,6 +90,8 @@ dat <- data.frame(iter=integer(),
                   spatialTF=integer(),
                   mean_N=numeric(),
                   mean_N_est=numeric(),
+                  min_N = numeric(),
+                  max_N = numeric(),
                   N_se=numeric(),
                   RMSE=numeric(),
                   theta=numeric(),
@@ -210,6 +215,8 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "n_years"] <- n_years_vec[ti]
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
+          dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T),
+          dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T),
           dat[counter, "mean_N_est"] <- NA_real_
           dat[counter, "N_se"] <- NA_real_
           dat[counter, "RMSE"] <- NA_real_
@@ -240,6 +247,8 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
           dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
+          dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T),
+          dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T),
           dat[counter, "N_se"] <- N_se
           dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
           dat[counter, "theta"] <- theta
@@ -272,3 +281,4 @@ stopCluster(cl)
 closeAllConnections()
 
 save(df_sims, file = "Output/Power_Sim/STsim_Results.RData")
+write.csv(df_sims, file = "Output/Power_Sim/STsim_Results.csv", row.names = FALSE)

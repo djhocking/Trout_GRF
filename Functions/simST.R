@@ -71,7 +71,7 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
   # seed at top of network
   WhichRoot = which( is.na(family[,'parent_b']) )
   condSD_b[WhichRoot] = sqrt( SD_st^2 / 2*theta_st )
-  x_bt[WhichRoot,] = rmvnorm(1, mean=rep(0,n_years), sigma=condSD_b[WhichRoot]^2 * Corr_tt^2 )[1,]
+  x_bt[WhichRoot,] = rmvnorm(1, mean=rep(0,n_years), sigma=condSD_b[WhichRoot]^2 * Corr_tt )[1,]
   
   # Loop through network
   while( TRUE ){

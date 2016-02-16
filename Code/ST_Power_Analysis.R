@@ -40,7 +40,7 @@ family = cbind( family, "child_b"=1:nrow(family) )
 mean_N <- 50
 n_years_vec <- c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
-sample_sites_vec <- c(25, 50, 100, nrow(family))
+sample_sites_vec <- c(25, 50, 100, 200, nrow(family))
 p <- c(0.75, 0.75, 0.75)
 theta <- 0.1
 SD <- 0.05
@@ -75,6 +75,8 @@ dat <- data.frame(iter=integer(),
                   n_years=integer(),
                   spatialTF=integer(),
                   mean_N=numeric(),
+                  min_N=numeric(),
+                  max_N=numeric(),
                   mean_N_est=numeric(),
                   N_se=numeric(),
                   RMSE=numeric(),
@@ -199,6 +201,8 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "n_years"] <- n_years_vec[ti]
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
+          dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T)
+          dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T)
           dat[counter, "mean_N_est"] <- NA_real_
           dat[counter, "N_se"] <- NA_real_
           dat[counter, "RMSE"] <- NA_real_
@@ -214,7 +218,37 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "rho_st_hat"] <- NA_real_
           dat[counter, "gamma_j"] <- gamma_j
           dat[counter, "gamma_j_hat"] <- NA_real_
+          dat[counter, "converge"] <- FALSE
         } else {
+          # check convergence
+          converge <- FALSE
+          try(converge <- mod$opt$convergence == 0 & !(mean(mod_out$SD$sd) == "NaN") & !any(is.na(mod_out$SD$sd)) & max(mod_out$SD$sd, na.rm = T) < 100)
+          
+          if(converge == FALSE) {
+            dat[counter, "iter"] <- i
+            dat[counter, "n_sites"] <- sample_sites_vec[b]
+            dat[counter, "n_years"] <- n_years_vec[ti]
+            dat[counter, "spatialTF"] <- s - 1
+            dat[counter, "mean_N"] <- mean(network$N_i)
+            dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T)
+            dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T)
+            dat[counter, "mean_N_est"] <- NA_real_
+            dat[counter, "N_se"] <- NA_real_
+            dat[counter, "RMSE"] <- NA_real_
+            dat[counter, "theta"] <- theta
+            dat[counter, "theta_hat"] <- NA_real_
+            dat[counter, "rhot"] <- rhot
+            dat[counter, "rhot_hat"] <- NA_real_
+            dat[counter, "sigmat"] <- SD_t
+            dat[counter, "sigmat_hat"] <- NA_real_
+            dat[counter, "theta_st"] <- theta_st
+            dat[counter, "theta_st_hat"] <- NA_real_
+            dat[counter, "rho_st"] <- rho
+            dat[counter, "rho_st_hat"] <- NA_real_
+            dat[counter, "gamma_j"] <- gamma_j
+            dat[counter, "gamma_j_hat"] <- NA_real_
+            dat[counter, "converge"] <- FALSE
+          } else {
           try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
           N_se <- ifelse(is.null(N_se), NA_real_, N_se)
           if(!is.na(N_se)) {
@@ -228,6 +262,8 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "n_years"] <- n_years_vec[ti]
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
+          dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T)
+          dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T)
           dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
           dat[counter, "N_se"] <- N_se
           dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
@@ -243,6 +279,9 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "rho_st_hat"] <- mod$Report$rho_st
           dat[counter, "gamma_j"] <- gamma_j
           dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
+          dat[counter, "converge"] <- FALSE
+          
+          }
         }
         #         mean(network$N_i)
         #         SD_means <- data.frame(param = names(mod$SD$value), 

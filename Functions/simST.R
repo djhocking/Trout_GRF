@@ -72,7 +72,7 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
         Match = match( family[i,'parent_b'], SimulatedNodes ) # Which
         if(length(Match)==1){
           condSD_b[i] = sqrt( SD_st^2/(2*theta_st) * (1-exp(-2*theta_st*family[i,'dist_b'])) )
-          x_bt[i,] = x_bt[SimulatedNodes[Match],] + rmvnorm(1, mean=rep(0,n_years), sigma=condSD_b[i]^2 * Corr_tt^2 )[1,]
+          x_bt[i,] = x_bt[SimulatedNodes[Match],] + rmvnorm(1, mean=rep(0,n_years), sigma=condSD_b[i]^2 * Corr_tt )[1,]   # Cov_matrix = pointwise_variance * Corr_matrix
         }
       }
     }
@@ -81,7 +81,8 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
   }
   
   # Abundance
-  N_i = rpois( prod(dim(x_bt)), lambda=exp(log_mean + x_b + x_t + x_bt + eta_i)) # organizes so i is ordered by site then year(site 1, 2, 3 for year 1, then site 1,2,3 for year 2) 
+  log_Npred_bt = log_mean + outer(x_b,rep(1,n_years)) + outer(rep(1,nrow(family)),x_t) + x_bt + eta_i
+  N_i = rpois( prod(dim(x_bt)), lambda=exp(log_Npred_bt)) # organizes so i is ordered by site then year(site 1, 2, 3 for year 1, then site 1,2,3 for year 2)
   
   t_i <- rep(1:n_years, each = nrow(x_bt))
   
@@ -97,5 +98,5 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
     }
   }
   
-  return(list(x_bt = x_bt, N_i = N_i, c_ip = c_ip_full, t_i = t_i))
+  return(list(x_bt = x_bt, N_i = N_i, c_ip = c_ip_full, t_i = t_i, log_Npred_bt = log_Npred_bt))
 }

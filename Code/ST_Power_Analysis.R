@@ -8,6 +8,8 @@
 # 
 # I'm unsure if this is necessary for this paper but I could vary the detection rate as you suggest holding everything else constant in a spatial model. This would be relevant for other fish species, other taxa (stream salamanders), and *maybe* YOY vs adults.
 
+if( Sys.getenv("USERNAME") %in% c("James.Thorson","xJames.Thorson") ) setwd( "C:/Users/James.Thorson/Desktop/Project_git/Trout_GRF/" )
+
 # clear environment
 rm(list = ls())
 gc()
@@ -61,6 +63,15 @@ X_ij <- do.call("rbind", rep(list(X_i), n_years))
 
 # Set TMB code
 Version = "OU_GMRF_v1h"
+
+# Sanity checks
+if( TRUE ){
+  network <- simST(family, theta = theta, SD = SD, rhot = rhot, SD_t = SD_t, theta_st = theta_st, SD_st = SD_st, mean_N = mean_N, n_years = n_years, rho = rho, gamma_j = gamma_j, X_ij=X_ij, p = p)
+  # Check average sample AR of log-density at each site
+  # This is only equal to rhot, or rho, when the other process has variance (i.e., SD_t or SD_st) fixed at zero, and is otherwise some kind of weighted average of the two (I think)
+  ar1 = function(vec) var(vec[-length(vec)],vec[-1]) / var(vec)
+  mean(apply(network$log_Npred_bt, MARGIN=1, FUN=ar1))
+}
 
 # Compile
 if(FALSE) {

@@ -275,9 +275,149 @@ for(i in 1:length(theta_vec)) {
                   
           save(network, mod2, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[i], "_SD_", SD_vec[j], "_spatialTF_", options_list[[l]][1], "_meanN_", mean_N[k], ".RData")) 
         }
-      }
+    }
     }
 }
+
+
+for(k in 1:length(mean_N)) {
+  for(l in 1:length(options_list)) {
+    m <- 2
+    
+    counter <- counter + 1
+    network <- simOUGMRF(family = family, 
+                         theta = theta_vec[i],
+                         SD = SD_vec[j],
+                         mean_N = mean_N[k],
+                         gamma = gamma_j,
+                         X_ij = X_ij,
+                         p = p,
+                         sample_pct = sample_pct_vec[1],
+                         spatial = spatial_vec[m]
+    )
+    
+    Options_vec = options_list[[l]]
+    
+    start <- 1
+    end <- 2
+    Calc_lambda_ip <- rep(NA, length.out = nrow(network$c_ip))
+    Calc_lambda_ip[start:end] <- 1
+    Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
+    
+    # Make inputs
+    Inputs <- makeInput(family = family, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+    
+    # run model
+    optim_err <- tryCatch(
+      mod_out <- runOUGMRF(inputs = Inputs),
+      error = function(e) e
+    )
+    
+    if(inherits(optim_err, "try-error")) {
+      mod2[[counter]] <- NA
+      table_i <- data.frame(spatial = spatial_vec[m],
+                            sp_mod = Options_vec[["SpatialTF"]],
+                            theta = theta_vec[i], 
+                            SD_ou = SD_vec[j], 
+                            mean_N_set = mean_N[k], 
+                            mean_N = mean(network$N_i, na.rm = T),
+                            mean_N_hat = NA_real_,
+                            min_N = min(network$N_i, na.rm = T),
+                            max_N = max(network$N_i, na.rm = T),
+                            N_se = NA_real_,
+                            AIC = NA_real_,
+                            converge = FALSE, 
+                            rmse = NA_real_, 
+                            resid_mean = NA_real_, 
+                            theta_hat = NA_real_, 
+                            SD_ou_hat = NA_real_, 
+                            coef_hat = NA_real_, 
+                            coef_sd = NA_real_,
+                            coef_true = gamma_j)
+    } else {
+      # compile all model output
+      mod2[[counter]] <- mod_out
+      
+      # extract predicted abundance
+      N_hat <- data.frame(N_hat = mod_out$Report$N_ip[,1], lambda_hat = mod_out$Report$lambda_ip[ , 1], pass_1 = network$c_ip[ , 1])
+      N_hat <- N_hat %>%
+        dplyr::mutate(N_hat = ifelse(is.na(pass_1), lambda_hat, N_hat))
+      
+      # compile output of interest
+      df_N[ , counter] <- N_hat$N_hat
+      df_coef[[counter]] <- as.numeric(mod_out$SD$value)
+      df_sd[[counter]] <- as.numeric(mod_out$SD$sd)
+      df_rmse[counter] <- rmse(network$N_i - N_hat$N_hat)
+      
+      # check convergence
+      converge <- mod_out$opt$convergence == 0 & !(mean(mod_out$SD$sd) == "NaN") & !any(is.na(mod_out$SD$sd)) & max(mod_out$SD$sd, na.rm = T) < 100
+      
+      # organize table of output
+      if(converge == FALSE) {
+        table_i <- data.frame(spatial = spatial_vec[m],
+                              sp_mod = Options_vec[["SpatialTF"]],
+                              theta = theta_vec[i], 
+                              SD_ou = SD_vec[j], 
+                              mean_N_set = mean_N[k], 
+                              mean_N = mean(network$N_i, na.rm = T),
+                              mean_N_hat = NA_real_,
+                              min_N = min(network$N_i, na.rm = T),
+                              max_N = max(network$N_i, na.rm = T), 
+                              N_se = NA_real_,
+                              converge = converge, 
+                              AIC = NA_real_,
+                              rmse = NA_real_, 
+                              resid_mean = NA_real_, 
+                              theta_hat = NA_real_, 
+                              SD_ou_hat = NA_real_, 
+                              coef_hat = NA_real_, 
+                              coef_sd = NA_real_,
+                              coef_true = gamma_j)
+      } else {
+        try(N_se <- mod_out$SD$sd[which(names(mod_out$SD$value) == "mean_N")])
+        N_se <- ifelse(is.null(N_se), NA_real_, N_se)
+        if(!is.na(N_se)) {
+          N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
+        }
+        
+        table_i <- data.frame(spatial = spatial_vec[m],
+                              sp_mod = Options_vec[["SpatialTF"]],
+                              theta = theta_vec[i], 
+                              SD_ou = SD_vec[j], 
+                              mean_N_set = mean_N[k], 
+                              mean_N = mean(network$N_i, na.rm = T),
+                              mean_N_hat = mean(mod_out$Report$N_ip[ , 1]),
+                              min_N = min(network$N_i, na.rm = T),
+                              max_N = max(network$N_i, na.rm = T), 
+                              N_se = N_se,
+                              converge = converge, 
+                              AIC = mod_out$opt$AIC,
+                              rmse = df_rmse[counter], 
+                              resid_mean = mean(network$N_i - N_hat$N_hat), 
+                              theta_hat = mod_out$Report$theta, 
+                              SD_ou_hat = mod_out$Report$SDinput, 
+                              coef_hat = mod_out$Report$gamma_j, 
+                              coef_sd = mod_out$SD$sd[which(names(mod_out$SD$value) == "gamma_j")],
+                              coef_true = gamma_j)
+      }
+    }
+    
+    # apend to existing table
+    if(counter == 1) {
+      table_full <- table_i
+    } else {
+      table_full <- dplyr::bind_rows(table_full, table_i)
+    }
+    table_full$sim <- sim
+    
+    #           df_N_plot <- data.frame(N_hat = N_hat$N_hat, N_i = network$N_i, obsTF = ifelse(is.na(network$c_ip[,1]), FALSE, TRUE))
+    #           g <- ggplot(df_N_plot, aes(N_i, N_hat, colour = obsTF)) + geom_point() + geom_abline(intercept = 0, slope = 1, colour = "blue") + theme_bw() + ggtitle(paste0("spatial=", as.integer(spatial_vec[m]), "; sp_mod=", Options_vec[["SpatialTF"]], "; theta=", theta_vec[i], "; SD_ou=", SD_vec[j], "; mean_N=", mean_N[k]))
+    #           ggsave(filename = paste0("Output/Sim_Spatial/Figures/model_", counter[i], ".pdf"), plot = g)
+    
+    save(network, mod2, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[i], "_SD_", SD_vec[j], "_spatialTF_", options_list[[l]][1], "_meanN_", mean_N[k], ".RData")) 
+  }
+}
+
 write.csv(table_full, file = paste0("Output/Sim_Spatial/Data/summary_sim", i, ".csv"), row.names = FALSE)
 return(table_full)
 } # end sim iter

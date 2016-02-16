@@ -1,5 +1,5 @@
 # Generate Data
-simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st = 0.5, SD_st = 0.05, mean_N = 10, n_years = 10, rho = 0.8, gamma_j, X_ij, p = c(0.75, 075, 0.75)) {#, sample_pct = NULL, sample_n = NULL, sample_years = NULL) {
+simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st = 0.5, SD_st = 0.05, mean_N = 10, n_years = 10, rho = 0.8, gamma_j, X_ij, p = c(0.75, 075, 0.75), spatial = TRUE, temporal = TRUE, spatiotemporal = TRUE) {#, sample_pct = NULL, sample_n = NULL, sample_years = NULL) {
   
   # load( "sample.RData")
   # colnames(family)[1] = "child_name"
@@ -21,6 +21,7 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
   log_mean <- log(mean_N)
   
   #------------ Spatial -------------
+  if(spatial) {
   # object
   condSD_b = x_b = rep(NA, nrow(family))
   
@@ -44,14 +45,22 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
     # Stopping condition
     if( all(!is.na(x_b)) ) break()
   }
+  } else {
+    x_b = rep(0, nrow(family))
+  }
   
   #---------------- Temporal Autocorrelation AR1 ----------
+  if(temporal) {
   x_t <- c(0, rep(NA, times = n_years - 1))
   for(t in 2:n_years) {  
     x_t[t] <- rhot * x_t[t-1] + rnorm(1, 0, SD_t)
   }
+  } else {
+    x_t <- c(0, rep(0, times = n_years - 1))
+  }
   
   #-------------- Spatiotemporal ------------------
+  if(spatiotemporal) {
   # Covariance for a given site among years
   Corr_tt = rho ^ outer( 1:n_years, 1:n_years, FUN=function(a,b){abs(a-b)} )
   
@@ -79,7 +88,9 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
     # Stopping condition
     if( all(!is.na(x_bt)) ) break()
   }
-  
+  } else {
+    x_bt = matrix(0, nrow=nrow(family), ncol=n_years)
+  }
   # Abundance
   log_Npred_bt = log_mean + outer(x_b,rep(1,n_years)) + outer(rep(1,nrow(family)),x_t) + x_bt + eta_i
   N_i = rpois( prod(dim(x_bt)), lambda=exp(log_Npred_bt)) # organizes so i is ordered by site then year(site 1, 2, 3 for year 1, then site 1,2,3 for year 2)

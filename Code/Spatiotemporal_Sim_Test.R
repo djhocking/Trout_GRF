@@ -39,7 +39,7 @@ SD_t <- 0.1
 theta_st <- 0.1
 SD_st <- 0.05
 rho <- 0.5
-s <- 2 # 1 = nonspatial, 2 = spatial
+s <- c(1,2,3,4,5,6,7) # 1 = nonspatial, 2 = spatial
 
 # Covariates
 # add spatially varying covariates constant in time
@@ -64,6 +64,8 @@ dat <- data.frame(iter=integer(),
                   n_years=integer(),
                   spatialTF=integer(),
                   mean_N=numeric(),
+                  min_N=numeric(),
+                  max_N=numeric(),
                   mean_N_est=numeric(),
                   N_se=numeric(),
                   RMSE=numeric(),
@@ -90,7 +92,6 @@ str(network)
 summary(network$N_i)
 
 # thin to sample sites and years
-counter <- counter + 1
 c_ip <- network$c_ip
 n <- length(network[["N_i"]])
 
@@ -114,13 +115,30 @@ Calc_lambda_ip <- rep(NA, length.out = nrow(network$c_ip))
 Calc_lambda_ip[start:end] <- 1
 Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
 
+for(s in 1:length(s)) {
+  counter <- counter + 1
 if(s == 1) {
-  Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+  Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
 }
 if(s == 2) {
+  Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+}
+  if(s == 3) {
+    Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+  }
+  if(s == 4) {
+    Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+  }
+if(s == 5) {
+  Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+}
+  if(s == 6) {
+    Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+  }
+if(s == 7) {
   Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
 }
-
+  
 # need to make df, family, and c_ip agree
 df_counts <- as.data.frame(c_ip)
 df_counts$child_b <- rep(1:nrow(family), times = n_years)
@@ -184,6 +202,11 @@ if(class(mod) == "try-error") {
   dat[counter, "gamma_j"] <- gamma_j
   dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
 }
+}
+
+dat$model <- c("null", "T", "S", "ST", "T-ST", "S-ST", "S-T-ST")
+
+write.csv(dat, file = "Output/ST_Test.csv", row.names = FALSE)
 
 N_est <- mod$Report$N_ip[ , 1]
 plot(network$N_i, N_est)

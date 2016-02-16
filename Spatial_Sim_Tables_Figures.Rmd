@@ -1,0 +1,148 @@
+---
+title: "Summary of Spatiotemporal Power Analysis"
+author: "Daniel J Hocking"
+date: "2/11/2016"
+output: html_document
+---
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+df_sims <- read.csv(file = "Output/Sim_Spatial/Sim_Results.csv", header = TRUE, stringsAsFactors = FALSE)
+```
+
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+theme_bw_journal <- function (base_family = "") {
+  theme_grey(base_family = base_family) %+replace%
+  theme(
+  axis.text = element_text(size = rel(0.8)), axis.ticks = element_line(colour = "black"),
+  legend.key = element_rect(colour = "grey80"), panel.background = element_rect(fill = "white",
+  colour = NA), panel.border = element_rect(fill = NA,
+  colour = "grey50"), panel.grid.major = element_line(colour = "grey90",
+  size = 0.2), panel.grid.minor = element_line(colour = "grey98",
+  size = 0.5), strip.background = element_rect(
+  fill = "grey80",
+  colour = "grey50", size = 0.2
+  )
+  )
+  }
+  
+  theme_set(theme_bw_journal())
+```
+
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+df_sim_summary <- df_sims %>%
+  dplyr::group_by(spatial, sp_mod, theta, SD_ou) %>%
+  dplyr::select(-sim) %>%
+  dplyr::summarise_each(funs(mean(., na.rm = T)))
+as.data.frame(df_sim_summary %>% dplyr::filter(sp_mod == 1)) 
+
+df_converged <- df_sims %>%
+  dplyr::group_by(spatial, sp_mod, theta, SD_ou) %>%
+  dplyr::filter(converge == TRUE) %>%
+  dplyr::filter(theta_hat < 15) # no way converged
+```
+
+I ran 200 simulations of the spatiotemporal model for the White River in Vermont with 359 nodes (~330 stream reaches) over 20 years. For each iteration I then sampled the data to simulate surveying various numbers of sites for differing numbers of years (all combinations of 4, 8, 10, 15, 20 years for 25, 50, 100, 359 sites). For each survey combination in each iteration I fit the model including either spatial, temporal, and spatiotemporal dynamics (attempting to match the data generating model) or just a temporal model with no spatial or spatiotemporal dynamics.
+
+This is a summary of the results varying the number of years averaged across the number of sites sampled (consider separating this out and just summarizing for the maximum number of sites or n_sites = 100 to more clearly isolate the year effects). The red dashed line is the true value.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+# consider separating this out and just summarizing for the maximum number of sites or n_sites = 100 to more clearly isolate the year effects
+
+df_spatial <- df_converged %>%
+  dplyr::filter(sp_mod == TRUE)
+
+# Make the plots
+y_N <- ggplot(df_converged, aes(theta, mean_N_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("") + ylim(c(0,200))
+
+y_N_se <- ggplot(df_converged, aes(theta, N_se, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("")
+
+y_gamma <- ggplot(df_converged, aes(theta, coef_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$coef, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+
+y_RMSE <- ggplot(df_converged, aes(theta, rmse, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("")
+
+y_theta <- ggplot(df_spatial, aes(theta, theta_hat, group = theta)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("")
+
+# Save the legend
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+
+legend <- get_legend(y_N)
+
+# Remove the legend from the box plot
+y_N <- y_N + theme(legend.position="none")
+
+# Create a blank plot
+# library(cowplot)
+# blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
+#   cowplot::theme_nothing()
+
+# Create grid of plots
+library(gridExtra)
+grid.arrange(y_gamma, legend, y_N, y_N_se, y_RMSE, y_theta, ncol = 2, nrow = 3, widths = c(2.7, 2.7), heights = c(rep(3, times=3)))
+
+#grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_thet_st, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # y_gamma, 
+
+```
+
+These results are not encouraging in that the spatial (theta), temporal (rhot, sigmat), and spatiotemporal (theta_st, rho_st) coefficients are not recovered well. However, the RMSE is improved with more sample years and by including the spatially explicit effects in the estimation. Although the mean abundance (mean_N) across sites is recovered well in all models, the precision in the estimate of the mean abundance in the watershed is improved with sample years and by the spatial model when there are few years.
+
+Below are the results for different numbers of survey sites averaged across all numbers of survey years (consider separating this out and just summarizing for the maximum number of years or n_years = 20 to more clearly isolate the site effects) 
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+# consider separating this out and just summarizing for the maximum number of years or n_years = 20 to more clearly isolate the site effects
+
+# Make the plots
+s_N <- ggplot(df_converged, aes(SD_ou, mean_N_est, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("")
+
+s_N_se <- ggplot(df_converged, aes(SD_ou, N_se, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("")
+
+s_gamma <- ggplot(df_converged, aes(SD_ou, coef_hat, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$coef, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+
+s_RMSE <- ggplot(df_converged, aes(SD_ou, rmse, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("")
+
+ggplot(df_converged, aes(SD_ou, rmse, colour = factor(sp_mod))) + stat_smooth() #+ geom_point()
+
+s_sd <- ggplot(df_spatial, aes(SD_ou, theta_hat, group = SD_ou)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("")
+
+# Save the legend
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+
+legend <- get_legend(s_N)
+
+# Remove the legend from the box plot
+s_N <- s_N + theme(legend.position="none")
+
+# Create a blank plot
+library(cowplot)
+blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
+  cowplot::theme_nothing()
+
+# Create grid of plots
+library(gridExtra)
+grid.arrange(s_gamma, legend, s_N, s_N_se, s_RMSE, s_theta, s_rhot, s_sigmat, s_thet_st, s_rho_st, ncol = 2)
+
+#grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_thet_st, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # y_gamma, 
+
+```
+
+This is somewhat similar to the results comparing number of years surveyed. The one really strange result is that sigmat_hat gets worse with the spatiotemporal model with an increase in the number of sites surveyed.
+
+I really don't know what's going on with these results. I'm not positive if my generating model is matching my estimating model.
+
+The code for the simulations is at: [https://github.com/djhocking/Trout_GRF/blob/master/Code/ST_Power_Analysis.R](https://github.com/djhocking/Trout_GRF/blob/master/Code/ST_Power_Analysis.R)
+
+The code for the data generator is at: [https://github.com/djhocking/Trout_GRF/blob/master/Functions/simST.R](https://github.com/djhocking/Trout_GRF/blob/master/Functions/simST.R)
+

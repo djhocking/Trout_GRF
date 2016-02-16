@@ -48,159 +48,70 @@ if(FALSE) {
 }
 compile( paste0("Code/", Version,".cpp") )
 
-#######################
-# Simulate GMRF following O-U process
-#######################
-
-# vary theta, SD, sigmaIID, log_mean, and sample_pct for spatial/non-spatial
-spatial_cor <- c("high", "med", "low")
-theta_vec <- c(0.5, 1, 5)
-SD_vec <- c(0.1, 0.25, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
-sigmaIID_vec <- c(0, 1, 2)
-mean_N <- c(5, 10, 100)
-spatial_vec <- c(TRUE, FALSE)
-
-sample_pct_vec <- c(1, 0.5, 0.25, 0.1, 0.05) # only do this for a couple of above scenarios
-
-# Detection probability for removal sampling
-p <- c(0.75, 0.1875, 0.05)
-
-# Covariates
-gamma_j <- c(0.2) # doesn't work if I use more than 1 coef
-X_ij <- matrix(rnorm(nrow(family), 0, 1), nrow(family), length(gamma_j))
-
-#############################
-# Effect of survey density
-#############################
-
-# simulate abundance on network
-df_N <- matrix(NA, nrow(family), length(sample_pct_vec))
-df_coef <- list()
-df_sd <- list()
-df_rmse <- NA
-N_hat <- list()
-set.seed(45641)
-network <- simOUGMRF(family = family, 
-                     theta = theta_vec[2],
-                     SD = SD_vec[1],
-                     mean_N = mean_N[2],
-                     gamma = gamma_j,
-                     X_ij = X_ij,
-                     p = p,
-                     sample_pct = 1
-)
-
-saveRDS(list(network=network, 
-             sample_pct_vec=sample_pct_vec, 
-             theta = theta_vec[2],
-             SD = SD_vec[1],
-             mean_N = mean_N[2],
-             gamma = gamma_j,
-             p = p), file = file.path(dir_out, "survey_density_input.RData"))
-
-# hold out percent of data at random
-for(i in 1:length(sample_pct_vec)) {
-  c_ip <- network$c_ip
-  n <- length(network[["N_i"]])
-  exclude_rows <- sample(1:n, size = round((1-sample_pct_vec[i])*n, digits = 0), replace = FALSE)
-  c_ip[exclude_rows, ] <- NA
-  # initial site-years to get SD for lambda (cycle through just for best model)
-  start <- 1
-  end <- 2
-  Calc_lambda_ip <- rep(NA, length.out = nrow(network$c_ip))
-  Calc_lambda_ip[start:end] <- 1
-  Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
-  
-  Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1)
-  
-  # Make inputs
-  Inputs <- makeInput(family = family, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
-  
-  mod <- runOUGMRF(inputs = Inputs)
-  
-  SD_means <- data.frame(param = names(mod$SD$value), 
-                         est = as.numeric(mod$SD$value), 
-                         sd = as.numeric(mod$SD$sd), stringsAsFactors = F)
-  
-  N_est <- SD_means %>%
-    dplyr::filter(grepl("N", param))
-  
-  N_hat[[i]] <- data.frame(N_hat = mod$Report$N_ip[ , 1], N_SD = N_est$sd, lambda_hat = mod$Report$lambda_ip[ , 1], pass_1 = network$c_ip[ , 1], stringsAsFactors = F)
-  N_hat[[i]] <- N_hat[[i]] %>%
-    dplyr::mutate(N_hat = ifelse(is.na(pass_1), lambda_hat, N_hat))
-  
-  df_N[ , i] <- N_hat[[i]]$N_hat
-  df_coef[[i]] <- as.numeric(mod$SD$value)
-  df_sd[[i]] <- as.numeric(mod$SD$sd)
-  df_rmse[i] <- rmse(network$N_i - N_hat[[i]]$N_hat)
-  
-  df_N_plot <- data.frame(N_hat = N_hat[[i]]$N_hat, 
-                          N_i = network$N_i,
-                          lambda_hat = N_hat[[i]]$lambda_hat,
-                          obsTF = ifelse(is.na(network$c_ip[,1]), FALSE, TRUE))
-  g <- ggplot(df_N_plot, aes(N_i, N_hat, colour = obsTF)) + geom_point() + geom_abline(aes(0,1), colour = "blue") + ggtitle(paste0(sample_pct_vec[i]*100, " Percent Surveyed")) + theme_bw() + xlim(0, 25) + ylim(0, 25)
-  print(g)
-  ggsave(filename = paste0("Output/pct", sample_pct_vec[i], ".pdf"), plot = g)
-}
-
-df_err <- data.frame(Percent = sample_pct_vec, RMSE = df_rmse, stringsAsFactors = F)
-format(df_err, digits = 3)
-
-coef_means <- data.frame(param = names(mod$SD$value), true = c(gamma_j, NA, NA, log(theta_vec[2]), SD_vec[1], NA, NA, network$N_i), matrix(unlist(df_coef), length(df_sd[[1]]), length(sample_pct_vec)), stringsAsFactors = F)
-names(coef_means) <- c("param",
-                  "true",
-                  paste0("pct", sample_pct_vec[1]),
-                  paste0("pct", sample_pct_vec[2]),
-                  paste0("pct", sample_pct_vec[3]),
-                  paste0("pct", sample_pct_vec[4]),
-                  paste0("pct", sample_pct_vec[5])
-)
-format(coef_means, digits = 2, scientific = FALSE)
-
-sd_pct <- data.frame(param = names(mod$SD$value), matrix(unlist(df_sd), length(df_sd[[1]]), length(df_sd)), stringsAsFactors = FALSE)
-names(sd_pct) <- c("param",
-                   paste0("pct", sample_pct_vec[1]),
-                   paste0("pct", sample_pct_vec[2]),
-                   paste0("pct", sample_pct_vec[3]),
-                   paste0("pct", sample_pct_vec[4]),
-                   paste0("pct", sample_pct_vec[5]))
-
-sd_pct_coef <- sd_pct %>%
-  dplyr::filter(!grepl("N_", param))
-sd_pct_coef
-
-sd_pct_N <- sd_pct %>%
-  dplyr::filter(grepl("N_", param))
-colMeans(sd_pct_N[ , !(names(sd_pct) %in% c("param"))], na.rm = T) # precision improves with sample size
-
-saveRDS(list(coef_means = coef_means,
-             sd_pct = sd_pct,
-             df_err = df_err),
-        file = file.path(dir_out, "survey_density_results.RData"))
-
 
 ###############################
-# vary theta, SD, mean, spatial
+# vary theta, SD, spatial
 ###############################
+
 # vary theta, SD, sigmaIID, log_mean, and sample_pct for spatial/non-spatial
-spatial_cor <- c("high", "med", "low")
-theta_vec <- c(0.5, 1, 5)
-SD_vec <- c(0.1, 0.1, 0.25) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
-sigmaIID_vec <- c(0, 1, 2)
-mean_N <- c(5, 10, 100)
+spatial_cor <- c("extremely high", "high", "medium", "low", "very low")
+theta_vec <- c(0.1, 0.25, 0.5, 1, 2, 3, 4, 5)
+SD_vec <- c(0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
+sigmaIID_vec <- c(0)
+mean_N <- c(50)
 spatial_vec <- c(TRUE, FALSE)
 
-sample_pct_vec <- c(1, 0.5, 0.25, 0.1, 0.05)
+sample_pct_vec <- c(1) #
 
 # Detection probability for removal sampling
-p <- c(0.75, 0.1875, 0.05)
+p <- c(0.75, 0.75, 0.75)
 
 # Covariates
-gamma_j <- c(0.2) # doesn't work if I use more than 1 coef
+gamma_j <- c(0.5) # doesn't work if I use more than 1 coef
 X_ij <- matrix(rnorm(nrow(family), 0, 1), nrow(family), length(gamma_j))
 
 options_list <- list(c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1),
                      c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1))
+
+#######################
+# Simulate GMRF following O-U process
+#######################
+
+if(!file.exists("Output/Sim_Spatial/Figures/")) {
+  dir.create("Output/Sim_Spatial/Figures/", recursive = TRUE)
+}
+if(!file.exists("Output/Sim_Spatial/Data/")) {
+  dir.create("Output/Sim_Spatial/Data/", recursive = TRUE)
+}
+
+n_sim <- 200
+
+library(foreach)
+library(doParallel)
+
+# set up parallel backend & make database connection available to all workers
+nc <- min(c(detectCores()-1, 15)) #
+cl <- makeCluster(nc, type = "PSOCK")
+registerDoParallel(cl)
+
+# # setup to write out to monitor progress
+# logFile = paste0(data_dir, "/log_file.txt")
+# logFile_Finish = paste0(data_dir, "/log_file_finish.txt")
+# cat("Monitoring progress of prediction loop in parallel", file=logFile, append=FALSE, sep = "\n")
+# cat("Monitoring the finish of each loop", file=logFile_Finish, append=FALSE, sep = "\n")
+
+########## Run Parallel Loop ########## 
+# start loop
+df_sims <- foreach(sim = 1:n_sim, 
+                   .inorder=FALSE, 
+                   .combine = rbind,
+                   .packages=c("TMB",
+                               "dplyr",
+                               "minqa",
+                               "lubridate",
+                               "tidyr")
+) %dopar% {
+  
 I <- length(theta_vec)
 J <- length(SD_vec)
 K <- length(mean_N)
@@ -221,10 +132,10 @@ saveRDS(list(spatial_cor = spatial_cor,
              spatial_vec = spatial_vec,
              p = p, 
              gamma_j = gamma_j),
-        file = "Output/spatial_sims_input.RData"
-        )
+        file = paste0("Output/Sim_Spatial/Data/spatial_sims_input_iter_", sim, ".RData"
+        ))
 
-set.seed(1987654)
+#set.seed(1987654)
 # adjust so don't have a new random sample when comparing spatial and non-spatial models
 
 for(i in 1:length(theta_vec)) { 
@@ -246,6 +157,12 @@ for(i in 1:length(theta_vec)) {
           
           Options_vec = options_list[[l]]
           
+          start <- 1
+          end <- 2
+          Calc_lambda_ip <- rep(NA, length.out = nrow(network$c_ip))
+          Calc_lambda_ip[start:end] <- 1
+          Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
+          
           # Make inputs
           Inputs <- makeInput(family = family, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
           
@@ -261,7 +178,12 @@ for(i in 1:length(theta_vec)) {
                                   sp_mod = Options_vec[["SpatialTF"]],
                                   theta = theta_vec[i], 
                                   SD_ou = SD_vec[j], 
-                                  mean_N = mean_N[k],  
+                                  mean_N_set = mean_N[k], 
+                                  mean_N = mean(network$N_i, na.rm = T),
+                                  mean_N_hat = NA_real_,
+                                  min_N = min(network$N_i, na.rm = T),
+                                  max_N = max(network$N_i, na.rm = T),
+                                  N_se = NA_real_,
                                   AIC = NA_real_,
                                   converge = FALSE, 
                                   rmse = NA_real_, 
@@ -287,7 +209,7 @@ for(i in 1:length(theta_vec)) {
             df_rmse[counter] <- rmse(network$N_i - N_hat$N_hat)
             
             # check convergence
-            converge <- mod_out$opt$convergence == 0 & !(mean(mod_out$SD$sd) == "NaN") & max(mod_out$SD$sd, na.rm = T) < 100
+            converge <- mod_out$opt$convergence == 0 & !(mean(mod_out$SD$sd) == "NaN") & !any(is.na(mod_out$SD$sd)) & max(mod_out$SD$sd, na.rm = T) < 100
             
             # organize table of output
             if(converge == FALSE) {
@@ -295,7 +217,12 @@ for(i in 1:length(theta_vec)) {
                                     sp_mod = Options_vec[["SpatialTF"]],
                                     theta = theta_vec[i], 
                                     SD_ou = SD_vec[j], 
-                                    mean_N = mean_N[k],  
+                                    mean_N_set = mean_N[k], 
+                                    mean_N = mean(network$N_i, na.rm = T),
+                                    mean_N_hat = NA_real_,
+                                    min_N = min(network$N_i, na.rm = T),
+                                    max_N = max(network$N_i, na.rm = T), 
+                                    N_se = NA_real_,
                                     converge = converge, 
                                     AIC = NA_real_,
                                     rmse = NA_real_, 
@@ -306,11 +233,22 @@ for(i in 1:length(theta_vec)) {
                                     coef_sd = NA_real_,
                                     coef_true = gamma_j)
             } else {
+              try(N_se <- mod_out$SD$sd[which(names(mod_out$SD$value) == "mean_N")])
+              N_se <- ifelse(is.null(N_se), NA_real_, N_se)
+              if(!is.na(N_se)) {
+                N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
+              }
+              
               table_i <- data.frame(spatial = spatial_vec[m],
                                     sp_mod = Options_vec[["SpatialTF"]],
                                     theta = theta_vec[i], 
                                     SD_ou = SD_vec[j], 
-                                    mean_N = mean_N[k], 
+                                    mean_N_set = mean_N[k], 
+                                    mean_N = mean(network$N_i, na.rm = T),
+                                    mean_N_hat = mean(mod_out$Report$N_ip[ , 1]),
+                                    min_N = min(network$N_i, na.rm = T),
+                                    max_N = max(network$N_i, na.rm = T), 
+                                    N_se = N_se,
                                     converge = converge, 
                                     AIC = mod_out$opt$AIC,
                                     rmse = df_rmse[counter], 
@@ -329,14 +267,29 @@ for(i in 1:length(theta_vec)) {
           } else {
             table_full <- dplyr::bind_rows(table_full, table_i)
           }
+          table_full$sim <- sim
           
-          df_N_plot <- data.frame(N_hat = N_hat$N_hat, N_i = network$N_i, obsTF = ifelse(is.na(network$c_ip[,1]), FALSE, TRUE))
-          g <- ggplot(df_N_plot, aes(N_i, N_hat, colour = obsTF)) + geom_point() + geom_abline(aes(0,1), colour = "blue") + theme_bw() + ggtitle(paste0("spatial=", as.integer(spatial_vec[m]), "; sp_mod=", Options_vec[["SpatialTF"]], "; theta=", theta_vec[i], "; SD_ou=", SD_vec[j], "; mean_N=", mean_N[k]))
-          ggsave(filename = paste0("Output/Figures/model_", counter[i], ".pdf"), plot = g)
+#           df_N_plot <- data.frame(N_hat = N_hat$N_hat, N_i = network$N_i, obsTF = ifelse(is.na(network$c_ip[,1]), FALSE, TRUE))
+#           g <- ggplot(df_N_plot, aes(N_i, N_hat, colour = obsTF)) + geom_point() + geom_abline(intercept = 0, slope = 1, colour = "blue") + theme_bw() + ggtitle(paste0("spatial=", as.integer(spatial_vec[m]), "; sp_mod=", Options_vec[["SpatialTF"]], "; theta=", theta_vec[i], "; SD_ou=", SD_vec[j], "; mean_N=", mean_N[k]))
+#           ggsave(filename = paste0("Output/Sim_Spatial/Figures/model_", counter[i], ".pdf"), plot = g)
+                  
+          save(network, mod2, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[i], "_SD_", SD_vec[j], "_spatialTF_", options_list[[l]][1], "_meanN_", mean_N[k], ".RData")) 
         }
       }
     }
-  }
+}
+write.csv(table_full, file = paste0("Output/Sim_Spatial/Data/summary_sim", i, ".csv"), row.names = FALSE)
+return(table_full)
+} # end sim iter
+stopCluster(cl)
+closeAllConnections()
+
+save(df_sims, file = "Output/Sim_Spatial/Sim_Results.RData")
+write.csv(df_sims, file = "Output/Sim_Spatial/Sim_Results.csv", row.names = FALSE)
+
+
+
+#####################
 
 
     for(k in 1:length(mean_N)) {
@@ -447,7 +400,7 @@ for(i in 1:length(theta_vec)) {
     }
   }
 }
-
+########################
 
 table_full$model <- 1:nrow(table_full)
 

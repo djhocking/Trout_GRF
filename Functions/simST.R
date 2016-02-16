@@ -92,7 +92,16 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
     x_bt = matrix(0, nrow=nrow(family), ncol=n_years)
   }
   # Abundance
-  log_Npred_bt = log_mean + outer(x_b,rep(1,n_years)) + outer(rep(1,nrow(family)),x_t) + x_bt + eta_i
+  log_Npred_bt <- log_mean + eta_i
+  if(spatial) {
+    log_Npred_bt <- log_Npred_bt + outer(x_b,rep(1,n_years))
+  }
+  if(temporal) {
+    log_Npred_bt <- log_Npred_bt + outer(rep(1,nrow(family)),x_t)
+  }
+  if(spatiotemporal) {
+    log_Npred_bt = log_Npred_bt + x_bt
+  }
   N_i = rpois( prod(dim(x_bt)), lambda=exp(log_Npred_bt)) # organizes so i is ordered by site then year(site 1, 2, 3 for year 1, then site 1,2,3 for year 2)
   
   t_i <- rep(1:n_years, each = nrow(x_bt))

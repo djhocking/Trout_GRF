@@ -242,9 +242,9 @@ df_sims <- foreach(i = 1:n_sim,
           # check convergence
           converge <- FALSE
           try(converge <- mod$opt$convergence == 0)
-          try(converge <- ifelse(converge == TRUE, !any(is.na(mod$SD$sd)), converge)
+          try(converge <- ifelse(converge == TRUE, !any(is.na(mod$SD$sd)), converge))
           large_sd <- FALSE
-          try(large_sd <-  & max(mod$SD$sd, na.rm = T) > 100)
+          try(large_sd <- max(mod$SD$sd, na.rm = T) > 100)
           
           if(converge == FALSE | large_sd == TRUE) {
             dat[counter, "iter"] <- i

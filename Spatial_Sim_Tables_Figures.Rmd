@@ -36,8 +36,11 @@ theme_bw_journal <- function (base_family = "") {
 df_sim_summary <- df_sims %>%
   dplyr::group_by(spatial, sp_mod, theta, SD_ou) %>%
   dplyr::select(-sim) %>%
+    dplyr::filter(converge == TRUE) %>%
   dplyr::summarise_each(funs(mean(., na.rm = T)))
 as.data.frame(df_sim_summary %>% dplyr::filter(sp_mod == 1)) 
+
+ggplot(df_sim_summary, aes(SD_ou, max_N, colour = factor(theta), group = factor(theta))) + geom_smooth() #stat_smooth(aes(fill = factor(theta)))
 
 df_converged <- df_sims %>%
   dplyr::group_by(spatial, sp_mod, theta, SD_ou) %>%
@@ -56,15 +59,16 @@ df_spatial <- df_converged %>%
   dplyr::filter(sp_mod == TRUE)
 
 # Make the plots
-y_N <- ggplot(df_converged, aes(theta, mean_N_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("") + ylim(c(0,200))
+y_N <- ggplot(df_converged, aes(theta, mean_N_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("") + ylim(c(0,200))# + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, mean_N, group = interaction(theta, sp_mod)))
 
-y_N_se <- ggplot(df_converged, aes(theta, N_se, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("")
+y_N_se <- ggplot(df_converged, aes(theta, N_se, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("") + ylim(c(0, 25))
 
-y_gamma <- ggplot(df_converged, aes(theta, coef_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$coef, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+y_gamma <- ggplot(df_converged, aes(theta, coef_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$coef_true, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
 
 y_RMSE <- ggplot(df_converged, aes(theta, rmse, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("")
 
-y_theta <- ggplot(df_spatial, aes(theta, theta_hat, group = theta)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("")
+y_theta <- ggplot(df_spatial, aes(theta, theta_hat, group = theta)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, theta, group = theta)) #+ geom_text(data = means, aes(label = weight, y = weight + 0.08))
+  # geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("")
 
 # Save the legend
 get_legend<-function(myggplot){
@@ -110,7 +114,7 @@ s_RMSE <- ggplot(df_converged, aes(SD_ou, rmse, group = interaction(SD_ou, sp_mo
 
 ggplot(df_converged, aes(SD_ou, rmse, colour = factor(sp_mod))) + stat_smooth() #+ geom_point()
 
-s_sd <- ggplot(df_spatial, aes(SD_ou, theta_hat, group = SD_ou)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("")
+s_sd <- ggplot(df_spatial, aes(SD_ou, theta_hat, group = SD_ou)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + xlab("") + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(SD_ou, theta, group = SD_ou)) # + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red")
 
 # Save the legend
 get_legend<-function(myggplot){

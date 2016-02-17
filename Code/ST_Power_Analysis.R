@@ -47,22 +47,25 @@ n_years_vec <- c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
 sample_sites_vec <- c(25, 50, 100, 200, nrow(family))
 p <- c(0.75, 0.75, 0.75)
-theta <- 0.5
-SD <- 0.5
+theta <- 1
+SD <- 0.2
 rhot <- 0.5
-SD_t <- 1
+SD_t <- 0.8
 theta_st <- 0.5
-SD_st <- 0.2
-rho <- 0.8
+SD_st <- 0.15
+rho <- 0.75
 
-n_sim <- 9
+n_sim <- 200
 
 # Covariates
 # add spatially varying covariates constant in time
-gamma_j <- c(0.5) # doesn't work if I use more than 1 coef
+gamma_j <- c(0.2) # doesn't work if I use more than 1 coef
 X_i <- matrix(rnorm(nrow(family), 0, 1), nrow(family), length(gamma_j))
 # replicate by number of years
 X_ij <- do.call("rbind", rep(list(X_i), n_years))
+
+save(mean_N, family, n_years_vec, n_years, sample_sites_vec, p, theta, SD, rhot, SD_t, theta_st, SD_st, rho, n_sim, gamma_j, X_ij, file = "Output/Power_Sim/Data/ST_Conditions.RData")
+
 
 # Set TMB code
 Version = "OU_GMRF_v1h"
@@ -118,7 +121,7 @@ library(foreach)
 library(doParallel)
 
 # set up parallel backend & make database connection available to all workers
-nc <- min(c(detectCores()-1, 15)) #
+nc <- min(c(detectCores()-1, 12)) #
 cl <- makeCluster(nc, type = "PSOCK")
 registerDoParallel(cl)
 
@@ -207,8 +210,8 @@ df_sims <- foreach(i = 1:n_sim,
         # Make inputs
         Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
         
-        mod <- runOUGMRF(inputs = Inputs)
-        
+        try(mod <- runOUGMRF(inputs = Inputs))
+          
         #----------- summarize -----------
         
         if(class(mod) == "try-error") {
@@ -217,8 +220,8 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "n_years"] <- n_years_vec[ti]
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
-          dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T)
-          dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T)
+          dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
+          dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
           dat[counter, "mean_N_est"] <- NA_real_
           dat[counter, "N_se"] <- NA_real_
           dat[counter, "RMSE"] <- NA_real_
@@ -238,16 +241,19 @@ df_sims <- foreach(i = 1:n_sim,
         } else {
           # check convergence
           converge <- FALSE
-          try(converge <- mod$opt$convergence == 0 & !(mean(mod_out$SD$sd) == "NaN") & !any(is.na(mod_out$SD$sd)) & max(mod_out$SD$sd, na.rm = T) < 100)
+          try(converge <- mod$opt$convergence == 0)
+          try(converge <- ifelse(converge == TRUE, !any(is.na(mod$SD$sd)), converge)
+          large_sd <- FALSE
+          try(large_sd <-  & max(mod$SD$sd, na.rm = T) > 100)
           
-          if(converge == FALSE) {
+          if(converge == FALSE | large_sd == TRUE) {
             dat[counter, "iter"] <- i
             dat[counter, "n_sites"] <- sample_sites_vec[b]
             dat[counter, "n_years"] <- n_years_vec[ti]
             dat[counter, "spatialTF"] <- s - 1
             dat[counter, "mean_N"] <- mean(network$N_i)
-            dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T)
-            dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T)
+            dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
+            dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
             dat[counter, "mean_N_est"] <- NA_real_
             dat[counter, "N_se"] <- NA_real_
             dat[counter, "RMSE"] <- NA_real_
@@ -278,11 +284,9 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "n_years"] <- n_years_vec[ti]
           dat[counter, "spatialTF"] <- s - 1
           dat[counter, "mean_N"] <- mean(network$N_i)
-          dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T)
-          dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T)
+          dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
+          dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
           dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
-          dat[counter, "min_N"] <- min_N = min(network$N_i, na.rm = T),
-          dat[counter, "max_N"] <- max_N = max(network$N_i, na.rm = T),
           dat[counter, "N_se"] <- N_se
           dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
           dat[counter, "theta"] <- theta
@@ -297,7 +301,7 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "rho_st_hat"] <- mod$Report$rho_st
           dat[counter, "gamma_j"] <- gamma_j
           dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
-          dat[counter, "converge"] <- FALSE
+          dat[counter, "converge"] <- TRUE
           
           }
         }
@@ -311,7 +315,8 @@ df_sims <- foreach(i = 1:n_sim,
       } # end spatial TF loop
     } # end site loop
   } # end year loop
-  write.csv(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".csv"), row.names = FALSE)
+  #write.csv(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".csv"), row.names = FALSE)
+  save(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".RData"))
   return(dat)
 } # end sim iter
 stopCluster(cl)

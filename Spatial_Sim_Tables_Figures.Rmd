@@ -48,7 +48,7 @@ df_converged <- df_sims %>%
   dplyr::filter(theta_hat < 15) # no way converged
 ```
 
-I ran 200 simulations of the spatiotemporal model for the White River in Vermont with 359 nodes (~330 stream reaches) over 20 years. For each iteration I then sampled the data to simulate surveying various numbers of sites for differing numbers of years (all combinations of 4, 8, 10, 15, 20 years for 25, 50, 100, 359 sites). For each survey combination in each iteration I fit the model including either spatial, temporal, and spatiotemporal dynamics (attempting to match the data generating model) or just a temporal model with no spatial or spatiotemporal dynamics.
+I ran `r max(df_sims$sim)` simulations of the spatiotemporal model for the White River in Vermont with 359 nodes (~330 stream reaches) over 20 years. For each iteration I then sampled the data to simulate surveying various numbers of sites for differing numbers of years (all combinations of 4, 8, 10, 15, 20 years for 25, 50, 100, 359 sites). For each survey combination in each iteration I fit the model including either spatial, temporal, and spatiotemporal dynamics (attempting to match the data generating model) or just a temporal model with no spatial or spatiotemporal dynamics.
 
 This is a summary of the results varying the number of years averaged across the number of sites sampled (consider separating this out and just summarizing for the maximum number of sites or n_sites = 100 to more clearly isolate the year effects). The red dashed line is the true value.
 

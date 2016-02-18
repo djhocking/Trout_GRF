@@ -84,7 +84,18 @@ if(!file.exists("Output/Sim_Spatial/Data/")) {
   dir.create("Output/Sim_Spatial/Data/", recursive = TRUE)
 }
 
-n_sim <- 200
+I <- length(theta_vec)
+J <- length(SD_vec)
+K <- length(mean_N)
+L <- length(options_list)
+M <- length(spatial_vec)
+df_N <- matrix(NA, nrow(family), I*J*K*L + K*L)
+df_coef <- list()
+df_sd <- list()
+df_rmse <- NA
+
+
+n_sim <- 9
 counter <- 0
 mod2 <- list()
 
@@ -114,27 +125,23 @@ df_sims <- foreach(sim = 1:n_sim,
                                "tidyr")
 ) %dopar% {
   
-  I <- length(theta_vec)
-  J <- length(SD_vec)
-  K <- length(mean_N)
-  L <- length(options_list)
-  M <- length(spatial_vec)
-  df_N <- matrix(NA, nrow(family), I*J*K*L + K*L)
-  df_coef <- list()
-  df_sd <- list()
-  df_rmse <- NA
+  source("Functions/Input_Functions.R")
+  source("Functions/simOUGMRF.R")
+  source("Functions/runOUGMRF.R")
+  source("Functions/summary_functions.R")
+  
   #counter <- 0
   
-  saveRDS(list(spatial_cor = spatial_cor,
-               theta_vec = theta_vec,
-               SD_vec = SD_vec,
-               sigmaIID_vec = sigmaIID_vec,
-               mean_N = mean_N,
-               spatial_vec = spatial_vec,
-               p = p, 
-               gamma_j = gamma_j),
-          file = paste0("Output/Sim_Spatial/Data/spatial_sims_input_iter_", sim, ".RData"
-          ))
+#   saveRDS(list(spatial_cor = spatial_cor,
+#                theta_vec = theta_vec,
+#                SD_vec = SD_vec,
+#                sigmaIID_vec = sigmaIID_vec,
+#                mean_N = mean_N,
+#                spatial_vec = spatial_vec,
+#                p = p, 
+#                gamma_j = gamma_j),
+#           file = paste0("Output/Sim_Spatial/Data/spatial_sims_input_iter_", sim, ".RData"
+#           ))
   
   #set.seed(1987654)
   # adjust so don't have a new random sample when comparing spatial and non-spatial models
@@ -201,7 +208,7 @@ df_sims <- foreach(sim = 1:n_sim,
             
             # check convergence
             converge <- FALSE
-            try(converge <- mod_out$opt$convergence == 0 & !(mean(mod_out$SD$sd) == "NaN") & !any(is.na(mod_out$SD$sd)) & max(mod_out$SD$sd, na.rm = T) < 100)
+            try(converge <- mod_out$opt$convergence == 0 & !any(is.na(mod_out$SD$sd)))
             
             # organize table of output
             if(converge == FALSE) {
@@ -343,7 +350,7 @@ df_sims <- foreach(sim = 1:n_sim,
         
         # check convergence
         converge <- FALSE
-        try(converge <- mod_out$opt$convergence == 0 & !(mean(mod_out$SD$sd) == "NaN") & !any(is.na(mod_out$SD$sd)) & max(mod_out$SD$sd, na.rm = T) < 100)
+        try(converge <- mod_out$opt$convergence == 0 & !any(is.na(mod_out$SD$sd)))
         
         # organize table of output
         if(converge == FALSE) {

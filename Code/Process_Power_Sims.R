@@ -1,5 +1,17 @@
 #file_list <- list.files("Output/Power_Sim/Data/")
 
+library(TMB)
+library(minqa)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+source("Functions/Input_Functions.R")
+source("Functions/simOUGMRF.R")
+source("Functions/simST.R")
+source("Functions/runOUGMRF.R")
+source("Functions/summary_functions.R")
+
 load(file = "Output/Power_Sim/Data/ST_Conditions.RData")
 
 dat <- data.frame(iter=integer(),
@@ -61,7 +73,9 @@ for(i in 1:n_sim) {
           } else {
             # check convergence
             converge <- FALSE
-            try(converge <- mod$opt$convergence == 0 & !any(is.na(mod$SD$sd)) & max(mod$SD$sd, na.rm = T) < 100)
+            if(!is.null(mod$SD$sd)) {
+            try(converge <- mod$opt$convergence == 0 & !any(is.na(mod$SD$sd)))
+            }
             
             if(converge == FALSE) {
               dat[counter, "iter"] <- i
@@ -88,11 +102,12 @@ for(i in 1:n_sim) {
               dat[counter, "gamma_j_hat"] <- NA_real_
               dat[counter, "converge"] <- FALSE
             } else {
+              N_se <- NULL
               try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
               N_se <- ifelse(is.null(N_se), NA_real_, N_se)
-              if(!is.na(N_se)) {
-                N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
-              }
+#               if(!is.na(N_se)) {
+#                 N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
+#               }
               df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
               try(df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1]))
               
@@ -177,6 +192,18 @@ str(df_sims)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 # what predicts prob of convergence
 library(lme4)
 df_sims_s <- scale(df_sims[ ,2:ncol(df_sims)])
@@ -247,11 +274,7 @@ for(i in 1:n_sim) {
             dat[counter, "spatialTF"] <- s - 1
             dat[counter, "mean_N"] <- mean(network$N_i)
             dat[counter, "mean_N_est"] <- mod$Report$mean_N
-            if(N_se == "NaN") {
-              dat[counter, "N_se"] <- NA_real_
-            } else {
               dat[counter, "N_se"] <- N_se
-            }
             dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
             dat[counter, "theta"] <- theta
             dat[counter, "theta_hat"] <- mod$Report$theta
@@ -282,9 +305,10 @@ for(i in 1:n_sim) {
 }
 
 df_sims <- dat %>%
-  dplyr::mutate(converged = ifelse(is.na(N_se) | N_se > mean_N_est | is.na(mean_N_est), 0, 1))
+  dplyr::mutate(converged = ifelse(is.na(N_se) | N_se > mean_N_est | is.na(mean_N_est) | converge == FALSE, FALSE, TRUE))
 
 saveRDS(df_sims, file = "Output/Power_Sim/STsim_Results.RData")
+write.csv(df_sims, file = "Output/Power_Sim/STsim_Results.RData", row.names = FALSE)
 
 str(df_sims)
 df_sim_summary <- df_sims %>%

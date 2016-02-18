@@ -95,8 +95,6 @@ dat <- data.frame(iter=integer(),
                   min_N=numeric(),
                   max_N=numeric(),
                   mean_N_est=numeric(),
-                  min_N = numeric(),
-                  max_N = numeric(),
                   N_se=numeric(),
                   RMSE=numeric(),
                   theta=numeric(),
@@ -210,7 +208,7 @@ df_sims <- foreach(i = 1:n_sim,
         # Make inputs
         Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
         
-        try(mod <- runOUGMRF(inputs = Inputs))
+        mod <- runOUGMRF(inputs = Inputs)
           
         #----------- summarize -----------
         

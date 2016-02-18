@@ -39,6 +39,7 @@ df_sim_summary <- df_sims %>%
     dplyr::filter(converge == TRUE) %>%
   dplyr::summarise_each(funs(mean(., na.rm = T)))
 as.data.frame(df_sim_summary %>% dplyr::filter(sp_mod == 1)) 
+as.data.frame(df_sim_summary %>% dplyr::filter(sp_mod == 0)) 
 
 ggplot(df_sim_summary, aes(SD_ou, max_N, colour = factor(theta), group = factor(theta))) + geom_smooth() #stat_smooth(aes(fill = factor(theta)))
 

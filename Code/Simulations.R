@@ -95,7 +95,7 @@ df_sd <- list()
 df_rmse <- NA
 
 
-n_sim <- 9
+n_sim <- 200
 counter <- 0
 mod2 <- list()
 
@@ -130,6 +130,7 @@ df_sims <- foreach(sim = 1:n_sim,
   source("Functions/runOUGMRF.R")
   source("Functions/summary_functions.R")
   
+  table_full <- NULL
   #counter <- 0
   
 #   saveRDS(list(spatial_cor = spatial_cor,
@@ -163,7 +164,7 @@ df_sims <- foreach(sim = 1:n_sim,
         )
         
         for(l in 1:length(options_list)) {
-          counter <- counter + 1
+          #counter <- counter + 1
           Options_vec = options_list[[l]]
           
           start <- 1
@@ -176,13 +177,14 @@ df_sims <- foreach(sim = 1:n_sim,
           Inputs <- makeInput(family = family, c_ip = network$c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
           
           # run model
+          mod_out <- NULL
           optim_err <- tryCatch(
             mod_out <- runOUGMRF(inputs = Inputs),
             error = function(e) e
           )
           
           if(inherits(optim_err, "try-error")) {
-            mod2[[counter]] <- NA
+            #mod2[[counter]] <- NA
             table_i <- data.frame(spatial = spatial_vec[m],
                                   sp_mod = Options_vec[["SpatialTF"]],
                                   theta = theta_vec[i], 
@@ -204,11 +206,13 @@ df_sims <- foreach(sim = 1:n_sim,
                                   coef_true = gamma_j)
           } else {
             # compile all model output
-            mod2[[counter]] <- mod_out
+            #mod2[[counter]] <- mod_out
             
             # check convergence
             converge <- FALSE
-            try(converge <- mod_out$opt$convergence == 0 & !any(is.na(mod_out$SD$sd)))
+            if(!is.null(mod_out$SD$sd)) {
+              try(converge <- mod_out$opt$convergence == 0 & !any(is.na(mod_out$SD$sd)))
+            }
             
             # organize table of output
             if(converge == FALSE) {
@@ -238,11 +242,12 @@ df_sims <- foreach(sim = 1:n_sim,
                 dplyr::mutate(N_hat = ifelse(is.na(pass_1), lambda_hat, N_hat))
               
               # compile output of interest
-              df_N[ , counter] <- N_hat$N_hat
-              df_coef[[counter]] <- as.numeric(mod_out$SD$value)
-              df_sd[[counter]] <- as.numeric(mod_out$SD$sd)
-              df_rmse[counter] <- rmse(network$N_i - N_hat$N_hat)
+#               df_N[ , counter] <- N_hat$N_hat
+#               df_coef[[counter]] <- as.numeric(mod_out$SD$value)
+#               df_sd[[counter]] <- as.numeric(mod_out$SD$sd)
+#               df_rmse[counter] <- rmse(network$N_i - N_hat$N_hat)
               
+N_se <- NULL
               try(N_se <- mod_out$SD$sd[which(names(mod_out$SD$value) == "mean_N")])
               N_se <- ifelse(is.null(N_se), NA_real_, N_se)
               if(!is.na(N_se)) {
@@ -261,7 +266,7 @@ df_sims <- foreach(sim = 1:n_sim,
                                     N_se = N_se,
                                     converge = converge, 
                                     AIC = mod_out$opt$AIC,
-                                    rmse = df_rmse[counter], 
+                                    rmse = rmse(network$N_i - N_hat$N_hat), 
                                     resid_mean = mean(network$N_i - N_hat$N_hat), 
                                     theta_hat = mod_out$Report$theta, 
                                     SD_ou_hat = mod_out$Report$SDinput, 
@@ -273,7 +278,7 @@ df_sims <- foreach(sim = 1:n_sim,
           table_i$sim <- sim
           
           # apend to existing table
-          if(counter == 1) {
+          if(is.null(table_full)) {
             table_full <- table_i
           } else {
             table_full <- dplyr::bind_rows(table_full, table_i)
@@ -284,7 +289,7 @@ df_sims <- foreach(sim = 1:n_sim,
           #           g <- ggplot(df_N_plot, aes(N_i, N_hat, colour = obsTF)) + geom_point() + geom_abline(intercept = 0, slope = 1, colour = "blue") + theme_bw() + ggtitle(paste0("spatial=", as.integer(spatial_vec[m]), "; sp_mod=", Options_vec[["SpatialTF"]], "; theta=", theta_vec[i], "; SD_ou=", SD_vec[j], "; mean_N=", mean_N[k]))
           #           ggsave(filename = paste0("Output/Sim_Spatial/Figures/model_", counter[i], ".pdf"), plot = g)
           
-          save(network, mod_out, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[i], "_SD_", SD_vec[j], "_spatialTF_", options_list[[l]][1], "_meanN_", mean_N[k], ".RData")) 
+         save(network, mod_out, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[i], "_SD_", SD_vec[j], "_spatialTF_", options_list[[l]][1], "_meanN_", mean_N[k], ".RData")) 
         }
       }
     }
@@ -305,7 +310,7 @@ df_sims <- foreach(sim = 1:n_sim,
     )
     
     for(l in 1:length(options_list)) {
-      counter <- counter + 1
+      #counter <- counter + 1
       Options_vec = options_list[[l]]
       
       start <- 1
@@ -324,7 +329,7 @@ df_sims <- foreach(sim = 1:n_sim,
       )
       
       if(inherits(optim_err, "try-error")) {
-        mod2[[counter]] <- NA
+        #mod2[[counter]] <- NA
         table_i <- data.frame(spatial = spatial_vec[m],
                               sp_mod = Options_vec[["SpatialTF"]],
                               theta = theta_vec[i], 
@@ -346,7 +351,7 @@ df_sims <- foreach(sim = 1:n_sim,
                               coef_true = gamma_j)
       } else {
         # compile all model output
-        mod2[[counter]] <- mod_out
+        #mod2[[counter]] <- mod_out
         
         # check convergence
         converge <- FALSE
@@ -381,10 +386,10 @@ df_sims <- foreach(sim = 1:n_sim,
             dplyr::mutate(N_hat = ifelse(is.na(pass_1), lambda_hat, N_hat))
           
           # compile output of interest
-          df_N[ , counter] <- N_hat$N_hat
-          df_coef[[counter]] <- as.numeric(mod_out$SD$value)
-          df_sd[[counter]] <- as.numeric(mod_out$SD$sd)
-          df_rmse[counter] <- rmse(network$N_i - N_hat$N_hat)
+#           df_N[ , counter] <- N_hat$N_hat
+#           df_coef[[counter]] <- as.numeric(mod_out$SD$value)
+#           df_sd[[counter]] <- as.numeric(mod_out$SD$sd)
+#           df_rmse[counter] <- rmse(network$N_i - N_hat$N_hat)
           
           try(N_se <- mod_out$SD$sd[which(names(mod_out$SD$value) == "mean_N")])
           N_se <- ifelse(is.null(N_se), NA_real_, N_se)
@@ -404,7 +409,7 @@ df_sims <- foreach(sim = 1:n_sim,
                                 N_se = N_se,
                                 converge = converge, 
                                 AIC = mod_out$opt$AIC,
-                                rmse = df_rmse[counter], 
+                                rmse = rmse(network$N_i - N_hat$N_hat), 
                                 resid_mean = mean(network$N_i - N_hat$N_hat), 
                                 theta_hat = mod_out$Report$theta, 
                                 SD_ou_hat = mod_out$Report$SDinput, 
@@ -416,7 +421,7 @@ df_sims <- foreach(sim = 1:n_sim,
       
       table_i$sim <- sim
       # apend to existing table
-      if(counter == 1) {
+      if(is.null(table_full)) {
         table_full <- table_i
       } else {
         table_full <- dplyr::bind_rows(table_full, table_i)
@@ -430,7 +435,7 @@ df_sims <- foreach(sim = 1:n_sim,
       save(network, mod_out, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[i], "_SD_", SD_vec[j], "_spatialTF_", options_list[[l]][1], "_meanN_", mean_N[k], ".RData")) 
     }
   }
-  
+  table_full <- as.data.frame(table_full)
   #write.csv(table_full, file = paste0("Output/Sim_Spatial/Data/summary_sim", i, ".csv"), row.names = FALSE)
   return(table_full)
 } # end sim iter

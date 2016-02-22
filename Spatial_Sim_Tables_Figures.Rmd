@@ -63,7 +63,7 @@ df_spatial <- df_converged %>%
   dplyr::filter(sp_mod == TRUE)
 
 # Make the plots
-y_N <- ggplot(df_converged, aes(theta, mean_N_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "right") + ylim(c(0,75)) + ylab("Mean reach abundance per 100 m") # + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, mean_N, group = interaction(theta, sp_mod)))
+y_N <- ggplot(df_converged, aes(theta, mean_N_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "right") + ylim(c(0,75)) + ylab("Mean abundance per 100 m") # + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, mean_N, group = interaction(theta, sp_mod)))
 
 y_N_se <- ggplot(df_converged, aes(theta, N_se, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + ylim(c(0, 1.5)) + ylab("SE of mean reach abundance")
 

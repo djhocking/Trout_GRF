@@ -3,7 +3,7 @@ rm(list = ls())
 gc()
 
 #######################
-# Load libraries
+# Load libraries & Create Directories
 #######################
 library(TMB)
 library(minqa)
@@ -17,6 +17,14 @@ source("Functions/runOUGMRF.R")
 source("Functions/summary_functions.R")
 
 dir_out <- "Output"
+
+if(!file.exists("Output/Sim_Spatial/Figures/")) {
+  dir.create("Output/Sim_Spatial/Figures/", recursive = TRUE)
+}
+if(!file.exists("Output/Sim_Spatial/Data/")) {
+  dir.create("Output/Sim_Spatial/Data/", recursive = TRUE)
+}
+
 
 #######################
 # Load data
@@ -45,8 +53,8 @@ compile( paste0("Code/", Version,".cpp") )
 n_sim <- 200
 # vary theta, SD, sigmaIID, log_mean, and sample_pct for spatial/non-spatial
 spatial_cor <- c("extremely high", "high", "medium", "low", "very low")
-theta_vec <- c(0.5, 1, 3, 5)
-SD_vec <- c(0.1, 0.2, 0.3, 0.4) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
+theta_vec <- c(0.5, 1, 2, 3, 4, 5)
+SD_vec <- c(0.2, 0.3, 0.4, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
 sigmaIID_vec <- c(0)
 mean_N <- c(10)
 spatial_vec <- c(TRUE, FALSE)
@@ -62,16 +70,10 @@ X_ij <- matrix(rnorm(nrow(family), 0, 1), nrow(family), length(gamma_j))
 options_list <- list(c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1),
                      c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=1))
 
+save(family, n_sim, theta_vec, SD_vec, sigmaIID_vec, mean_N, spatial_vec, sample_pct_vec, p, gamma_j, options_list, file = "Output/Sim_Spatial/Sim_Spatial_Conditions.RData")
 #######################
 # Simulate GMRF following O-U process
 #######################
-
-if(!file.exists("Output/Sim_Spatial/Figures/")) {
-  dir.create("Output/Sim_Spatial/Figures/", recursive = TRUE)
-}
-if(!file.exists("Output/Sim_Spatial/Data/")) {
-  dir.create("Output/Sim_Spatial/Data/", recursive = TRUE)
-}
 
 I <- length(theta_vec)
 J <- length(SD_vec)

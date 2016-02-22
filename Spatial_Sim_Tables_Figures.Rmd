@@ -1,5 +1,5 @@
 ---
-title: "Summary of Spatiotemporal Power Analysis"
+title: "Summary of Spatial Validation Simulations"
 author: "Daniel J Hocking"
 date: "2/11/2016"
 output: html_document
@@ -9,6 +9,7 @@ output: html_document
 library(ggplot2)
 library(dplyr)
 df_sims <- read.csv(file = "Output/Sim_Spatial/Sim_Results.csv", header = TRUE, stringsAsFactors = FALSE)
+load(file = "Output/Sim_Spatial/Sim_Spatial_Conditions.RData")
 ```
 
 
@@ -41,17 +42,19 @@ df_sim_summary <- df_sims %>%
 as.data.frame(df_sim_summary %>% dplyr::filter(sp_mod == 1)) 
 as.data.frame(df_sim_summary %>% dplyr::filter(sp_mod == 0)) 
 
-ggplot(df_sim_summary, aes(SD_ou, max_N, colour = factor(theta), group = factor(theta))) + geom_smooth() #stat_smooth(aes(fill = factor(theta)))
+# ggplot(df_sim_summary, aes(SD_ou, max_N, colour = factor(theta), group = factor(theta))) + geom_smooth() #stat_smooth(aes(fill = factor(theta)))
 
 df_converged <- df_sims %>%
   dplyr::group_by(spatial, sp_mod, theta, SD_ou) %>%
   dplyr::filter(converge == TRUE) %>%
   dplyr::filter(theta_hat < 15) # no way converged
+
+theta_string <- noquote(paste(theta_vec, sep = ", ", collapse = ", "))
+sd_string <- noquote(paste(SD_vec, sep = ", ", collapse = ", "))
 ```
 
-I ran `r max(df_sims$sim)` simulations of the spatiotemporal model for the White River in Vermont with 359 nodes (~330 stream reaches) over 20 years. For each iteration I then sampled the data to simulate surveying various numbers of sites for differing numbers of years (all combinations of 4, 8, 10, 15, 20 years for 25, 50, 100, 359 sites). For each survey combination in each iteration I fit the model including either spatial, temporal, and spatiotemporal dynamics (attempting to match the data generating model) or just a temporal model with no spatial or spatiotemporal dynamics.
+I ran `r max(df_sims$sim)` simulations of the spatial model for the White River in Vermont with `r nrow(family)` nodes (~330 stream reaches) for 1 year (no temporal or spatiotemporal components). For each iteration, I varied the two parameters that defind the Ornstein-Uhlenbeck process and therefore the latent spatial correlation structure in the watershed. We used all combinations of $/theta$ (`r theta_string`) and $/sigma_{ou}$ (`r sd_string`). For each combination in each iteration, I fit the model including with and without spatial correlation.
 
-This is a summary of the results varying the number of years averaged across the number of sites sampled (consider separating this out and just summarizing for the maximum number of sites or n_sites = 100 to more clearly isolate the year effects). The red dashed line is the true value.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
 # consider separating this out and just summarizing for the maximum number of sites or n_sites = 100 to more clearly isolate the year effects
@@ -60,15 +63,15 @@ df_spatial <- df_converged %>%
   dplyr::filter(sp_mod == TRUE)
 
 # Make the plots
-y_N <- ggplot(df_converged, aes(theta, mean_N_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("") + ylim(c(0,200))# + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, mean_N, group = interaction(theta, sp_mod)))
+y_N <- ggplot(df_converged, aes(theta, mean_N_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "right") + ylim(c(0,75)) + ylab("Mean reach abundance per 100 m") # + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, mean_N, group = interaction(theta, sp_mod)))
 
-y_N_se <- ggplot(df_converged, aes(theta, N_se, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("") + ylim(c(0, 25))
+y_N_se <- ggplot(df_converged, aes(theta, N_se, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + ylim(c(0, 1.5)) + ylab("SE of mean reach abundance")
 
-y_gamma <- ggplot(df_converged, aes(theta, coef_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$coef_true, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+y_gamma <- ggplot(df_converged, aes(theta, coef_hat, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$coef_true, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + ylim(c(0.3, 0.75)) + ylab(expression(paste("Fixed effect coefficient (", gamma, ")")))
 
-y_RMSE <- ggplot(df_converged, aes(theta, rmse, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("")
+y_RMSE <- ggplot(df_converged, aes(theta, rmse, group = interaction(theta, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF")) + ylim(c(5, 40)) + theme(legend.position = "none") + ylab("RMSE")
 
-y_theta <- ggplot(df_spatial, aes(theta, theta_hat, group = theta)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, theta, group = theta)) #+ geom_text(data = means, aes(label = weight, y = weight + 0.08))
+y_theta <- ggplot(df_spatial, aes(theta, theta_hat, group = theta)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(theta, theta, group = theta)) + ylim(c(0, 10)) + ylab(expression(paste("Expected value of ", theta))) #+ geom_text(data = means, aes(label = weight, y = weight + 0.08))
   # geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("")
 
 # Save the legend
@@ -91,7 +94,13 @@ y_N <- y_N + theme(legend.position="none")
 
 # Create grid of plots
 library(gridExtra)
-grid.arrange(y_gamma, legend, y_N, y_N_se, y_RMSE, y_theta, ncol = 2, nrow = 3, widths = c(2.7, 2.7), heights = c(rep(3, times=3)))
+grid.arrange(y_theta + xlab(""), legend, 
+             y_N + xlab(""), y_N_se + xlab(""), 
+             y_RMSE + xlab(expression(paste("True value of ", theta))), y_gamma + xlab(expression(paste("True value of ", theta))), 
+             ncol = 2, 
+             nrow = 3, 
+             widths = c(2.7, 2.7), 
+             heights = c(rep(3, times=3)))
 
 #grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_thet_st, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # y_gamma, 
 
@@ -105,17 +114,19 @@ Below are the results for different numbers of survey sites averaged across all 
 # consider separating this out and just summarizing for the maximum number of years or n_years = 20 to more clearly isolate the site effects
 
 # Make the plots
-s_N <- ggplot(df_converged, aes(SD_ou, mean_N_est, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("")
+s_N <- ggplot(df_converged, aes(SD_ou, mean_N_hat, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + xlab("") + ylim(c(0, 75)) # + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") +
 
-s_N_se <- ggplot(df_converged, aes(SD_ou, N_se, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("")
+s_N_se <- ggplot(df_converged, aes(SD_ou, N_se, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("") + ylim(c(0, 1.5))
 
-s_gamma <- ggplot(df_converged, aes(SD_ou, coef_hat, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$coef, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+s_gamma <- ggplot(df_converged, aes(SD_ou, coef_hat, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("") + ylim(c(0.3, 0.7)) #+ geom_hline(yintercept = df_converged$coef, linetype = 2, size = 1, colour = "red")
 
 s_RMSE <- ggplot(df_converged, aes(SD_ou, rmse, group = interaction(SD_ou, sp_mod))) + geom_boxplot(aes(fill = factor(sp_mod))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("")
 
-ggplot(df_converged, aes(SD_ou, rmse, colour = factor(sp_mod))) + stat_smooth() #+ geom_point()
+# ggplot(df_converged, aes(SD_ou, rmse, colour = factor(sp_mod))) + stat_smooth() #+ geom_point()
 
-s_sd <- ggplot(df_spatial, aes(SD_ou, theta_hat, group = SD_ou)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + xlab("") + stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(SD_ou, theta, group = SD_ou)) # + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red")
+s_theta <- ggplot(df_spatial, aes(SD_ou, theta_hat, group = SD_ou)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + xlab("") #+ stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(SD_ou, theta, group = SD_ou)) # + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red")
+
+s_sd <- ggplot(df_spatial, aes(SD_ou, SD_ou_hat, group = SD_ou)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + xlab("") #+ geom_abline(intercept = 0, slope = 1)#+ stat_summary(fun.y=mean, colour="darkred", geom="point", shape=18, size=3, aes(SD_ou, theta, group = SD_ou)) # + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red")
 
 # Save the legend
 get_legend<-function(myggplot){
@@ -137,7 +148,7 @@ blank_plot <- ggplot()+geom_blank(aes(1,1)) +
 
 # Create grid of plots
 library(gridExtra)
-grid.arrange(s_gamma, legend, s_N, s_N_se, s_RMSE, s_theta, s_rhot, s_sigmat, s_thet_st, s_rho_st, ncol = 2)
+grid.arrange(s_gamma, legend, s_N, s_N_se, s_RMSE, s_theta, ncol = 2)
 
 #grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_thet_st, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # y_gamma, 
 

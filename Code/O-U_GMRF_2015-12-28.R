@@ -1,12 +1,12 @@
 
 
-setwd("C:/Users/James.Thorson/Desktop/UW Hideaway/Collaborations/2015 -- Hocking river network GMRF/exploratory data/")
+#setwd("C:/Users/James.Thorson/Desktop/UW Hideaway/Collaborations/2015 -- Hocking river network GMRF/exploratory data/")
 
 #######################
 # Load data
 #######################
 
-load( "sample.RData")
+load( "Data/sample.RData")
 colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
 
@@ -105,6 +105,7 @@ log_mean = 2
 rho = 0.8
 n_years = 10
 
+# temporal correlation can vary by 
 # Covariance for a given site among years
 Corr_tt = rho ^ outer( 1:n_years, 1:n_years, FUN=function(a,b){abs(a-b)} )
 

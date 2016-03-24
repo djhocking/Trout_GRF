@@ -17,8 +17,8 @@ source("Functions/summary_functions.R")
 
 data_dir <- "Output"
 
-yoy <- readRDS(file.path(data_dir, "W_susquehanna_YOY_Summary_RDS.RData"))
-adult <- readRDS(file.path(data_dir, "W_susquehanna_Summary_RDS.RData"))
+yoy <- readRDS(file.path(data_dir, "W_Susquehanna_YOY_Summary_RDS.RData"))
+adult <- readRDS(file.path(data_dir, "W_Susquehanna_Summary_RDS.RData"))
 
 # problem of how to covert to match year and site
 lambda_dt <- data.frame(child_name = adult$family$child_name, adult$Report4b$lambda_dt, stringsAsFactors = FALSE)

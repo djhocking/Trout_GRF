@@ -21,6 +21,7 @@ Output/*.RData
 prismtmp/
 Output/Figures/
 Presentations/
+Output/
 
 #KO Ignore
 gisFiles/

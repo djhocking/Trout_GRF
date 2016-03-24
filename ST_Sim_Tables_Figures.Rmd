@@ -9,7 +9,7 @@ output: html_document
 library(ggplot2)
 library(dplyr)
 df_sims <- read.csv(file = "Output/Power_Sim/STsim_Results.csv", header = TRUE, stringsAsFactors = FALSE)
-df_sims <- readRDS(file = "Output/Power_Sim/STsim_Results.RData")
+#df_sims <- readRDS(file = "Output/Power_Sim/STsim_Results.RData")
 load( "Data/White_River_Network.RData")
 colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
@@ -209,7 +209,8 @@ sites_prj <- spTransform(sites, crs(projection(dem)))
 
 ```{r add abundance, warning=FALSE, message=FALSE}
 # Add abundance data to flowlines
-load("Output/Power_Sim/Data/Data/sim_188_st_1_sites_359_years_20.RData") # includes simulated data and model results
+#load("Output/Power_Sim/Data/sim_188_st_1_sites_359_years_20.RData") # includes simulated data and model results
+load("Output/Power_Sim/Data/sim_137_st_1_sites_50_years_8.RData")
 
 # make dataframe of abundance across network
 df_N <- data.frame(child_name = rep(family$child_name, times = max(network$t_i)), year = network$t_i, N = network$N_i, N_hat = mod$Report$N_ip[ , 1], stringsAsFactors = FALSE)
@@ -289,23 +290,23 @@ my_legend <- g_legend(p_true[[1]])
 
 # Arrange in rows
 st_grid <- arrangeGrob(p_true[[2]] + ggtitle("True N: Year 2") + theme(legend.position="none", axis.title.x = element_blank()),
-             p_true[[4]] + ggtitle("True N: Year 4") + theme(legend.position="none", axis.title.x = element_blank()),
-             p_true[[6]] + ggtitle("True N: Year 6") + theme(legend.position="none", axis.title.x = element_blank()),
-             p_true[[8]] + ggtitle("True N: Year 8") + theme(legend.position="none", axis.title.x = element_blank()),
-             p_true[[10]] + ggtitle("True N: Year 10") + theme(legend.position="none", axis.title.x = element_blank()),
+             p_true[[4]] + ggtitle("True N: Year 4") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+             p_true[[6]] + ggtitle("True N: Year 6") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+             p_true[[8]] + ggtitle("True N: Year 8") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+             p_true[[10]] + ggtitle("True N: Year 10") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
              my_legend,
              p_hat[[2]] + ggtitle(expression(paste(widehat(N), ": Year 2", ))) + theme(legend.position="none"),
-             p_hat[[4]] + ggtitle(expression(paste(widehat(N), ": Year 4", ))) + theme(legend.position="none"),
-             p_hat[[6]] + ggtitle(expression(paste(widehat(N), ": Year 6", ))) + theme(legend.position="none"),
-             p_hat[[8]] + ggtitle(expression(paste(widehat(N), ": Year 8", ))) + theme(legend.position="none"),
-             p_hat[[10]] + ggtitle(expression(paste(widehat(N), ": Year 10", ))) + theme(legend.position="none"),
+             p_hat[[4]] + ggtitle(expression(paste(widehat(N), ": Year 4", ))) + theme(legend.position="none", axis.title.y = element_blank()),
+             p_hat[[6]] + ggtitle(expression(paste(widehat(N), ": Year 6", ))) + theme(legend.position="none", axis.title.y = element_blank()),
+             p_hat[[8]] + ggtitle(expression(paste(widehat(N), ": Year 8", ))) + theme(legend.position="none", axis.title.y = element_blank()),
+             p_hat[[10]] + ggtitle(expression(paste(widehat(N), ": Year 10", ))) + theme(legend.position="none", axis.title.y = element_blank()),
              my_legend,
              nrow = 2,
-             heights = c(3, 3),
-             widths = c(4, 4, 4, 4, 4, 1))
+             heights = c(4, 4),
+             widths = c(5, 5, 5, 5, 5, 2))
              
-ggsave(filename = "Output/Power_Sim/ST_Grid.png", plot = st_grid)
-ggsave(filename = "Output/Power_Sim/ST_Grid.pdf", plot = st_grid, dpi = 300)
+ggsave(filename = "Output/Power_Sim/ST_Grid.png", plot = st_grid, width = 11, height = 6, units = "in")
+ggsave(filename = "Output/Power_Sim/ST_Grid.pdf", plot = st_grid, dpi = 300, width = 11, height = 6, units = "in")
 
 st_grid
 ```

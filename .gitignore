@@ -1,7 +1,17 @@
+# Automatic
 packrat/lib*/
 .Rproj.user
 Related_Papers/
 .Rhistory
+
+# Specific Files
+Summary_BKT_OU_GMRF.html
+Output/Summary_BKT_OU_GMRF.html
+Diagnostics/log_file.txt
+W_Susquehanna.RData
+Data/derived_site_metrics.csv
+
+# General File Types
 *.Rhistory
 *.o
 *.dll
@@ -12,19 +22,19 @@ Related_Papers/
 *.jpeg
 *.tif
 *.tiff
-Summary_BKT_OU_GMRF.html
-Output/Summary_BKT_OU_GMRF.html
-Diagnostics/
-Diagnostics/log_file.txt
-W_Susquehanna.RData
+
+# Partial Folders
 Output/*.RData
+
+# Entire Folders
+Diagnostics/
 prismtmp/
 Output/Figures/
 Presentations/
 Output/
 Sandbox/
 
-#KO Ignore
+# KO Ignore
 gisFiles/
 Output/W_Susquehanna.RData
 Output/Spatiotemporal.RData

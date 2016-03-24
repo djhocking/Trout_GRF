@@ -168,7 +168,7 @@ for(i in 1:n_sim) {
   }
 }
 
-df_sims_extra <- df_sims
+df_sims_extra <- dat
 df_sims <- df_sims_extra %>%
   distinct()
 
@@ -180,9 +180,14 @@ df_sims <- df_sims %>%
                 !is.na(rhot)) %>%
   dplyr::distinct()
 
+df_sims <- df_sims %>%
+  dplyr::mutate(converged = ifelse(is.na(N_se) | N_se > mean_N_est | is.na(mean_N_est) | converge == FALSE, FALSE, TRUE))
 
 df_sims <- df_sims %>%
-  dplyr::mutate(converged = ifelse(is.na(N_se) | N_se > mean_N_est | is.na(mean_N_est), FALSE, TRUE))
+  dplyr::mutate(converged = ifelse(theta_hat > 10 | theta_st_hat > 10, FALSE, converged))
+
+summary(df_sims)
+summary(df_sims[which(df_sims$converged == TRUE), ])
 
 saveRDS(df_sims, file = "Output/Power_Sim/STsim_Results.RData")
 write.csv(df_sims, file = "Output/Power_Sim/STsim_Results.csv", row.names = FALSE)

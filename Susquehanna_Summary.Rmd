@@ -1,0 +1,106 @@
+---
+title: "Adult Summary"
+author: "Daniel J Hocking"
+date: "4/28/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, results = "asis")
+```
+
+```{r load}
+library(TMB)
+library(dplyr)
+library(minqa)
+library(optimx)
+library(ggplot2)
+source("Functions/Input_Functions.R")
+
+adult <- readRDS(file = "Output/W_Susquehanna_Summary_RDS.RData")
+yoy <- readRDS(file = "Output/W_Susquehanna_YOY_Summary_RDS.RData")
+# load("Output/W_Susquehanna_Stock_Recruit.RData")
+
+load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
+
+# remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
+#X_ij <- X_ij[ , c("length_std", "effort_std")]
+covs <- X_ij
+X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_summer_1, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_summer_1, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
+```
+
+## Summarize Data
+
+```{r data summary}
+
+# number of nodes
+n_nodes <- length(unique(df$child_b))
+
+# number of sites
+n_sites <- length(unique(df[which(!is.na(df$pass_1)), "child_name"]))
+
+# number of stream reaches
+n_reaches <- n_nodes - n_sites
+
+# number of years
+n_years <- length(unique(df$year))
+
+# range of years
+range_years <- range(df$year)
+
+# number of site visits
+n_site_visits <- length(unique(df[which(!is.na(df$pass_1)), "site_visit"]))
+
+# mean number of visits per site
+mean_visits <- n_site_visits / n_sites
+
+# range of visits per site
+site_visits <- df %>%
+  dplyr::group_by(child_name) %>%
+  dplyr::filter(!is.na(pass_1)) %>%
+  dplyr::summarise(n_site_visits = n())
+
+min_visits <- min(site_visits$n_site_visits)
+max_visits <- max(site_visits$n_site_visits)
+
+# mean number of passes per visit
+
+# total number of fish captured by yoy and adult
+
+# summary of covariates
+cov_list <- c("forest", "surfcoarse", "temp_mean_summer_1", "temp_mean_fall_1", "temp_mean_winter", "temp_mean_spring", "prcp_mean_summer_1", "prcp_mean_fall_1", "prcp_mean_winter", "prcp_mean_spring")
+
+covs <- df %>%
+  dplyr::select(one_of(cov_list))
+
+# summary(covs)
+
+cov_means <- data.frame(t(dplyr::summarise_each(covs, funs(mean))))
+cov_mins <- data.frame(t(dplyr::summarise_each(covs, funs(min))))
+cov_maxs <- data.frame(t(dplyr::summarise_each(covs, funs(max))))
+
+cov_summary <- data.frame(cov_means, cov_mins, cov_maxs)
+cov_summary <- round(cov_summary, digits = 2)
+cov_summary <- data.frame(rownames(cov_means), cov_summary)
+names(cov_summary) <- c("Variable", "Mean", "Min", "Max")
+rownames(cov_summary) <- NULL
+
+library(pander)
+pandoc.table(cov_summary, keep.trailing.zeros = T, style = "rmarkdown")
+
+```
+
+
+
+## Model Comparison
+
+```{r AIC}
+format(adult$aic_table, digits = 1)
+
+
+
+
+
+
+
+

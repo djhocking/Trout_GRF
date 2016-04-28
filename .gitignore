@@ -22,6 +22,7 @@ Data/derived_site_metrics.csv
 *.jpeg
 *.tif
 *.tiff
+*.html
 
 # Partial Folders
 Output/*.RData

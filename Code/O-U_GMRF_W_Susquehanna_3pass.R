@@ -406,34 +406,145 @@ for(i in 1:ncol(as.matrix(X_ij))) {
 format(SD_table, digits = 2, scientific = 5) # 
 
 
+
+#-------------------- Redo reduced Spatiotemporal -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj4r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj4r$fn( obj4r$par )
+# Check for parameters that don't do anything
+Which = which( obj4r$gr( obj4r$par )==0 )
+
+opt4r_lbfgsb <- optim(obj4r$env$last.par.best[-c(obj4r$env$random)], fn = obj4r$fn, gr = obj4r$gr, method = "L-BFGS-B")
+Report4r_lbfgsb = obj4r$report()
+opt4r_lbfgsb[["AIC"]] = 2*opt4r_lbfgsb$fval + 2*length(opt4r_lbfgsb$par)
+SD4r_lbfgsb<- sdreport(obj4r)
+
+opt4r_boybqa <- bobyqa(par = obj4r$env$last.par.best[-c(obj4r$env$random)], fn = obj4r$fn)
+Report4r_bobyqa = obj4r$report()
+opt4r_bobyqa[["AIC"]] = 2*opt4r_bobyqa$fval + 2*length(opt4r_bobyqa$par)
+SD4r_bobyqa <- sdreport(obj4r, bias.correct=FALSE )
+
+#-------------------- Redo reduced T + ST -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj5r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj5r$fn( obj5r$par )
+# Check for parameters that don't do anything
+Which = which( obj5r$gr( obj5r$par )==0 )
+
+opt5r_lbfgsb <- optim(obj5r$env$last.par.best[-c(obj5r$env$random)], fn = obj5r$fn, gr = obj5r$gr, method = "L-BFGS-B", control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14))
+Report5r_lbfgsb = obj5r$report()
+opt5r_lbfgsb[["AIC"]] = 2*opt5r_lbfgsb$fval + 2*length(opt5r_lbfgsb$par)
+SD5r_lbfgsb<- sdreport(obj5r)
+
+#-------------------- Redo reduced S + T + ST -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj6r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj6r$fn( obj6r$par )
+# Check for parameters that don't do anything
+Which = which( obj6r$gr( obj6r$par )==0 )
+
+opt6r_lbfgsb <- optim(obj6r$env$last.par.best[-c(obj6r$env$random)], fn = obj6r$fn, gr = obj6r$gr, method = "L-BFGS-B", control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14))
+Report6r_lbfgsb = obj6r$report()
+opt6r_lbfgsb[["AIC"]] = 2*opt6r_lbfgsb$fval + 2*length(opt6r_lbfgsb$par)
+SD6r_lbfgsb<- sdreport(obj6r)
+
+#----------------------
+
+#-------------------- Redo reduced S + ST -----------------
+# In sqrt(diag(object$cov.fixed)) : NaNs produced
+# reduce covariates and try
+X_ij <- as.matrix(dplyr::select(covs, length_std))
+
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = t_i, version = Version)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj8r <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+
+# First run
+obj8r$fn( obj8r$par )
+# Check for parameters that don't do anything
+Which = which( obj8r$gr( obj8r$par )==0 )
+
+opt8r_lbfgsb <- optim(obj8r$env$last.par.best[-c(obj8r$env$random)], fn = obj8r$fn, gr = obj8r$gr, method = "L-BFGS-B", control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14))
+Report8r_lbfgsb = obj8r$report()
+opt8r_lbfgsb[["AIC"]] = 2*opt8r_lbfgsb$fval + 2*length(opt8r_lbfgsb$par)
+SD8r_lbfgsb<- sdreport(obj8r)
+
+#----------------------
+
+SD4r_lbfgsb$sd # fail
+SD5r_lbfgsb$sd # fail
+SD6r_lbfgsb$sd # fail
+SD8r_lbfgsb$sd # fail
+
 #--------------- AIC -------------
 Model <- c("Obs", 
            "Temporal", 
-           "Spatial",#, 
+        #   "Spatial",#, 
            "Spatiotemporal", 
            "Temporal + ST", 
-           # "S+T+ST", 
+          # "S+T+ST", 
            "Spatial + Temporal"
-           #   "Spatial + ST"
+        #   "Spatial + ST"
 ) #
 M_num <- c(1,
            2,
-           3, #,
+          # 3, #,
            4,
            5,
            #6,
            7
-           # 8
+          # 8
 )
 AIC <- c(opt1b$AIC, 
          opt2b$AIC, 
-         opt3b$AIC, #, 
+         #opt3$AIC, #, 
          opt4b$AIC, 
          opt5b$AIC, 
          #opt6$AIC, 
          opt7b$AIC
          #opt8$AIC
-) # 
+         ) # 
 aic_table <- data.frame(M_num, Model, AIC, stringsAsFactors = FALSE)
 names(aic_table) <- c("M_num", "Model", "AIC")
 aic_table <- dplyr::arrange(aic_table, AIC)
@@ -561,14 +672,14 @@ save.image(file = "Output/W_Susquehanna.RData")
 save(Report4b, opt4b, SD4b, SD_table, family, covs, aic_table, t_i, df = df, file = "Output/W_Susquehanna_Summary.RData")
 
 saveRDS(list(df = df,
-             family = family,
-             Report4b=Report4b, 
-             opt4b=opt4b, 
-             SD4b=SD4b, 
-             t_i = t_i,
-             SD_table=SD_table, 
-             aic_table=aic_table,
-             covs = covs),
+        family = family,
+        Report4b=Report4b, 
+        opt4b=opt4b, 
+        SD4b=SD4b, 
+        t_i = t_i,
+        SD_table=SD_table, 
+        aic_table=aic_table,
+        covs = covs),
         file = "Output/W_Susquehanna_Summary_RDS.RData")
 
 

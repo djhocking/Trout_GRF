@@ -169,13 +169,14 @@ The code for the data generator is at: [https://github.com/djhocking/Trout_GRF/b
 
 ## Make Maps
 
-```{r libraries and data}
+```{r libraries and data, echo=FALSE, warning=FALSE, message=FALSE}
 #library(maps)
 library(sp)
 library(raster)
 library(rgdal)
 library(ggplot2)
 library(dplyr)
+library(grid)
 library(gridExtra)
 #library(ggmap)
 
@@ -192,7 +193,7 @@ family = cbind( family, "child_b"=1:nrow(family) )
 
 Make sure projections are the same across all data
 
-```{r projections}
+```{r projections, , echo=FALSE, warning=FALSE, message=FALSE}
 # get data in same projection
 print(proj4string(dem))
 print(proj4string(sites))
@@ -207,7 +208,7 @@ sites_prj <- spTransform(sites, crs(projection(dem)))
 # str(flowlines_prj)
 ```
 
-```{r add abundance, warning=FALSE, message=FALSE}
+```{r add abundance, warning=FALSE, message=FALSE, echo=FALSE, eval=TRUE}
 # Add abundance data to flowlines
 #load("Output/Power_Sim/Data/sim_188_st_1_sites_359_years_20.RData") # includes simulated data and model results
 load("Output/Power_Sim/Data/sim_137_st_1_sites_50_years_8.RData")
@@ -219,7 +220,7 @@ df_N <- data.frame(child_name = rep(family$child_name, times = max(network$t_i))
 
 Prepare data for ggplot:
 
-```{r prep ggplot data}
+```{r prep ggplot data, echo=FALSE, warning=FALSE, message=FALSE}
 # convert flowlines to dataframe for ggplot2
 flowlines_f <- ggplot2::fortify(flowlines_prj)
 
@@ -232,7 +233,7 @@ colnames(dem_df) <- c("Longitude", "Latitude", "Elevation")
 ```
 
 
-```{r ggplot group 2, fig.width=8, fig.height=10, fig.align='center'}
+```{r ggplot group 2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=10, fig.align='center'}
 my_breaks = c(0, 10, 20, 30, 40, 50)
 # Set colors related to abundance (N_hat)
 colors <- colorRampPalette(c('cyan','blue'))(max(max(df_N$N_hat), max(df_N$N)))
@@ -295,11 +296,11 @@ st_grid <- arrangeGrob(p_true[[2]] + ggtitle("True N: Year 2") + theme(legend.po
              p_true[[8]] + ggtitle("True N: Year 8") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
              p_true[[10]] + ggtitle("True N: Year 10") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
              my_legend,
-             p_hat[[2]] + ggtitle(expression(paste(widehat(N), ": Year 2", ))) + theme(legend.position="none"),
-             p_hat[[4]] + ggtitle(expression(paste(widehat(N), ": Year 4", ))) + theme(legend.position="none", axis.title.y = element_blank()),
-             p_hat[[6]] + ggtitle(expression(paste(widehat(N), ": Year 6", ))) + theme(legend.position="none", axis.title.y = element_blank()),
-             p_hat[[8]] + ggtitle(expression(paste(widehat(N), ": Year 8", ))) + theme(legend.position="none", axis.title.y = element_blank()),
-             p_hat[[10]] + ggtitle(expression(paste(widehat(N), ": Year 10", ))) + theme(legend.position="none", axis.title.y = element_blank()),
+             p_hat[[2]] + ggtitle(expression(paste(widehat(N), ": Year 2"))) + theme(legend.position="none"),
+             p_hat[[4]] + ggtitle(expression(paste(widehat(N), ": Year 4"))) + theme(legend.position="none", axis.title.y = element_blank()),
+             p_hat[[6]] + ggtitle(expression(paste(widehat(N), ": Year 6"))) + theme(legend.position="none", axis.title.y = element_blank()),
+             p_hat[[8]] + ggtitle(expression(paste(widehat(N), ": Year 8"))) + theme(legend.position="none", axis.title.y = element_blank()),
+             p_hat[[10]] + ggtitle(expression(paste(widehat(N), ": Year 10"))) + theme(legend.position="none", axis.title.y = element_blank()),
              my_legend,
              nrow = 2,
              heights = c(4, 4),

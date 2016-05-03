@@ -555,6 +555,29 @@ ggplot(bar, aes(year, N, group = child_b, colour = child_b)) + geom_line() + geo
 
 SD7b$par.fixed
 
+
+#----- use 4 because simplier or model 5 for direct comparison with YOY since both have equal AIC support -------
+
+Mod5 <- list(Report = Report5b, opt = opt5b, SD = SD5b)
+
+Parameters <- colnames(as.matrix(X_ij))
+
+save.image("Output/W_Susquehanna.RData")
+save(Mod5, SD_table, aic_table, covs, X_ij, Parameters, df = df, family, file = "Output/W_Susquehanna_Summary.RData")
+
+saveRDS(list(df = df,
+             family = family,
+             Report5=Mod5$Report, 
+             opt5=Mod5$opt, 
+             SD5=Mod5$SD, 
+             SD_table=SD_table, 
+             Parameters = Parameters,
+             covs = covs,
+             aic_table=aic_table),
+        file = "Output/W_Susquehanna_Summary.Rds")
+
+
+
 # save
 save.image(file = "Output/W_Susquehanna.RData")
 

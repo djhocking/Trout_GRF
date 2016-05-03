@@ -17,11 +17,11 @@ source("Functions/summary_functions.R")
 
 data_dir <- "Output"
 
-yoy <- readRDS(file.path(data_dir, "W_Susquehanna_YOY_Summary_RDS.RData"))
-adult <- readRDS(file.path(data_dir, "W_Susquehanna_Summary_RDS.RData"))
+yoy <- readRDS(file.path(data_dir, "W_Susquehanna_YOY_Summary.Rds"))
+adult <- readRDS(file.path(data_dir, "W_Susquehanna_Summary.Rds"))
 
 # problem of how to covert to match year and site
-lambda_dt <- data.frame(child_name = adult$family$child_name, adult$Report4b$lambda_dt, stringsAsFactors = FALSE)
+lambda_dt <- data.frame(child_name = adult$family$child_name, adult$Report5$lambda_dt, stringsAsFactors = FALSE)
 names(lambda_dt) <- c("child_name", seq(from = 1982, to = 1982+ncol(lambda_dt)-2, by = 1))
 lambda_adult <- tidyr::gather(lambda_dt, year, lambda_adult, -child_name) %>%
   distinct()

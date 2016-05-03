@@ -17,8 +17,8 @@ library(optimx)
 library(ggplot2)
 source("Functions/Input_Functions.R")
 
-adult <- readRDS(file = "Output/W_Susquehanna_Summary_RDS.RData")
-yoy <- readRDS(file = "Output/W_Susquehanna_YOY_Summary_RDS.RData")
+adult <- readRDS(file = "Output/W_Susquehanna_Summary.Rds")
+yoy <- readRDS(file = "Output/W_Susquehanna_YOY_Summary.Rds")
 # load("Output/W_Susquehanna_Stock_Recruit.RData")
 
 load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
@@ -97,7 +97,14 @@ pandoc.table(cov_summary, keep.trailing.zeros = T, style = "rmarkdown")
 ```{r AIC}
 format(adult$aic_table, digits = 1)
 
+format(yoy$aic_table, digits = 1)
+```
 
+```{r coef tables}
+adult$SD5$value
+
+
+```
 
 
 

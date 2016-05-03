@@ -326,7 +326,7 @@ as.data.frame(df_sim_summary %>% dplyr::filter(spatialTF == 1))
 library(lme4)
 df_sims_s <- scale(df_sims[ ,2:ncol(df_sims)])
 df_sims_s <- data.frame(iter = df_sims$iter, df_sims_s, converge = df_sims$converged)
-converge_lm <- glmer(converge ~ n_sites + n_years + spatialTF + n_years * spatialTF + (1|iter), data = df_sims_s, family = "binomial")
+converge_lm <- glmer(converge.1 ~ n_sites + n_years + spatialTF + n_years * spatialTF + (1|iter), data = df_sims_s, family = "binomial")
 summary(converge_lm)
 
 df_sims %>%

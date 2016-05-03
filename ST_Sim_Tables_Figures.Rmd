@@ -63,23 +63,23 @@ df_spatial <- df_converged %>%
   dplyr::filter(spatialTF == TRUE)
 
 # Make the plots
-y_N <- ggplot(df_converged, aes(n_years, mean_N_est, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_N <- ggplot(df_converged, aes(n_years, mean_N_est, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10) + ylim(0, 50)
 
-y_N_se <- ggplot(df_converged, aes(n_years, N_se, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_N_se <- ggplot(df_converged, aes(n_years, N_se, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10) + ylim(0,15)
 
-y_gamma <- ggplot(df_converged, aes(n_years, gamma_j_hat, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$gamma_j, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_gamma <- ggplot(df_converged, aes(n_years, gamma_j_hat, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = df_converged$gamma_j, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10) + ylim(0, 0.35)
 
-y_RMSE <- ggplot(df_converged, aes(n_years, RMSE, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_RMSE <- ggplot(df_converged, aes(n_years, RMSE, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
 
-y_theta <- ggplot(df_spatial, aes(n_years, theta_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_theta <- ggplot(df_spatial, aes(n_years, theta_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10) + ylim(0, 5)
 
-y_rhot <- ggplot(df_converged, aes(n_years, rhot_hat, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_y_continuous(limits = c(0.4, 1)) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$rhot, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_rhot <- ggplot(df_converged, aes(n_years, rhot_hat, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_y_continuous(limits = c(-1, 1)) + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = df_converged$rhot, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
 
-y_sigmat <- ggplot(df_converged, aes(n_years, sigmat_hat, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_y_continuous(limits = c(0, 4)) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$sigmat, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_sigmat <- ggplot(df_converged, aes(n_years, sigmat_hat, group = interaction(n_years, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_y_continuous(limits = c(0, 2.25)) + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = df_converged$sigmat, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10)
 
-y_thet_st <- ggplot(df_spatial, aes(n_years, theta_st_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF")) + scale_y_continuous(limits = c(0, 5)) + geom_hline(yintercept = df_spatial$theta_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_thet_st <- ggplot(df_spatial, aes(n_years, theta_st_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + scale_y_continuous(limits = c(0, 0.75)) + geom_hline(yintercept = df_spatial$theta_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + geom_text(x = 5, y = 65, label = "b", size = 10)
 
-y_rho_st <- ggplot(df_spatial, aes(n_years, rho_st_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF")) + scale_y_continuous(limits = c(0, 1)) + geom_hline(yintercept = df_spatial$rho_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + geom_text(x = 5, y = 65, label = "b", size = 10)
+y_rho_st <- ggplot(df_spatial, aes(n_years, rho_st_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + scale_y_continuous(limits = c(-0.5, 1)) + geom_hline(yintercept = df_spatial$rho_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + geom_text(x = 5, y = 65, label = "b", size = 10)
 
 # Save the legend
 get_legend<-function(myggplot){
@@ -105,6 +105,20 @@ grid.arrange(y_gamma, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_
 
 #grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_thet_st, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # y_gamma, 
 
+y_grid <- arrangeGrob(y_theta + xlab(""), legend, 
+             y_N + xlab(""), y_N_se + xlab(""), 
+             y_thet_st + xlab(""), y_rho_st + xlab(""),
+             y_rhot + xlab(""), y_sigmat + xlab(""),
+             y_RMSE + xlab(expression(paste("Number of years"))), y_gamma + xlab(expression(paste("Number of years"))), 
+             ncol = 2, 
+             nrow = 5, 
+             widths = c(2.7, 2.7), 
+             heights = c(rep(5, times=5)))
+
+ggsave(file = "Output/Power_Sim/ST_years.png", y_grid, dpi = 72)
+
+grid::grid.draw(y_grid)
+
 ```
 
 These results are not encouraging in that the spatial (theta), temporal (rhot, sigmat), and spatiotemporal (theta_st, rho_st) coefficients are not recovered well. However, the RMSE is improved with more sample years and by including the spatially explicit effects in the estimation. Although the mean abundance (mean_N) across sites is recovered well in all models, the precision in the estimate of the mean abundance in the watershed is improved with sample years and by the spatial model when there are few years.
@@ -115,23 +129,23 @@ Below are the results for different numbers of survey sites averaged across all 
 # consider separating this out and just summarizing for the maximum number of years or n_years = 20 to more clearly isolate the site effects
 
 # Make the plots
-s_N <- ggplot(df_converged, aes(n_sites, mean_N_est, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("")
+s_N <- ggplot(df_converged, aes(n_sites, mean_N_est, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = mean(df_converged$mean_N, na.rm = T), linetype = 2, size = 1, colour = "red") + theme(legend.position = "top") + xlab("") + ylim(0, 50)
 
-s_N_se <- ggplot(df_converged, aes(n_sites, N_se, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("")
+s_N_se <- ggplot(df_converged, aes(n_sites, N_se, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF")) + theme(legend.position = "none") + xlab("") + ylim(0, 10)
 
-s_gamma <- ggplot(df_converged, aes(n_sites, gamma_j_hat, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$gamma_j, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+s_gamma <- ggplot(df_converged, aes(n_sites, gamma_j_hat, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$gamma_j, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("") + ylim(-0.1, 0.5)
 
-s_RMSE <- ggplot(df_converged, aes(n_sites, RMSE, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 40)) + theme(legend.position = "none") + xlab("")
+s_RMSE <- ggplot(df_converged, aes(n_sites, RMSE, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF")) + scale_y_continuous(limits = c(5, 50)) + theme(legend.position = "none") + xlab("")
 
-s_theta <- ggplot(df_spatial, aes(n_sites, theta_hat, group = n_sites)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("")
+s_theta <- ggplot(df_spatial, aes(n_sites, theta_hat, group = n_sites)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta, linetype = 2, size = 1, colour = "red") + xlab("") + ylim(0, 6)
 
-s_rhot <- ggplot(df_converged, aes(n_sites, rhot_hat, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_y_continuous(limits = c(0.3, 1)) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$rhot, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+s_rhot <- ggplot(df_converged, aes(n_sites, rhot_hat, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_y_continuous(limits = c(-1, 1)) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$rhot, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
 
-s_sigmat <- ggplot(df_converged, aes(n_sites, sigmat_hat, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF))) + scale_y_continuous(limits = c(0, 4)) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$sigmat, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
+s_sigmat <- ggplot(df_converged, aes(n_sites, sigmat_hat, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_y_continuous(limits = c(0, 2.25)) + scale_fill_manual(values=c("#F8766D", "#619CFF")) + geom_hline(yintercept = df_converged$sigmat, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + xlab("")
 
-s_thet_st <- ggplot(df_spatial, aes(n_sites, theta_st_hat, group = n_sites)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF")) + scale_y_continuous(limits = c(0, 4)) + geom_hline(yintercept = df_spatial$theta_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none")
+s_thet_st <- ggplot(df_spatial, aes(n_sites, theta_st_hat, group = n_sites)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF")) + scale_y_continuous(limits = c(0, 0.75)) + geom_hline(yintercept = df_spatial$theta_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none")
 
-s_rho_st <- ggplot(df_spatial, aes(n_sites, rho_st_hat, group = n_sites)) + geom_boxplot(aes(fill = "#619CFF")) + scale_fill_manual(values=c("#619CFF")) + scale_y_continuous(limits = c(0, 1)) + geom_hline(yintercept = df_spatial$rho_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none")
+s_rho_st <- ggplot(df_spatial, aes(n_sites, rho_st_hat, group = n_sites)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF")) + scale_y_continuous(limits = c(0.25, 1)) + geom_hline(yintercept = df_spatial$rho_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none")
 
 # Save the legend
 get_legend<-function(myggplot){
@@ -156,6 +170,20 @@ library(gridExtra)
 grid.arrange(s_gamma, legend, s_N, s_N_se, s_RMSE, s_theta, s_rhot, s_sigmat, s_thet_st, s_rho_st, ncol = 2)
 
 #grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_thet_st, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # y_gamma, 
+
+s_grid <- arrangeGrob(s_theta + xlab(""), legend, 
+             s_N + xlab(""), s_N_se + xlab(""), 
+             s_thet_st + xlab(""), s_rho_st + xlab(""),
+             s_rhot + xlab(""), s_sigmat + xlab(""),
+             s_RMSE + xlab(expression(paste("Number of sites"))), s_gamma + xlab(expression(paste("Number of sites"))), 
+             ncol = 2, 
+             nrow = 5, 
+             widths = c(2.7, 2.7), 
+             heights = c(rep(5, times=5)))
+
+ggsave(file = "Output/Power_Sim/ST_sites.png", s_grid, dpi = 72)
+
+grid::grid.draw(s_grid)
 
 ```
 

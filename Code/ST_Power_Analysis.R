@@ -43,9 +43,9 @@ family = cbind( family, "child_b"=1:nrow(family) )
 
 # Set Conditions
 mean_N <- 10
-n_years_vec <- c(4, 8, 10, 15, 20)
+n_years_vec <- c(4, 20) # c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
-sample_sites_vec <- c(25, 50, 100, 200, nrow(family))
+sample_sites_vec <- c(25, 200) # c(25, 50, 100, 200, nrow(family))
 p <- c(0.75, 0.75, 0.75)
 theta <- 1
 SD <- 0.2
@@ -55,7 +55,7 @@ theta_st <- 0.5
 SD_st <- 0.15
 rho <- 0.75
 
-n_sim <- 200
+n_sim <- 4 # 200
 
 # Covariates
 # add spatially varying covariates constant in time
@@ -309,13 +309,13 @@ df_sims <- foreach(i = 1:n_sim,
         #                                sd = as.numeric(mod$SD$sd), stringsAsFactors = F)
         
         #-------- save sim iter output -------
-        save(network, mod, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData")) 
+        # save(network, mod, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData")) 
       } # end spatial TF loop
     } # end site loop
   } # end year loop
   #write.csv(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".csv"), row.names = FALSE)
-  save(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".RData"))
-  return(dat)
+  # save(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".RData"))
+  return(dat) # if save before the return nothing gets returned
 } # end sim iter
 stopCluster(cl)
 closeAllConnections()

@@ -103,11 +103,12 @@ format(yoy$aic_table, digits = 1)
 ```{r coef tables}
 adult$SD5$value
 
+yoy$SD5$value
 
 ```
 
 
-
+Compare values to where fall in relation to simulations
 
 
 

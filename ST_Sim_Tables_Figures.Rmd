@@ -56,7 +56,7 @@ I ran 200 simulations of the spatiotemporal model for the White River in Vermont
 
 This is a summary of the results varying the number of years averaged across the number of sites sampled (consider separating this out and just summarizing for the maximum number of sites or n_sites = 100 to more clearly isolate the year effects). The red dashed line is the true value.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+```{r year plots, echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
 # consider separating this out and just summarizing for the maximum number of sites or n_sites = 100 to more clearly isolate the year effects
 
 df_spatial <- df_converged %>%
@@ -125,7 +125,7 @@ These results are not encouraging in that the spatial (theta), temporal (rhot, s
 
 Below are the results for different numbers of survey sites averaged across all numbers of survey years (consider separating this out and just summarizing for the maximum number of years or n_years = 20 to more clearly isolate the site effects) 
 
-```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+```{r site plots, echo=FALSE, results='hide', warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
 # consider separating this out and just summarizing for the maximum number of years or n_years = 20 to more clearly isolate the site effects
 
 # Make the plots
@@ -187,7 +187,7 @@ grid::grid.draw(s_grid)
 
 ```
 
-This is somewhat similar to the results comparing number of years surveyed. The one really strange result is that sigmat_hat gets worse with the spatiotemporal model with an increase in the number of sites surveyed.
+This is somewhat similar to the results comparing number of years surveyed. One strange result is that sigmat_hat gets worse with the spatiotemporal model with an increase in the number of sites surveyed. Another is that theta_st_hat is biased low, close to zero.
 
 I really don't know what's going on with these results. I'm not positive if my generating model is matching my estimating model.
 
@@ -199,13 +199,13 @@ The code for the data generator is at: [https://github.com/djhocking/Trout_GRF/b
 
 ```{r libraries and data, echo=FALSE, warning=FALSE, message=FALSE}
 #library(maps)
-library(sp)
-library(raster)
-library(rgdal)
-library(ggplot2)
-library(dplyr)
-library(grid)
-library(gridExtra)
+library(sp, verbose = TRUE, quietly = TRUE, warn.conflicts = FALSE)
+library(raster, verbose = TRUE, quietly = TRUE, warn.conflicts = FALSE)
+library(rgdal, verbose = TRUE, quietly = TRUE, warn.conflicts = FALSE)
+library(ggplot2, verbose = TRUE, quietly = TRUE, warn.conflicts = FALSE)
+library(dplyr, verbose = TRUE, quietly = TRUE, warn.conflicts = FALSE)
+library(grid, verbose = TRUE, quietly = TRUE, warn.conflicts = FALSE)
+library(gridExtra, verbose = TRUE, quietly = TRUE, warn.conflicts = FALSE)
 #library(ggmap)
 
 # load data
@@ -221,7 +221,7 @@ family = cbind( family, "child_b"=1:nrow(family) )
 
 Make sure projections are the same across all data
 
-```{r projections, , echo=FALSE, warning=FALSE, message=FALSE}
+```{r projections, echo=FALSE, warning=FALSE, message=FALSE}
 # get data in same projection
 print(proj4string(dem))
 print(proj4string(sites))
@@ -284,9 +284,9 @@ flowlines_df <- data.frame(id=rownames(flow@data),
 flowlines_df <- left_join(flowlines_f, flowlines_df, by = "id") %>%
   dplyr::filter(year == t)
 
-p_hat[[t]] <- ggplot(dem_df, aes(Longitude, Latitude)) + geom_path(data = flowlines_df, aes(x=long, y=lat, group = group, colour = N_hat), size = 0.8) + scale_color_gradient2("Abundance", low = "blue", mid = "blue", high = "red", breaks = my_breaks, labels = my_breaks, limits = c(0, 50), na.value = "red") + theme_bw() # + coord_equal(ratio=1) 
+p_hat[[t]] <- ggplot(dem_df, aes(Longitude, Latitude)) + geom_path(data = flowlines_df, aes(x=long, y=lat, group = group, colour = N_hat), size = 0.8) + scale_color_gradient2("Abundance", low = "blue", mid = "blue", high = "red", breaks = my_breaks, labels = my_breaks, limits = c(0, 50), na.value = "red") + theme_bw() + coord_equal(ratio=1) 
 
-p_true[[t]] <- ggplot(dem_df, aes(Longitude, Latitude)) + geom_path(data = flowlines_df, aes(x=long, y=lat, group = group, colour = N), size = 0.8) + scale_color_gradient2("Abundance", mid = "blue", high = "red", breaks = my_breaks, labels = my_breaks, limits = c(0, 50), na.value = "red") + theme_bw() # + coord_equal(ratio=1) 
+p_true[[t]] <- ggplot(dem_df, aes(Longitude, Latitude)) + geom_path(data = flowlines_df, aes(x=long, y=lat, group = group, colour = N), size = 0.8) + scale_color_gradient2("Abundance", mid = "blue", high = "red", breaks = my_breaks, labels = my_breaks, limits = c(0, 50), na.value = "red") + theme_bw() + coord_equal(ratio=1) 
 
 #p_true[[t]] <- ggplot(dem_df, aes(Longitude, Latitude)) + geom_path(data = flowlines_df, aes(x=long, y=lat, group = group, colour = N), size = 0.8) + scale_color_gradientn("Abundance", colours = colors, breaks = my_breaks, labels = my_breaks) + coord_equal(ratio=1) + theme_bw()
 }
@@ -318,13 +318,13 @@ g_legend <- function(a.gplot) {
 my_legend <- g_legend(p_true[[1]])
 
 # Arrange in rows
-st_grid <- arrangeGrob(p_true[[2]] + ggtitle("True N: Year 2") + theme(legend.position="none", axis.title.x = element_blank()),
-             p_true[[4]] + ggtitle("True N: Year 4") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
-             p_true[[6]] + ggtitle("True N: Year 6") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
-             p_true[[8]] + ggtitle("True N: Year 8") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
-             p_true[[10]] + ggtitle("True N: Year 10") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+st_grid <- arrangeGrob(p_true[[2]] + ggtitle("N: Year 2") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+             p_true[[4]] + ggtitle("N: Year 4") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+             p_true[[6]] + ggtitle("N: Year 6") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+             p_true[[8]] + ggtitle("N: Year 8") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
+             p_true[[10]] + ggtitle("N: Year 10") + theme(legend.position="none", axis.title.x = element_blank(), axis.title.y = element_blank()),
              my_legend,
-             p_hat[[2]] + ggtitle(expression(paste(widehat(N), ": Year 2"))) + theme(legend.position="none"),
+             p_hat[[2]] + ggtitle(expression(paste(widehat(N), ": Year 2"))) + theme(legend.position="none", axis.title.y = element_blank()),
              p_hat[[4]] + ggtitle(expression(paste(widehat(N), ": Year 4"))) + theme(legend.position="none", axis.title.y = element_blank()),
              p_hat[[6]] + ggtitle(expression(paste(widehat(N), ": Year 6"))) + theme(legend.position="none", axis.title.y = element_blank()),
              p_hat[[8]] + ggtitle(expression(paste(widehat(N), ": Year 8"))) + theme(legend.position="none", axis.title.y = element_blank()),
@@ -337,5 +337,5 @@ st_grid <- arrangeGrob(p_true[[2]] + ggtitle("True N: Year 2") + theme(legend.po
 ggsave(filename = "Output/Power_Sim/ST_Grid.png", plot = st_grid, width = 11, height = 6, units = "in")
 ggsave(filename = "Output/Power_Sim/ST_Grid.pdf", plot = st_grid, dpi = 300, width = 11, height = 6, units = "in")
 
-st_grid
+grid::grid.draw(st_grid)
 ```

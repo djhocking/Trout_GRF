@@ -36,7 +36,7 @@ runOUGMRF <- function(inputs) {
     #}
      }
     }) # end try - consider trycatch and having error return NULL or NA or something
-    return(list(opt = opt1, Report = Report1, SD = SD1))
+    return(list(opt = opt1, Report = Report1, SD = SD1, obj=obj1))
   #}) # end try - consider trycatch and having error return NULL or NA or something
 }
 

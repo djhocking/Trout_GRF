@@ -1,7 +1,7 @@
 runOUGMRF <- function(inputs) {
   # Make object
   dyn.load( dynlib(paste0("Code/", Version )))
-  obj1 <- MakeADFun(data=inputs$Data, parameters=inputs$Params, random=inputs$Random, map=inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+  obj1 <- MakeADFun(data=inputs$Data, parameters=inputs$Params, random=inputs$Random, map=inputs$Map, hessian=FALSE, inner.control=list(maxit=1000), silent = TRUE )
   
   # First run
   obj1$fn( obj1$par )

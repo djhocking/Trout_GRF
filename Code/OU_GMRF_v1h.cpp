@@ -86,6 +86,8 @@ template<class Type>
     Delta_t = Deltainput_t * sigmat;
     vector<Type> log_offset_i(n_i);
     log_offset_i = log(offset_i);
+    Type SD_inf = SDinput / pow(2*theta, 0.5);
+    Type SD_st_inf = SDinput_st / pow(2*theta_st, 0.5);
     
     // Probability of GRF on network -- SPATIAL
     vector<Type> rho_b(n_b); 
@@ -224,7 +226,11 @@ template<class Type>
    // REPORT( rho_t_b );
     REPORT( SD_b );
     REPORT( SDinput );
-   // REPORT( SDinput_b );
+    REPORT( SDinput_st );
+    REPORT( SD_inf );
+    REPORT( SD_st_inf );
+  //  REPORT( SDinput_b );
+  //  REPORT( SDinput_t_b );
     REPORT( theta );
     REPORT( theta_st );
     REPORT( Epsiloninput_d );

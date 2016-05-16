@@ -74,9 +74,9 @@ Type objective_function<Type>::operator() ()
   
   // Derived parameters
   Type SDinput = exp(log_SD);
-  Type theta = exp(log_theta_vec(1));
+  Type theta = exp(log_theta_vec(0));
   Type SDinput_st = exp(log_SD_st);
-  Type theta_st = exp(log_theta_vec(2));
+  Type theta_st = exp(log_theta_vec(1));
   Type detectrate = exp(log_detectrate);
   Type sigmaIID = exp(log_sigmaIID);
   vector<Type> extradetectrate_i(n_i);

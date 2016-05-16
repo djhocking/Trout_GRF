@@ -43,19 +43,19 @@ family = cbind( family, "child_b"=1:nrow(family) )
 
 # Set Conditions
 mean_N <- 10
-n_years_vec <- c(4, 20) # c(4, 8, 10, 15, 20)
+n_years_vec <- c(20) # c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
-sample_sites_vec <- c(25, 200) # c(25, 50, 100, 200, nrow(family))
+sample_sites_vec <- c(300) # c(25, 50, 100, 200, nrow(family))
 p <- c(0.75, 0.75, 0.75)
-theta <- 1
+theta <- 0.8 # works with 1
 SD <- 0.2
 rhot <- 0.5
 SD_t <- 0.8
-theta_st <- 0.5
+theta_st <- 0.8 # 0.5 works
 SD_st <- 0.15
 rho <- 0.75
 
-n_sim <- 4 # 200
+n_sim <- 20 # 200
 
 # Covariates
 # add spatially varying covariates constant in time
@@ -161,7 +161,7 @@ df_sims <- foreach(i = 1:n_sim,
   
   # simulate abundance and counts on network
   #set.seed(723750)
-  network <- simST(family, theta = theta, SD = SD, rhot = rhot, SD_t = SD_t, theta_st = theta_st, SD_st = SD_st, mean_N = mean_N, n_years = n_years, rho = rho, gamma_j = gamma_j, X_ij=X_ij, p = p)
+  network <- simST(family, theta = theta, SD = SD, rhot = rhot, SD_t = SD_t, theta_st = theta_st, SD_st = SD_st, mean_N = mean_N, n_years = n_years, rho = rho, gamma_j = gamma_j, X_ij=X_ij, p = p, spatial = TRUE, temporal = TRUE, spatiotemporal = FALSE)
   str(network)
   summary(network$N_i)
   
@@ -197,7 +197,7 @@ df_sims <- foreach(i = 1:n_sim,
           Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         if(s == 2) {
-          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         
         # need to make df, family, and c_ip agree

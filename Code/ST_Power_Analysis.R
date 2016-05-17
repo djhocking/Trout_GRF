@@ -105,6 +105,14 @@ dat <- data.frame(iter=integer(),
                   sigmat_hat=numeric(),
                   theta_st=numeric(),
                   theta_st_hat=numeric(),
+                  SD = numeric(),
+                  SD_hat = numeric(),
+                  SD_st = numeric(),
+                  SD_st_hat = numeric(),
+                  SD_inf = numeric(),
+                  SD_inf_hat = numeric(),
+                  SD_st_inf = numeric(),
+                  SD_st_inf_hat = numeric(),
                   rho_st=numeric(),
                   rho_st_hat=numeric(),
                   gamma_j=numeric(),
@@ -161,7 +169,7 @@ df_sims <- foreach(i = 1:n_sim,
   
   # simulate abundance and counts on network
   #set.seed(723750)
-  network <- simST(family, theta = theta, SD = SD, rhot = rhot, SD_t = SD_t, theta_st = theta_st, SD_st = SD_st, mean_N = mean_N, n_years = n_years, rho = rho, gamma_j = gamma_j, X_ij=X_ij, p = p, spatial = TRUE, temporal = TRUE, spatiotemporal = FALSE)
+  network <- simST(family, theta = theta, SD = SD, rhot = rhot, SD_t = SD_t, theta_st = theta_st, SD_st = SD_st, mean_N = mean_N, n_years = n_years, rho = rho, gamma_j = gamma_j, X_ij=X_ij, p = p, spatial = TRUE, temporal = TRUE, spatiotemporal = TRUE)
   str(network)
   summary(network$N_i)
   
@@ -197,7 +205,7 @@ df_sims <- foreach(i = 1:n_sim,
           Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         if(s == 2) {
-          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         
         # need to make df, family, and c_ip agree
@@ -231,6 +239,14 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "sigmat_hat"] <- NA_real_
           dat[counter, "theta_st"] <- theta_st
           dat[counter, "theta_st_hat"] <- NA_real_
+          dat[counter, "SD"] <- SD
+          dat[counter, "SD_hat"] <- NA_real_
+          dat[counter, "SD_st"] <- SD_st
+          dat[counter, "SD_st_hat"] <- NA_real_
+          dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
+          dat[counter, "SD_inf_hat"] <- NA_real_
+          dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
+          dat[counter, "SD_st_inf_hat"] <- NA_real_
           dat[counter, "rho_st"] <- rho
           dat[counter, "rho_st_hat"] <- NA_real_
           dat[counter, "gamma_j"] <- gamma_j
@@ -263,6 +279,14 @@ df_sims <- foreach(i = 1:n_sim,
             dat[counter, "sigmat_hat"] <- NA_real_
             dat[counter, "theta_st"] <- theta_st
             dat[counter, "theta_st_hat"] <- NA_real_
+            dat[counter, "SD"] <- SD
+            dat[counter, "SD_hat"] <- NA_real_
+            dat[counter, "SD_st"] <- SD_st
+            dat[counter, "SD_st_hat"] <- NA_real_
+            dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
+            dat[counter, "SD_inf_hat"] <- NA_real_
+            dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
+            dat[counter, "SD_st_inf_hat"] <- NA_real_
             dat[counter, "rho_st"] <- rho
             dat[counter, "rho_st_hat"] <- NA_real_
             dat[counter, "gamma_j"] <- gamma_j
@@ -295,12 +319,19 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "sigmat_hat"] <- mod$Report$sigmat
           dat[counter, "theta_st"] <- theta_st
           dat[counter, "theta_st_hat"] <- mod$Report$theta_st
+          dat[counter, "SD"] <- SD
+          dat[counter, "SD_hat"] <- mod$Report$SDinput
+          dat[counter, "SD_st"] <- SD_st
+          dat[counter, "SD_st_hat"] <- mod$Report$SDinput_st
+          dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
+          dat[counter, "SD_inf_hat"] <- mod$Report$SD_inf
+          dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
+          dat[counter, "SD_st_inf_hat"] <- mod$Report$SD_st_inf
           dat[counter, "rho_st"] <- rho
           dat[counter, "rho_st_hat"] <- mod$Report$rho_st
           dat[counter, "gamma_j"] <- gamma_j
           dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
           dat[counter, "converge"] <- TRUE
-          
           }
         }
         #         mean(network$N_i)

@@ -23,13 +23,14 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
   #------------ Spatial -------------
   if(spatial) {
   # object
-  condSD_b = x_b = rep(NA, nrow(family))
+  rho_b = condSD_b = x_b = rep(NA, nrow(family))
   
   # seed at top of network
   WhichRoot = which( is.na(family[,'parent_b']) )
   condSD_b[WhichRoot] = sqrt( SD^2 / 2*theta )
   x_b[WhichRoot] = rnorm(1, mean=0, sd=condSD_b[WhichRoot])
-  
+  rho_b[WhichRoot] = 0
+
   # Loop through network
   while( TRUE ){
     for(i in 1:nrow(family)){
@@ -38,7 +39,8 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
         Match = match( family[i,'parent_b'], SimulatedNodes ) # Which
         if(length(Match)==1){
           condSD_b[i] = sqrt( SD^2/(2*theta) * (1-exp(-2*theta*family[i,'dist_b'])) )
-          x_b[i] = x_b[SimulatedNodes[Match]] + rnorm(1, mean=0, sd=condSD_b[i])
+          rho_b[i] = exp(-theta * family[i,'dist_b']);
+          x_b[i] = rho_b[i]*x_b[SimulatedNodes[Match]] + rnorm(1, mean=0, sd=condSD_b[i])
         }
       }
     }
@@ -72,7 +74,8 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
   WhichRoot = which( is.na(family[,'parent_b']) )
   condSD_b[WhichRoot] = sqrt( SD_st^2 / 2*theta_st )
   x_bt[WhichRoot,] = rmvnorm(1, mean=rep(0,n_years), sigma=condSD_b[WhichRoot]^2 * Corr_tt )[1,]
-  
+  rho_b[WhichRoot] = 0
+
   # Loop through network
   while( TRUE ){
     for(i in 1:nrow(family)){
@@ -81,7 +84,8 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
         Match = match( family[i,'parent_b'], SimulatedNodes ) # Which
         if(length(Match)==1){
           condSD_b[i] = sqrt( SD_st^2/(2*theta_st) * (1-exp(-2*theta_st*family[i,'dist_b'])) )
-          x_bt[i,] = x_bt[SimulatedNodes[Match],] + rmvnorm(1, mean=rep(0,n_years), sigma=condSD_b[i]^2 * Corr_tt )[1,]   # Cov_matrix = pointwise_variance * Corr_matrix
+          rho_b[i] = exp(-theta_st * family[i,'dist_b']);
+          x_bt[i,] = rho_b[i]*x_bt[SimulatedNodes[Match],] + rmvnorm(1, mean=rep(0,n_years), sigma=condSD_b[i]^2 * Corr_tt )[1,]   # Cov_matrix = pointwise_variance * Corr_matrix
         }
       }
     }
@@ -118,5 +122,5 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
     }
   }
   
-  return(list(x_bt = x_bt, N_i = N_i, c_ip = c_ip_full, t_i = t_i, log_Npred_bt = log_Npred_bt))
+  return(list(x_bt = x_bt, x_t=x_t, x_b=x_b, N_i = N_i, c_ip = c_ip_full, t_i = t_i, log_Npred_bt = log_Npred_bt))
 }

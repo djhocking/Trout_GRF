@@ -138,7 +138,7 @@ Type objective_function<Type>::operator() ()
       if(Options_vec(2)==1) jnll_comp(2) += SCALE( AR1(rho_st), SDinput_t_b(b))(temp_b);
     }
   }
-  
+
   // Probability of temporal variation
   if(Options_vec(1)==1) jnll_comp(1) += AR1(rhot)(Deltainput_t);
   
@@ -252,14 +252,16 @@ Type objective_function<Type>::operator() ()
   REPORT( lognormal_overdispersed_i );
   //REPORT( SDinput_t_b );
   //REPORT( SDinput_st );
-  REPORT( temp_b );
   REPORT( Nu_dt );
   REPORT( lambda_dt );
   REPORT( N_ip );
   REPORT( chat_ip );
   REPORT( extradetectionSD );
   REPORT( mean_N );
-  
+  REPORT( rho_t_b );
+  REPORT( SDinput_t_b );
+  REPORT( temp_b );
+
   // ADREPORT( lambda_ip);
   ADREPORT( gamma_j );
   ADREPORT( log_theta_vec );

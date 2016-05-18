@@ -46,14 +46,14 @@ mean_N <- 10
 n_years_vec <- c(20) # c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
 sample_sites_vec <- c(300) # c(25, 50, 100, 200, nrow(family))
-p <- c(0.75, 0.75, 0.75)
-theta <- 0.8 # works with 1
-SD <- 0.2
-rhot <- 0.5
-SD_t <- 0.8
-theta_st <- 0.8 # 0.5 works
-SD_st <- 0.15
-rho <- 0.75
+p <- c(0.75, 0.75, 0.75)  # Detection probability for each of three passes
+theta <- 0.8 # range for spatial variation (works with 1)
+SD <- 0   #  Marginal SD of spatial variation
+rhot <- 0.5  # Autocorrelation over time
+SD_t <- 0  # Conditional SD for variation over time
+theta_st <- 0.8 # Range for spatio-temporal variation (0.5 works)
+SD_st <- 0.15   # Marginal SD of spatial component of spatio-temporal variation
+rho <- 0.75    # Correlation among years for spatio-temporal variation
 
 n_sim <- 20 # 200
 
@@ -202,10 +202,10 @@ df_sims <- foreach(i = 1:n_sim,
         Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
         
         if(s == 1) {
-          Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+          Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         if(s == 2) {
-          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         
         # need to make df, family, and c_ip agree
@@ -216,8 +216,24 @@ df_sims <- foreach(i = 1:n_sim,
         # Make inputs
         Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
         
+        # Run
         mod <- runOUGMRF(inputs = Inputs)
-          
+
+        # Debugging info -- added by Jim but turned off by default
+        if(FALSE){
+          # Diagnostics -- estimation model
+          unlist(mod$Report[c('log_mean','detectrate','extradetectionSD','rho_st','rhot','SD_inf','SD_st_inf','SDinput','SDinput_st','sigmaIID','sigmat','theta','theta_st')])
+          sapply( mod$ParHat[c('log_extradetectrate_i','Epsiloninput_d','Deltainput_t','Nu_dt')], FUN=function(vec){c(mean(vec),sd(vec))} )
+          table(names(mod$obj$env$last.par.best))
+          mod$Report$rho_t_b
+          mod$Report$SDinput_t_b
+          mod$ParHat$Nu_dt
+
+          # Diagnostics -- simulation model
+          sapply( network[c('x_t','x_b','x_bt')], FUN=function(vec){c(mean(vec),sd(vec))} )
+          network$x_bt
+        }
+
         #----------- summarize -----------
         
         if(class(mod) == "try-error") {

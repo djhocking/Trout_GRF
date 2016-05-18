@@ -68,7 +68,7 @@ save(mean_N, family, n_years_vec, n_years, sample_sites_vec, p, theta, SD, rhot,
 
 
 # Set TMB code
-Version = "OU_GMRF_v1i"
+Version = "OU_GMRF_v1h"
 
 # Sanity checks
 if( TRUE ){

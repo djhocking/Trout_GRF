@@ -42,20 +42,20 @@ colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
 
 # Set Conditions
-mean_N <- 10
-n_years_vec <- c(20) # c(4, 8, 10, 15, 20)
+mean_N <- 10 # 10
+n_years_vec <- 20 # c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
-sample_sites_vec <- c(300) # c(25, 50, 100, 200, nrow(family))
+sample_sites_vec <- 300 # c(25, 50, 100, 200, nrow(family))
 p <- c(0.75, 0.75, 0.75)  # Detection probability for each of three passes
-theta <- 0.8 # range for spatial variation (works with 1)
-SD <- 0   #  Marginal SD of spatial variation
-rhot <- 0.5  # Autocorrelation over time
-SD_t <- 0  # Conditional SD for variation over time
-theta_st <- 0.8 # Range for spatio-temporal variation (0.5 works)
-SD_st <- 0.15   # Marginal SD of spatial component of spatio-temporal variation
-rho <- 0.75    # Correlation among years for spatio-temporal variation
+theta <- 0.3 # range for spatial variation (works with 1)
+SD <- 0.1   #  Marginal SD of spatial variation
+rhot <- 0.2 # 0.1 # Autocorrelation over time
+SD_t <- 0.7 # 0  # Conditional SD for variation over time
+theta_st <- 0.3 # Range for spatio-temporal variation (0.5 works)
+SD_st <- 0.5 # 0.15   # Marginal SD of spatial component of spatio-temporal variation
+rho <- 0.5    # Correlation among years for spatio-temporal variation
 
-n_sim <- 20 # 200
+n_sim <- 10
 
 # Covariates
 # add spatially varying covariates constant in time
@@ -68,7 +68,7 @@ save(mean_N, family, n_years_vec, n_years, sample_sites_vec, p, theta, SD, rhot,
 
 
 # Set TMB code
-Version = "OU_GMRF_v1h"
+Version = "OU_GMRF_v1i"
 
 # Sanity checks
 if( TRUE ){
@@ -202,7 +202,7 @@ df_sims <- foreach(i = 1:n_sim,
         Calc_lambda_ip[is.na(Calc_lambda_ip)] <- 0
         
         if(s == 1) {
-          Options_vec = c("SpatialTF"=0, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+          Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         if(s == 2) {
           Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
@@ -214,7 +214,7 @@ df_sims <- foreach(i = 1:n_sim,
         df <- dplyr::left_join(df_counts, family)
         
         # Make inputs
-        Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip)
+        Inputs <- makeInput(family = family, df = df, c_ip = c_ip, options = Options_vec, X = X_ij, t_i = network$t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, spatial_equal = TRUE)
         
         # Run
         mod <- runOUGMRF(inputs = Inputs)
@@ -366,6 +366,10 @@ df_sims <- foreach(i = 1:n_sim,
 } # end sim iter
 stopCluster(cl)
 closeAllConnections()
+
+dplyr::filter(df_sims, spatialTF == TRUE) %>% summary()
+dplyr::filter(df_sims, spatialTF == TRUE & converge == TRUE) %>% summary()
+dplyr::filter(df_sims, spatialTF == FALSE) %>% summary()
 
 save(df_sims, file = "Output/Power_Sim/STsim_Results.RData")
 write.csv(df_sims, file = "Output/Power_Sim/STsim_Results.csv", row.names = FALSE)

@@ -42,7 +42,7 @@ offset <-  as.numeric(df_yoy$length_sample)
 # Fit in TMB
 #######################
 
-Version = "OU_GMRF_v1h"
+Version = "OU_GMRF_v1i"
 # v1a -- Original version
 # v1b -- added covariates matrix X_ij
 # v1c- adds linear predictors to SD output and multinomial count process (HAS A BUG!)
@@ -393,6 +393,73 @@ for(i in 2:nrow(aic_table)) {
 }
 aic_table
 
+################# compare models with theta = theta_st ###############
+
+
+#----------------- Spatial Temporal Spatiotemporal ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset, spatial_equal = TRUE)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj6e <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000), silent = TRUE )
+Report = obj6e$report()
+
+# First run
+obj6e$fn( obj6e$par )
+# Check for parameters that don't do anything
+Which = which( obj6e$gr( obj6e$par )==0 )
+
+# Run model
+opt6e = nlminb(start=obj6e$env$last.par.best[-c(obj6e$env$random)], objective=obj6e$fn, gradient=obj6e$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt6e[["final_gradient"]] = obj6e$gr( opt6e$par )
+# opt6e[["AIC"]] = 2*opt6e$objective + 2*length(opt6e$par)
+# Report6e = obj6e$report()
+# SD6e = sdreport( obj6e, bias.correct=FALSE )
+
+opt6eb <- bobyqa(par = obj6e$env$last.par.best[-c(obj6e$env$random)], fn = obj6e$fn)
+Report6eb = obj6e$report()
+opt6eb[["AIC"]] = 2*opt6eb$fval + 2*length(opt6eb$par)
+SD6eb <- sdreport(obj6e, bias.correct=FALSE )
+
+#--------------------------------------------------
+
+#----------------- Spatial + Spatiotemporal ------------------
+# Turn off random effects in v1f (0 means exclude a component, except for ObsModel)
+Options_vec = c("SpatialTF"=1, "TemporalTF"=0, "SpatiotemporalTF"=1, "DetectabilityTF"=1, "ObsModel"=1, "OverdispersedTF"=1, "abundTF"=0)
+
+# Make inputs
+Inputs <- makeInput(family = family, df = df_yoy, c_ip = c_ip_yoy, options = Options_vec, X = X_ij, t_i = t_i, version = Version, CalcSD_lambda_ip = Calc_lambda_ip, offset_i = offset, spatial_equal = TRUE)
+
+# Make object
+dyn.load( dynlib(paste0("Code/", Version )))
+obj8e <- MakeADFun(data=Inputs$Data, parameters=Inputs$Params, random=Inputs$Random, map=Inputs$Map, hessian=FALSE, inner.control=list(maxit=1000) )
+Report = obj8e$report()
+
+# First run
+obj8e$fn( obj8e$par )
+#fn_test < obj8e$fn(obj8e$par)
+
+# Check for parameters that don't do anything
+Which = which( obj8e$gr( obj8e$par )==0 )
+
+# Run model
+opt8e = nlminb(start=obj8e$env$last.par.best[-c(obj8e$env$random)], objective=obj8e$fn, gradient=obj8e$gr, control=list(eval.max=1e4, iter.max=1e4, trace=1, rel.tol=1e-14) )
+opt8e[["final_gradient"]] = obj8e$gr( opt8e$par )
+# opt8e[["AIC"]] = 2*opt8e$objective + 2*length(opt8e$par)
+# Report8e = obj8e$report()
+# SD8e = sdreport( obj8e, bias.correct=FALSE )
+
+opt8eb <- bobyqa(par = obj8e$env$last.par.best[-c(obj8e$env$random)], fn = obj8e$fn)
+Report8eb = obj8e$report(obj8e$env$last.par.best)
+opt8eb[["AIC"]] = 2*opt8eb$fval + 2*length(opt8eb$par)
+SD8eb <- sdreport(obj8e, bias.correct=FALSE )
+
+
+# package and save
 Mod5 <- list(Report = Report5b, opt = opt5b, SD = SD5b)
 
 Parameters <- colnames(as.matrix(X_ij))

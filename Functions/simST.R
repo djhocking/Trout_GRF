@@ -68,6 +68,7 @@ simST <- function(family, theta = 0.25, SD = 0.1, rhot = 0.5, SD_t = 1, theta_st
   
   # object
   condSD_b = rep(NA, nrow(family))
+  rho_b = rep(NA, nrow(family))
   x_bt = matrix(NA, nrow=nrow(family), ncol=n_years)
   
   # seed at top of network

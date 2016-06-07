@@ -38,7 +38,7 @@ if( any(family$dist_b < (max(family$dist_b,na.rm=TRUE)/1e4),na.rm=TRUE) ) {
   warning("Negative distances fixed to lower bound")
 }
 
-Version = "OU_GMRF_v1h"
+Version = "OU_GMRF_v1i"
 
 # Compile
 if(FALSE) {
@@ -53,15 +53,15 @@ compile( paste0("Code/", Version,".cpp") )
 n_sim <- 200
 # vary theta, SD, sigmaIID, log_mean, and sample_pct for spatial/non-spatial
 spatial_cor <- c("extremely high", "high", "medium", "low", "very low")
-theta_vec <- c(0.5, 1, 2, 3, 4, 5)
-SD_vec <- c(0.2, 0.3, 0.4, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
+theta_vec <- c(0.1, 0.5, 1, 2, 3)
+SD_vec <- c(0.1, 0.25, 0.5, 1, 2) # c(0.2, 0.3, 0.4, 0.5) # 0.01, 0.1, 0.25 work with theta = c(0.5, 1, 5) and mean_N=c(5,10,50)
 sigmaIID_vec <- c(0)
 mean_N <- c(10)
 spatial_vec <- c(TRUE, FALSE)
 sample_pct_vec <- c(1) #
 
 # Detection probability for removal sampling
-p <- c(0.75, 0.75, 0.75)
+p <- c(0.5, 0.5, 0.5)
 
 # Covariates
 gamma_j <- c(0.5) # doesn't work if I use more than 1 coef
@@ -286,7 +286,7 @@ df_sims <- foreach(sim = 1:n_sim,
           converge <- FALSE
           if(!is.null(mod_out2$SD)) { # if SD produced, check sd produced
             if(!is.null(mod_out2$SD$sd)) { # if sd produced, check that converged
-              converge <- ifelse(mod_out2$opt$convergence == 0 & !any(is.na(mod_out2$SD$sd)), TRUE, FALSE)
+              converge <- ifelse(mod_out2$opt$convergence == 0 & !any(is.na(mod_out2$SD$sd)) & max(mod_out2$SD$sd) < 20 & max(mod_out2$Report$theta) < 25, TRUE, FALSE)
             }
           }
         }
@@ -360,13 +360,18 @@ df_sims <- foreach(sim = 1:n_sim,
       } else {
         table_full2 <- dplyr::bind_rows(table_full2, table2_i)
       }
-      save(network2, mod_out2, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[1], "_SD_", SD_vec[1], "_spMod_", options_list[[l]][1], "_meanN_", mean_N[1], "_spatial_data_", m, ".RData")) 
+      # save(network2, mod_out2, file = paste0("Output/Sim_Spatial/Data/sim_", sim, "_theta_", theta_vec[1], "_SD_", SD_vec[1], "_spMod_", options_list[[l]][1], "_meanN_", mean_N[1], "_spatial_data_", m, ".RData")) 
     } # end spatial model options loop
   table_combined <- dplyr::bind_rows(table_full, table_full2)
   return(table_combined)
 } # end foreach dopar loop
 stopCluster(cl)
 closeAllConnections()
+
+dplyr::filter(df_sims, spatial == TRUE & converge == TRUE & theta == 0.5 & SD_ou == 0.2 & sp_mod == TRUE) %>% summary()
+dplyr::filter(df_sims, spatial == TRUE) %>% summary()
+dplyr::filter(df_sims, spatial == TRUE & converge == TRUE) %>% summary()
+dplyr::filter(df_sims, spatial == FALSE) %>% summary()
 
 save(df_sims, file = "Output/Sim_Spatial/Sim_Results.RData")
 write.csv(df_sims, file = "Output/Sim_Spatial/Sim_Results.csv", row.names = FALSE)   

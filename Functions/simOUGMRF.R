@@ -3,29 +3,36 @@
 simOUGMRF <- function(family, theta, SD, mean_N, gamma, X_ij, p, sample_pct, spatial = TRUE) {
 
   #------------ Spatial -------------
-  # object
-  condSD_b = x_b = rep(NA, nrow(family))
-  
-  # seed at top of network
-  WhichRoot = which( is.na(family[,'parent_b']) )
-  condSD_b[WhichRoot] = sqrt( SD^2 / 2*theta )
-  x_b[WhichRoot] = rnorm(1, mean=0, sd=condSD_b[WhichRoot])
-  
-  # Loop through network
-  while( TRUE ){
-    for(i in 1:nrow(family)){
-      if( is.na(x_b[i]) ){
-        SimulatedNodes = which(!is.na(x_b))
-        Match = match( family[i,'parent_b'], SimulatedNodes ) # Which
-        if(length(Match)==1){
-          condSD_b[i] = sqrt( SD^2/(2*theta) * (1-exp(-2*theta*family[i,'dist_b'])) )
-          x_b[i] = x_b[SimulatedNodes[Match]] + rnorm(1, mean=0, sd=condSD_b[i])
+  if(spatial) {
+    # object
+    rho_b = condSD_b = x_b = rep(NA, nrow(family))
+    
+    # seed at top of network
+    WhichRoot = which( is.na(family[,'parent_b']) )
+    condSD_b[WhichRoot] = sqrt( SD^2 / 2*theta )
+    x_b[WhichRoot] = rnorm(1, mean=0, sd=condSD_b[WhichRoot])
+    rho_b[WhichRoot] = 0
+    
+    # Loop through network
+    while( TRUE ){
+      for(i in 1:nrow(family)){
+        if( is.na(x_b[i]) ){
+          SimulatedNodes = which(!is.na(x_b))
+          Match = match( family[i,'parent_b'], SimulatedNodes ) # Which
+          if(length(Match)==1){
+            condSD_b[i] = sqrt( SD^2/(2*theta) * (1-exp(-2*theta*family[i,'dist_b'])) )
+            rho_b[i] = exp(-theta * family[i,'dist_b']);
+            x_b[i] = rho_b[i]*x_b[SimulatedNodes[Match]] + rnorm(1, mean=0, sd=condSD_b[i])
+          }
         }
       }
+      # Stopping condition
+      if( all(!is.na(x_b)) ) break()
     }
-    # Stopping condition
-    if( all(!is.na(x_b)) ) break()
+  } else {
+    x_b = rep(0, nrow(family))
   }
+  
   
   #-------------- Spatiotemporal -------------------
   

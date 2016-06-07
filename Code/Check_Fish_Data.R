@@ -33,6 +33,11 @@ df_fish$method <- "removal"
 df_fish_MR$method <- "MR"
 df_fish <- dplyr::bind_rows(df_fish, df_fish_MR)
 
+
+#---------- check that equal effort for 1st pass of both methods ---------
+
+
+
 #######################
 # Prep Trout Data
 #######################

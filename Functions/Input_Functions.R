@@ -5,7 +5,7 @@ rmatrix <- function( nrow=1, ncol=1, mean=0, sd=1, ... ){
 
 
 # Make inputs
-makeInput <- function(family, df = NULL, c_i = NULL, c_ip = NULL, options, X, t_i, version, CalcSD_lambda_ip, offset_i = NULL) {
+makeInput <- function(family, df = NULL, c_i = NULL, c_ip = NULL, options, X, t_i, version, CalcSD_lambda_ip, offset_i = NULL, spatial_equal = FALSE) {
   
   # included so don't have to redo for simulations
   if(is.null(df)) {
@@ -170,7 +170,7 @@ makeInput <- function(family, df = NULL, c_i = NULL, c_ip = NULL, options, X, t_
     Map[["log_theta_vec"]] = factor(c(NA,NA))
   }
   
-  if( Version%in%c("OU_GMRF_v1i") & Options_vec[["SpatialTF"]]==TRUE  & Options_vec[["SpatiotemporalTF"]]==TRUE ){
+  if( Version%in%c("OU_GMRF_v1i") & Options_vec[["SpatialTF"]]==TRUE  & Options_vec[["SpatiotemporalTF"]]==TRUE & spatial_equal == TRUE){
     Map[["log_theta_vec"]] = factor(c(1,1))
   }
   

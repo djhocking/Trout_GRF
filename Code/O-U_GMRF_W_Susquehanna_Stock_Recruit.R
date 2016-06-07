@@ -52,7 +52,7 @@ covs <- covs %>%
 
 offset <-  as.numeric(yoy$df_yoy$length_sample)
 
-Version = "OU_GMRF_v1h"
+Version = "OU_GMRF_v1i"
 
 # Compile
 if(FALSE) {

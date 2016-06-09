@@ -42,20 +42,20 @@ colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
 
 # Set Conditions
-mean_N <- 10
-n_years_vec <- c(4, 8, 10, 15, 20)
+mean_N <- 10 # 10
+n_years_vec <- 20 # c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
-sample_sites_vec <- c(25, 50, 100, 200, nrow(family))
-p <- c(0.75, 0.75, 0.75)  # Detection probability for each of three passes
-theta <- 0.3 # range for spatial variation (works with 1)
-SD <- 0.5   #  Marginal SD of spatial variation
-rhot <- 0.4 # 0.1 # Autocorrelation over time
+sample_sites_vec <- 300 # c(25, 50, 100, 200, nrow(family))
+p <- c(0.5, 0.5, 0.5)  # Detection probability for each of three passes
+theta <- 10 # range for spatial variation (works with 1)
+SD <- 0   #  Marginal SD of spatial variation
+rhot <- 0.5 # 0.1 # Autocorrelation over time
 SD_t <- 0.3 # 0  # Conditional SD for variation over time
-theta_st <- 0.3 # Range for spatio-temporal variation (0.5 works)
-SD_st <- 0.4 # 0.15   # Marginal SD of spatial component of spatio-temporal variation
-rho <- 0.7    # Correlation among years for spatio-temporal variation
+theta_st <- 10 # Range for spatio-temporal variation (0.5 works)
+SD_st <- 0 # 0.15   # Marginal SD of spatial component of spatio-temporal variation
+rho <- 0    # Correlation among years for spatio-temporal variation
 
-n_sim <- 200
+n_sim <- 24
 
 # Covariates
 # add spatially varying covariates constant in time
@@ -109,8 +109,6 @@ dat <- data.frame(iter=integer(),
                   SD_hat = numeric(),
                   SD_st = numeric(),
                   SD_st_hat = numeric(),
-                  var_sum_sp = numeric(),
-                  var_sum_sp_hat = numeric(),
                   SD_inf = numeric(),
                   SD_inf_hat = numeric(),
                   SD_st_inf = numeric(),
@@ -142,17 +140,17 @@ registerDoParallel(cl)
 ########## Run Parallel Loop ########## 
 # start loop
 df_sims <- foreach(i = 1:n_sim, 
-                        .inorder=FALSE, 
-                        .combine = rbind,
-                        .packages=c("TMB",
-                                    "dplyr",
-                                    "minqa",
-                                    "lubridate",
-                                    "tidyr")
-                        #.export = c("indexDeployments", "deriveMetrics") # shouldn't be needed after update package
-                        #.export = c("derive_metrics_par")#,
-                        #.export=ls(envir=globalenv(),
-                        #          "indexDeployments")# shouldn't be needed after update package
+                   .inorder=FALSE, 
+                   .combine = rbind,
+                   .packages=c("TMB",
+                               "dplyr",
+                               "minqa",
+                               "lubridate",
+                               "tidyr")
+                   #.export = c("indexDeployments", "deriveMetrics") # shouldn't be needed after update package
+                   #.export = c("derive_metrics_par")#,
+                   #.export=ls(envir=globalenv(),
+                   #          "indexDeployments")# shouldn't be needed after update package
 ) %dopar% {
   #for(i in 1:2) {
   source("Functions/Input_Functions.R")
@@ -207,7 +205,7 @@ df_sims <- foreach(i = 1:n_sim,
           Options_vec = c("SpatialTF"=0, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         if(s == 2) {
-          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=1, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
+          Options_vec = c("SpatialTF"=1, "TemporalTF"=1, "SpatiotemporalTF"=0, "DetectabilityTF"=0, "ObsModel"=1, "OverdispersedTF"=0, "abundTF"=0)
         }
         
         # need to make df, family, and c_ip agree
@@ -220,7 +218,7 @@ df_sims <- foreach(i = 1:n_sim,
         
         # Run
         mod <- runOUGMRF(inputs = Inputs)
-
+        
         # Debugging info -- added by Jim but turned off by default
         if(FALSE){
           # Diagnostics -- estimation model
@@ -230,12 +228,12 @@ df_sims <- foreach(i = 1:n_sim,
           mod$Report$rho_t_b
           mod$Report$SDinput_t_b
           mod$ParHat$Nu_dt
-
+          
           # Diagnostics -- simulation model
           sapply( network[c('x_t','x_b','x_bt')], FUN=function(vec){c(mean(vec),sd(vec))} )
           network$x_bt
         }
-
+        
         #----------- summarize -----------
         
         if(class(mod) == "try-error") {
@@ -261,8 +259,6 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "SD_hat"] <- NA_real_
           dat[counter, "SD_st"] <- SD_st
           dat[counter, "SD_st_hat"] <- NA_real_
-          dat[counter, "var_sum_sp"] <- SD^2 + SD_st^2
-          dat[counter, "var_sum_sp_hat"] <- NA_real_
           dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
           dat[counter, "SD_inf_hat"] <- NA_real_
           dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
@@ -303,8 +299,6 @@ df_sims <- foreach(i = 1:n_sim,
             dat[counter, "SD_hat"] <- NA_real_
             dat[counter, "SD_st"] <- SD_st
             dat[counter, "SD_st_hat"] <- NA_real_
-            dat[counter, "var_sum_sp"] <- SD^2 + SD_st^2
-            dat[counter, "var_sum_sp_hat"] <- NA_real_
             dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
             dat[counter, "SD_inf_hat"] <- NA_real_
             dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
@@ -315,47 +309,45 @@ df_sims <- foreach(i = 1:n_sim,
             dat[counter, "gamma_j_hat"] <- NA_real_
             dat[counter, "converge"] <- FALSE
           } else {
-          try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
-          N_se <- ifelse(is.null(N_se), NA_real_, N_se)
-          if(!is.na(N_se)) {
-          N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
-          }
-          df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
-          try(df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1]))
-          
-          dat[counter, "iter"] <- i
-          dat[counter, "n_sites"] <- sample_sites_vec[b]
-          dat[counter, "n_years"] <- n_years_vec[ti]
-          dat[counter, "spatialTF"] <- s - 1
-          dat[counter, "mean_N"] <- mean(network$N_i)
-          dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
-          dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
-          dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
-          dat[counter, "N_se"] <- N_se
-          dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
-          dat[counter, "theta"] <- theta
-          dat[counter, "theta_hat"] <- mod$Report$theta
-          dat[counter, "rhot"] <- rhot
-          dat[counter, "rhot_hat"] <- mod$Report$rhot
-          dat[counter, "sigmat"] <- SD_t
-          dat[counter, "sigmat_hat"] <- mod$Report$sigmat
-          dat[counter, "theta_st"] <- theta_st
-          dat[counter, "theta_st_hat"] <- mod$Report$theta_st
-          dat[counter, "SD"] <- SD
-          dat[counter, "SD_hat"] <- mod$Report$SDinput
-          dat[counter, "SD_st"] <- SD_st
-          dat[counter, "SD_st_hat"] <- mod$Report$SDinput_st
-          dat[counter, "var_sum_sp"] <- mod$Report$SDinput^2 + mod$Report$SDinput_st^2
-          dat[counter, "var_sum_sp_hat"] <- SD^2 + SD_st^2
-          dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
-          dat[counter, "SD_inf_hat"] <- mod$Report$SD_inf
-          dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
-          dat[counter, "SD_st_inf_hat"] <- mod$Report$SD_st_inf
-          dat[counter, "rho_st"] <- rho
-          dat[counter, "rho_st_hat"] <- mod$Report$rho_st
-          dat[counter, "gamma_j"] <- gamma_j
-          dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
-          dat[counter, "converge"] <- TRUE
+            try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
+            N_se <- ifelse(is.null(N_se), NA_real_, N_se)
+            if(!is.na(N_se)) {
+              N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
+            }
+            df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
+            try(df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1]))
+            
+            dat[counter, "iter"] <- i
+            dat[counter, "n_sites"] <- sample_sites_vec[b]
+            dat[counter, "n_years"] <- n_years_vec[ti]
+            dat[counter, "spatialTF"] <- s - 1
+            dat[counter, "mean_N"] <- mean(network$N_i)
+            dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
+            dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
+            dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
+            dat[counter, "N_se"] <- N_se
+            dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
+            dat[counter, "theta"] <- theta
+            dat[counter, "theta_hat"] <- mod$Report$theta
+            dat[counter, "rhot"] <- rhot
+            dat[counter, "rhot_hat"] <- mod$Report$rhot
+            dat[counter, "sigmat"] <- SD_t
+            dat[counter, "sigmat_hat"] <- mod$Report$sigmat
+            dat[counter, "theta_st"] <- theta_st
+            dat[counter, "theta_st_hat"] <- mod$Report$theta_st
+            dat[counter, "SD"] <- SD
+            dat[counter, "SD_hat"] <- mod$Report$SDinput
+            dat[counter, "SD_st"] <- SD_st
+            dat[counter, "SD_st_hat"] <- mod$Report$SDinput_st
+            dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
+            dat[counter, "SD_inf_hat"] <- mod$Report$SD_inf
+            dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
+            dat[counter, "SD_st_inf_hat"] <- mod$Report$SD_st_inf
+            dat[counter, "rho_st"] <- rho
+            dat[counter, "rho_st_hat"] <- mod$Report$rho_st
+            dat[counter, "gamma_j"] <- gamma_j
+            dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
+            dat[counter, "converge"] <- TRUE
           }
         }
         #         mean(network$N_i)
@@ -379,5 +371,3 @@ dplyr::filter(df_sims, spatialTF == TRUE) %>% summary()
 dplyr::filter(df_sims, spatialTF == TRUE & converge == TRUE) %>% summary()
 dplyr::filter(df_sims, spatialTF == FALSE) %>% summary()
 
-save(df_sims, file = "Output/Power_Sim/STsim_Results.RData")
-write.csv(df_sims, file = "Output/Power_Sim/STsim_Results.csv", row.names = FALSE)

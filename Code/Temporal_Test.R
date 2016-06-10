@@ -30,7 +30,7 @@ family = cbind( family, "child_b"=1:nrow(family) )
 Version = "OU_GMRF_v1i"
 
 # Number of simulations
-n_sim <- 5
+n_sim <- 20
 
 # Set Conditions
 mean_N <- 10 
@@ -245,4 +245,6 @@ for(i in 1:n_sim) {
 df_sims %>%
   dplyr::select(iter, rhot, rhot_hat, sigmat, sigmat_hat, converge) %>%
   summary()
+
+hist(df_sims$rhot_hat) + abline(v = rhot, col = "red")
 

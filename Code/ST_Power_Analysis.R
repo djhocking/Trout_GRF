@@ -46,11 +46,11 @@ mean_N <- 10
 n_years_vec <- c(4, 8, 10, 15, 20)
 n_years <- max(n_years_vec)
 sample_sites_vec <- c(25, 50, 100, 200, nrow(family))
-p <- c(0.75, 0.75, 0.75)  # Detection probability for each of three passes
+p <- c(0.5, 0.5, 0.5)  # Detection probability for each of three passes
 theta <- 0.3 # range for spatial variation (works with 1)
 SD <- 0.5   #  Marginal SD of spatial variation
-rhot <- 0.4 # 0.1 # Autocorrelation over time
-SD_t <- 0.3 # 0  # Conditional SD for variation over time
+rhot <- 0.6 # 0.1 # Autocorrelation over time
+SD_t <- 0.2 # 0  # Conditional SD for variation over time
 theta_st <- 0.3 # Range for spatio-temporal variation (0.5 works)
 SD_st <- 0.4 # 0.15   # Marginal SD of spatial component of spatio-temporal variation
 rho <- 0.7    # Correlation among years for spatio-temporal variation
@@ -119,6 +119,7 @@ dat <- data.frame(iter=integer(),
                   rho_st_hat=numeric(),
                   gamma_j=numeric(),
                   gamma_j_hat=numeric(),
+                  converge = logical(),
                   stringsAsFactors=FALSE)
 
 df_sims <- dat
@@ -134,12 +135,16 @@ cl <- makeCluster(nc, type = "PSOCK")
 registerDoParallel(cl)
 
 # # setup to write out to monitor progress
-# logFile = paste0(data_dir, "/log_file.txt")
+logFile = paste0("Output/Power_Sim/log_file.txt")
 # logFile_Finish = paste0(data_dir, "/log_file_finish.txt")
-# cat("Monitoring progress of prediction loop in parallel", file=logFile, append=FALSE, sep = "\n")
+cat("Monitoring progress of prediction loop in parallel", file=logFile, append=FALSE, sep = "\n")
 # cat("Monitoring the finish of each loop", file=logFile_Finish, append=FALSE, sep = "\n")
 
 ########## Run Parallel Loop ########## 
+
+# problem no file locking when writing in parallel so things seem to get messed up and written in the wrong places
+# write.table(dat, file = paste0("Output/Power_Sim/Data/summary.csv"), sep = ",", row.names = FALSE, append = FALSE, col.names = TRUE)
+
 # start loop
 df_sims <- foreach(i = 1:n_sim, 
                         .inorder=FALSE, 
@@ -364,16 +369,34 @@ df_sims <- foreach(i = 1:n_sim,
         #                                sd = as.numeric(mod$SD$sd), stringsAsFactors = F)
         
         #-------- save sim iter output -------
-        # save(network, mod, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData")) 
+        save(network, mod, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData"))
+        
       } # end spatial TF loop
     } # end site loop
   } # end year loop
-  #write.csv(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".csv"), row.names = FALSE)
+  
+  cat(paste0("Finished sim ", i, " of ", n_sim, ": ", timestamp()), file=logFile, append=TRUE, sep = "\n")
+  
+  # problem no file locking when writing in parallel so things seem to get messed up and written in the wrong places
+  write.table(dat, file = paste0("Output/Power_Sim/Data/summary_", i, ".csv"), sep = ",", row.names = FALSE)
   # save(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".RData"))
   return(dat) # if save before the return nothing gets returned
 } # end sim iter
 stopCluster(cl)
 closeAllConnections()
+
+library(readr)
+# df_sims <- read_csv(paste0("Output/Power_Sim/Data/summary.csv")) #, header = TRUE, stringsAsFactors = FALSE)
+df_sims <- read_csv(paste0("Output/Power_Sim/Data/summary_", 1, ".csv"))
+for(sim in 2:n_sim) {
+  if(file.exists(paste0("Output/Power_Sim/Data/summary_", sim, ".csv"))) {
+    try(foo <- read_csv(paste0("Output/Power_Sim/Data/summary_", sim, ".csv")))
+    if(class(foo)[[1]] != "try-error") {
+      df_sims <- dplyr::bind_rows(df_sims, foo)
+    }
+  }
+}
+write.table(dat, file = paste0("Output/Power_Sim/Data/summary.csv"), sep = ",", row.names = FALSE)
 
 dplyr::filter(df_sims, spatialTF == TRUE) %>% summary()
 dplyr::filter(df_sims, spatialTF == TRUE & converge == TRUE) %>% summary()

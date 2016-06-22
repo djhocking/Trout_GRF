@@ -30,18 +30,20 @@ family = cbind( family, "child_b"=1:nrow(family) )
 Version = "OU_GMRF_v1i"
 
 # Number of simulations
-n_sim <- 20
+n_sim <- 50
 
 # Set Conditions
 mean_N <- 10 
 n_years_vec <- 20
 n_years <- max(n_years_vec)
 sample_sites_vec <- 300
+
+rhot <- 0.6 # 0.1 # Autocorrelation over time
+SD_t <- 0.1 # 0  # Conditional SD for variation over time
+
 p <- c(0.5, 0.5, 0.5)  # Detection probability for each of three passes
 theta <- 0.5 # range for spatial variation
 SD <- 0   #  Marginal SD of spatial variation
-rhot <- 0.5 # 0.1 # Autocorrelation over time
-SD_t <- 0.3 # 0  # Conditional SD for variation over time
 theta_st <- 0.5 # Range for spatio-temporal variation
 SD_st <- 0 # Marginal SD of spatial component of spatio-temporal variation
 rho <- 0    # Correlation among years for spatio-temporal variation
@@ -246,5 +248,10 @@ df_sims %>%
   dplyr::select(iter, rhot, rhot_hat, sigmat, sigmat_hat, converge) %>%
   summary()
 
-hist(df_sims$rhot_hat) + abline(v = rhot, col = "red")
+hist(df_sims$rhot_hat) 
+abline(v = rhot, col = "red")
+text(x = 0, y = 10, labels = paste0("rhot = ", rhot, "; sigmat = ", SD_t))
 
+abund <- c(0, rep(NA, times = 49))
+for(i in 2:50) abund[i] <- rnorm(1, abund[i-1] * rhot , SD_t)
+plot(1:50, exp(abund), type = "b")

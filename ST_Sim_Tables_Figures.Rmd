@@ -220,8 +220,8 @@ library(gridExtra, verbose = FALSE, quietly = TRUE, warn.conflicts = FALSE)
 
 # load data
 dem <- raster(x = "Data/layers/demwhite")
-flowlines <- rgdal::readOGR(dsn = "Data/layers/flowlinesWhite", layer = "flowlinesWhite")
-sites <- rgdal::readOGR(dsn = "Data/layers/pointsWhite", layer = "pointsWhite")
+flowlines <- rgdal::readOGR(dsn = "Data/layers/flowlinesWhite", layer = "flowlinesWhite", verbose = FALSE)
+sites <- rgdal::readOGR(dsn = "Data/layers/pointsWhite", layer = "pointsWhite", verbose = FALSE)
 load( "Data/White_River_Network.RData") # family defines spatial relationship in network
 colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
@@ -233,8 +233,8 @@ Make sure projections are the same across all data
 
 ```{r projections, echo=FALSE, warning=FALSE, message=FALSE}
 # get data in same projection
-print(proj4string(dem))
-print(proj4string(sites))
+# print(proj4string(dem))
+# print(proj4string(sites))
 
 # flowlines_prj <- spTransform(flowlines, crs(projection(dem)))
 # sites_prj <- spTransform(sites, crs(projection(dem)))

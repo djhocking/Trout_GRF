@@ -1,7 +1,7 @@
 ---
 title: "Summary of Spatial Validation Simulations"
 author: "Daniel J Hocking"
-date: date()
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: html_document
 ---
 

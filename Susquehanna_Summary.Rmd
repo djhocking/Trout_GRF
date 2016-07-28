@@ -1,8 +1,10 @@
 ---
 title: "Adult Summary"
 author: "Daniel J Hocking"
-date: "4/28/2016"
-output: html_document
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -68,7 +70,7 @@ max_visits <- max(site_visits$n_site_visits)
 # total number of fish captured by yoy and adult
 
 # summary of covariates
-cov_list <- c("forest", "surfcoarse", "temp_mean_summer_1", "temp_mean_fall_1", "temp_mean_winter", "temp_mean_spring", "prcp_mean_summer_1", "prcp_mean_fall_1", "prcp_mean_winter", "prcp_mean_spring")
+cov_list <- c("AreaSqKM", "forest", "surfcoarse", "temp_mean_summer_1", "temp_mean_fall_1", "temp_mean_winter", "temp_mean_spring", "prcp_mean_summer_1", "prcp_mean_fall_1", "prcp_mean_winter", "prcp_mean_spring")
 
 covs <- df %>%
   dplyr::select(one_of(cov_list))
@@ -78,6 +80,7 @@ covs <- df %>%
 cov_means <- data.frame(t(dplyr::summarise_each(covs, funs(mean))))
 cov_mins <- data.frame(t(dplyr::summarise_each(covs, funs(min))))
 cov_maxs <- data.frame(t(dplyr::summarise_each(covs, funs(max))))
+cov_medians <- data.frame(t(dplyr::summarise_each(covs, funs(median))))
 
 cov_summary <- data.frame(cov_means, cov_mins, cov_maxs)
 cov_summary <- round(cov_summary, digits = 2)
@@ -88,22 +91,56 @@ rownames(cov_summary) <- NULL
 library(pander)
 pandoc.table(cov_summary, keep.trailing.zeros = T, style = "rmarkdown")
 
+# distances
+
+dist_mean <- mean(df$dist_b, na.rm = TRUE)
+dist_min <- min(df$dist_b, na.rm = TRUE)
+dist_max <- max(df$dist_b, na.rm = TRUE)
+dist_median <- median(df$dist_b, na.rm = TRUE)
+
+df_survey_dist <- df %>%
+  dplyr::group_by(child_name) %>%
+  dplyr::filter(!is.na(pass_1)) %>%
+  dplyr::select(child_name, dist_b) %>%
+  dplyr::summarise_each(funs(mean, median, min, max))
+
+dist_survey_mean <- mean(df_survey_dist$mean, na.rm = TRUE)
+dist_survey_min <- min(df_survey_dist$min, na.rm = TRUE)
+dist_survey_max <- max(df_survey_dist$max, na.rm = TRUE)
+dist_survey_median <- median(df_survey_dist$median, na.rm = TRUE)
+
 ```
 
-
+The West Susquehanna watershed contained `r n_nodes` nodes, comprised of `r n_sites` survey sites and `r n_reaches` stream reaches. Sites were survey in a total of `r n_years` from `r min(df$year, na.rm = T)` and `r max(df$year, na.rm = T)`. There were a total of `r n_site_visits` site visits with a mean of `r round(mean_visits, digits = 1)` and a range of `r min_visits` to `r max_visits` visits per site. The total drainage area of the watershed was `r round(cov_summary[which(cov_summary$Variable == "AreaSqKM"), ]$Max, digits = 0)` $km^2$ and the smallest stream had a cumulative drainage area of `r round(dplyr::summarise_each(covs, funs(min))$AreaSqKM, digits = 1)`. The median drainage area was `r round(dplyr::summarise_each(covs, funs(median))$AreaSqKM, digits = 1)`. The mean distance between nodes in the network was `r round(dist_mean, digits = 3)` and ranged from `r round(dist_min, digits = 3)` to `r round(dist_max, digits = 3)` with a median of `r round(dist_median, digits = 3)` km.
 
 ## Model Comparison
 
 ```{r AIC}
-format(adult$aic_table, digits = 1)
 
-format(yoy$aic_table, digits = 1)
+pandoc.table(format(adult$aic_table, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+
+pandoc.table(format(yoy$aic_table, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 ```
 
 ```{r coef tables}
 adult$SD5$value
+Parameter <- c(names(adult$SD5$value))
 
 yoy$SD5$value
+
+data.frame(mu = exp(adult$Report5$log_mean),
+           sigma.mu = adult$Report5$sigmaIID,
+           theta = NA_real_,
+           rhot = adult$Report5$rhot,
+           sigmat = adult$Report5$sigmat,
+           theta_st = adult$Report5$theta_st,
+           SD_st = adult$Report5$SDinput_st,
+           # var_sum_sp = adult$Report5$SDinput^2 + adult$Report5$SDinput_st^2,
+           # SD_st_inf = adult$Report5$SD_st_inf,
+           rho_st = adult$Report5$rho_st,
+           gamma_j = adult$Report5$gamma_j, 
+           stringsAsFactors = FALSE)
+
 
 ```
 
@@ -111,4 +148,58 @@ yoy$SD5$value
 Compare values to where fall in relation to simulations
 
 
+```{r plot effects, eval=FALSE}
+
+
+
+n.sims=1000
+simCoef <- as.data.frame(fixef(sim(glmm.M32, n.sims=n.sims)))
+names(simCoef) <- names(fixef(glmm.M32))
+
+# Plot effect of catchment forest on occurrence prob at a typical HUC10 basin # Gelman p. 44
+eff.forest <- data.frame(forest.raw=seq(0,100,length.out=100)
+                         , meanJulyTemp=rep(0,100)
+                         , prcp=rep(0,100)
+                         , surfcoarse=rep(0,100)
+                         , devel_hi=rep(0,100)
+                         , agriculture=rep(0,100)
+                         )
+
+eff.forest$forest <- (eff.forest$forest.raw - mean(data.fit2$forest, na.rm=T))/sd(data.fit2$forest, na.rm=T)
+
+sim.prob.forest <- matrix(NA, nrow=nrow(eff.forest), ncol=n.sims)
+for (i in 1:n.sims){
+  sim.prob.forest[,i] <- exp(simCoef[i,1] + simCoef[i,"forest"]*eff.forest$forest) / (1 + exp(simCoef[i,1] + simCoef[i,"forest"]*eff.forest$forest))
+}
+sim.prob.forest <- as.data.frame(sim.prob.forest)
+
+eff.forest$mean <- apply(sim.prob.forest[,1:n.sims], 1, mean)
+eff.forest$lower <- apply(sim.prob.forest[,1:n.sims], 1, quantile, probs=c(0.025))
+eff.forest$upper <- apply(sim.prob.forest[,1:n.sims], 1, quantile, probs=c(0.975))
+
+ggplot(eff.forest, aes(x = forest.raw, y = mean)) + 
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill="grey") +
+  geom_line(colour = "black", size = 2) +
+  #labs(title = "Occupancy in CT, MA, NH & NY") +
+  xlab("Percent forest cover") +
+  ylab("Occupancy probability") +
+  theme_bw() + 
+  ylim(0, 1) +
+  theme(axis.text.y = element_text(size=15),
+        axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=17, face="bold"),
+        axis.title.y = element_text(size=17, angle=90, face="bold"),
+        plot.title = element_text(size=20))
+
+forest <- seq(0, 100, by = 0.5)
+stds_forest <- dplyr::filter(df_stds, var == "forest")
+forest_std <- (forest - stds_forest$mean) / (stds_forest$sd)
+
+mean <- exp(.25 + Report4b$log_mean + forest_std * coef_table[which(coef_table$Parameter == "forest"), "Estimate"])
+low
+high
+ggplot(coef_table, aes(forest))
+
+
+```
 

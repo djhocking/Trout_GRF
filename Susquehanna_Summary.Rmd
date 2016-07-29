@@ -112,7 +112,7 @@ dist_survey_median <- median(df_survey_dist$median, na.rm = TRUE)
 
 ```
 
-The West Susquehanna watershed contained `r n_nodes` nodes, comprised of `r n_sites` survey sites and `r n_reaches` stream reaches. Sites were survey in a total of `r n_years` from `r min(df$year, na.rm = T)` and `r max(df$year, na.rm = T)`. There were a total of `r n_site_visits` site visits with a mean of `r round(mean_visits, digits = 1)` and a range of `r min_visits` to `r max_visits` visits per site. The total drainage area of the watershed was `r round(cov_summary[which(cov_summary$Variable == "AreaSqKM"), ]$Max, digits = 0)` $km^2$ and the smallest stream had a cumulative drainage area of `r round(dplyr::summarise_each(covs, funs(min))$AreaSqKM, digits = 1)`. The median drainage area was `r round(dplyr::summarise_each(covs, funs(median))$AreaSqKM, digits = 1)`. The mean distance between nodes in the network was `r round(dist_mean, digits = 3)` and ranged from `r round(dist_min, digits = 3)` to `r round(dist_max, digits = 3)` with a median of `r round(dist_median, digits = 3)` km.
+The West Susquehanna watershed contained `r n_nodes` nodes, comprised of `r n_sites` survey sites and `r n_reaches` stream reaches. Sites were survey in a total of `r n_years` from `r min(adult$df$year, na.rm = T)` and `r max(adult$df$year, na.rm = T)`. There were a total of `r n_site_visits` site visits with a mean of `r round(mean_visits, digits = 1)` and a range of `r min_visits` to `r max_visits` visits per site. The total drainage area of the watershed was `r round(cov_summary[which(cov_summary$Variable == "AreaSqKM"), ]$Max, digits = 0)` $km^2$ and the smallest stream had a cumulative drainage area of `r round(dplyr::summarise_each(covs, funs(min))$AreaSqKM, digits = 1)`. The median drainage area was `r round(dplyr::summarise_each(covs, funs(median))$AreaSqKM, digits = 1)`. The mean distance between nodes in the network was `r round(dist_mean, digits = 3)` and ranged from `r round(dist_min, digits = 3)` to `r round(dist_max, digits = 3)` with a median of `r round(dist_median, digits = 3)` km.
 
 ## Model Comparison
 
@@ -168,7 +168,9 @@ df_coefs <- data.frame(Parameter = c("mu",
            yoy$Report5$gamma_j[6:8]),
            stringsAsFactors = FALSE)
 
-cbind(adult$SD5$value, adult$SD5$sd)
+# cbind(adult$SD5$value, adult$SD5$sd)
+# 
+# cbind(yoy$SD5$value, yoy$SD5$sd)
 
 pandoc.table(format(df_coefs, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 

@@ -23,11 +23,12 @@ adult <- readRDS(file = "Output/W_Susquehanna_Summary.Rds")
 yoy <- readRDS(file = "Output/W_Susquehanna_YOY_Summary.Rds")
 # load("Output/W_Susquehanna_Stock_Recruit.RData")
 
-load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
+# load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
 
 # remove year from X_ij now so it doesn't mess with testing of temporal and temporal-spatial mdoels
 #X_ij <- X_ij[ , c("length_std", "effort_std")]
-covs <- X_ij
+# covs <- X_ij
+covs <- adult$covs
 X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_summer_1, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_summer_1, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
 ```
 
@@ -36,28 +37,28 @@ X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_summer_1, te
 ```{r data summary}
 
 # number of nodes
-n_nodes <- length(unique(df$child_b))
+n_nodes <- length(unique(adult$df$child_b))
 
 # number of sites
-n_sites <- length(unique(df[which(!is.na(df$pass_1)), "child_name"]))
+n_sites <- length(unique(adult$df[which(!is.na(adult$df$pass_1)), "child_name"]))
 
 # number of stream reaches
 n_reaches <- n_nodes - n_sites
 
 # number of years
-n_years <- length(unique(df$year))
+n_years <- length(unique(adult$df$year))
 
 # range of years
-range_years <- range(df$year)
+range_years <- range(adult$df$year)
 
 # number of site visits
-n_site_visits <- length(unique(df[which(!is.na(df$pass_1)), "site_visit"]))
+n_site_visits <- length(unique(adult$df[which(!is.na(adult$df$pass_1)), "site_visit"]))
 
 # mean number of visits per site
 mean_visits <- n_site_visits / n_sites
 
 # range of visits per site
-site_visits <- df %>%
+site_visits <- adult$df %>%
   dplyr::group_by(child_name) %>%
   dplyr::filter(!is.na(pass_1)) %>%
   dplyr::summarise(n_site_visits = n())
@@ -72,7 +73,7 @@ max_visits <- max(site_visits$n_site_visits)
 # summary of covariates
 cov_list <- c("AreaSqKM", "forest", "surfcoarse", "temp_mean_summer_1", "temp_mean_fall_1", "temp_mean_winter", "temp_mean_spring", "prcp_mean_summer_1", "prcp_mean_fall_1", "prcp_mean_winter", "prcp_mean_spring")
 
-covs <- df %>%
+covs <- adult$df %>%
   dplyr::select(one_of(cov_list))
 
 # summary(covs)
@@ -93,12 +94,12 @@ pandoc.table(cov_summary, keep.trailing.zeros = T, style = "rmarkdown")
 
 # distances
 
-dist_mean <- mean(df$dist_b, na.rm = TRUE)
-dist_min <- min(df$dist_b, na.rm = TRUE)
-dist_max <- max(df$dist_b, na.rm = TRUE)
-dist_median <- median(df$dist_b, na.rm = TRUE)
+dist_mean <- mean(adult$df$dist_b, na.rm = TRUE)
+dist_min <- min(adult$df$dist_b, na.rm = TRUE)
+dist_max <- max(adult$df$dist_b, na.rm = TRUE)
+dist_median <- median(adult$df$dist_b, na.rm = TRUE)
 
-df_survey_dist <- df %>%
+df_survey_dist <- adult$df %>%
   dplyr::group_by(child_name) %>%
   dplyr::filter(!is.na(pass_1)) %>%
   dplyr::select(child_name, dist_b) %>%
@@ -128,19 +129,48 @@ Parameter <- c(names(adult$SD5$value))
 
 yoy$SD5$value
 
-data.frame(mu = exp(adult$Report5$log_mean),
-           sigma.mu = adult$Report5$sigmaIID,
-           theta = NA_real_,
-           rhot = adult$Report5$rhot,
-           sigmat = adult$Report5$sigmat,
-           theta_st = adult$Report5$theta_st,
-           SD_st = adult$Report5$SDinput_st,
+df_coefs <- data.frame(Parameter = c("mu",
+           "sigma.mu",
+           "theta",
+           "rhot",
+           "sigmat",
+           "theta_st",
+           "SD_st",
            # var_sum_sp = adult$Report5$SDinput^2 + adult$Report5$SDinput_st^2,
            # SD_st_inf = adult$Report5$SD_st_inf,
-           rho_st = adult$Report5$rho_st,
-           gamma_j = adult$Report5$gamma_j, 
+           "rho_st",
+           adult$Parameters[1:10]),
+           Adult = c(exp(adult$Report5$log_mean),
+           adult$Report5$sigmaIID,
+           NA_real_,
+           adult$Report5$rhot,
+           adult$Report5$sigmat,
+           adult$Report5$theta_st,
+           adult$Report5$SDinput_st,
+           # var_sum_sp = adult$Report5$SDinput^2 + adult$Report5$SDinput_st^2,
+           # SD_st_inf = adult$Report5$SD_st_inf,
+           adult$Report5$rho_st,
+           adult$Report5$gamma_j), 
+           YOY = c(exp(yoy$Report5$log_mean),
+           yoy$Report5$sigmaIID,
+           NA_real_,
+           yoy$Report5$rhot,
+           yoy$Report5$sigmat,
+           yoy$Report5$theta_st,
+           yoy$Report5$SDinput_st,
+           # var_sum_sp = yoy$Report5$SDinput^2 + yoy$Report5$SDinput_st^2,
+           # SD_st_inf = yoy$Report5$SD_st_inf,
+           yoy$Report5$rho_st,
+           yoy$Report5$gamma_j[1:2],
+           NA_real_,
+           yoy$Report5$gamma_j[3:5],
+           NA_real_,
+           yoy$Report5$gamma_j[6:8]),
            stringsAsFactors = FALSE)
 
+cbind(adult$SD5$value, adult$SD5$sd)
+
+pandoc.table(format(df_coefs, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 
 ```
 

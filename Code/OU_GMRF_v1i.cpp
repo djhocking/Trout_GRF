@@ -79,6 +79,7 @@ Type objective_function<Type>::operator() ()
   Type theta_st = exp(log_theta_vec(1));
   Type detectrate = exp(log_detectrate);
   Type sigmaIID = exp(log_sigmaIID);
+  Type mu = exp(log_mean);
   vector<Type> extradetectrate_i(n_i);
   extradetectrate_i = exp(log_extradetectrate_i);
   Type extradetectionSD = exp(log_extradetectionSD);
@@ -263,15 +264,20 @@ Type objective_function<Type>::operator() ()
   REPORT( temp_b );
 
   // ADREPORT( lambda_ip);
-  ADREPORT( gamma_j );
+  ADREPORT( mean_N );
+  ADREPORT( mu );
+  ADREPORT( sigmaIID );
+  ADREPORT( rhot );
+  ADREPORT( sigmat );
+  ADREPORT( theta );
   ADREPORT( log_theta_vec );
   ADREPORT( theta_st );
-  ADREPORT( rhot );
-  ADREPORT( theta );
+  ADREPORT( SDinput_st );
+  ADREPORT( rho_st );
   //ADREPORT( SDinput );
   //  ADREPORT( SDinput_t_b );
   //  ADREPORT( SD_report );
-  ADREPORT( mean_N );
+  ADREPORT( gamma_j );
   // ADREPORT( log_N100_dt );
   //   if( Options_vec(6)==1 ) {
   ////    vector<Type> log_N_i(n_i);

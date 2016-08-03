@@ -274,7 +274,7 @@ opt5[["final_gradient"]] = obj5$gr( opt5$par )
 opt5b <- bobyqa(par = obj5$env$last.par.best[-c(obj5$env$random)], fn = obj5$fn)
 Report5b = obj5$report()
 opt5b[["AIC"]] = 2*opt5b$fval + 2*length(opt5b$par)
-SD5b <- sdreport(obj5, bias.correct=FALSE )
+SD5b <- sdreport(obj5, bias.correct=FALSE, p.value = TRUE)
 
 #--------------------------------------------------
 

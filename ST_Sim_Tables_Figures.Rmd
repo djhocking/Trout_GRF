@@ -1,7 +1,7 @@
 ---
 title: "Summary of Spatiotemporal Power Analysis"
 author: "Daniel J Hocking"
-date: "2/11/2016"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: html_document
 ---
 
@@ -41,7 +41,7 @@ df_sim_summary <- df_sims %>%
   dplyr::group_by(n_sites, n_years, spatialTF) %>%
   dplyr::select(-iter) %>%
   dplyr::summarise_each(funs(mean(., na.rm = T)))
-as.data.frame(df_sim_summary %>% dplyr::filter(spatialTF == 1)) 
+# as.data.frame(df_sim_summary %>% dplyr::filter(spatialTF == 1)) 
 
 df_converged <- df_sims %>%
   dplyr::group_by(n_sites, n_years, spatialTF) %>%
@@ -127,6 +127,20 @@ grid::grid.draw(y_grid)
 ```
 
 These results are not encouraging in that the spatial (theta), temporal (rhot, sigmat), and spatiotemporal (theta_st, rho_st) coefficients are not recovered well. However, the RMSE is improved with more sample years and by including the spatially explicit effects in the estimation. Although the mean abundance (mean_N) across sites is recovered well in all models, the precision in the estimate of the mean abundance in the watershed is improved with sample years and by the spatial model when there are few years.
+
+Here's a look at the RMSE among different numbers of sampled sites when sampled for 20 years so that the variability is among simulations.
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+df_rmse_st <- df_converged %>%
+  dplyr::filter(n_years == 20)
+  
+rmse_20 <- ggplot(df_rmse_st, aes(n_sites, RMSE, group = interaction(n_sites, spatialTF))) + geom_boxplot(aes(fill = factor(spatialTF)), outlier.colour = "NA") + scale_fill_manual(values=c("#F8766D", "#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + theme(legend.position = "none") + xlab("") + geom_text(x = 5, y = 65, label = "b", size = 10) + coord_cartesian(ylim = c(0, 25))
+
+rmse_20
+ggsave(file = "Output/Power_Sim/ST_sites_rmse_20.png", rmse_20, dpi = 72)
+ggsave(file = "Output/Power_Sim/ST_sites_rmse_20.pdf", rmse_20, dpi = 300))
+
+```
 
 Below are the results for different numbers of survey sites averaged across all numbers of survey years (consider separating this out and just summarizing for the maximum number of years or n_years = 20 to more clearly isolate the site effects) 
 
@@ -220,8 +234,8 @@ library(gridExtra, verbose = FALSE, quietly = TRUE, warn.conflicts = FALSE)
 
 # load data
 dem <- raster(x = "Data/layers/demwhite")
-flowlines <- rgdal::readOGR(dsn = "Data/layers/flowlinesWhite", layer = "flowlinesWhite")
-sites <- rgdal::readOGR(dsn = "Data/layers/pointsWhite", layer = "pointsWhite")
+flowlines <- rgdal::readOGR(dsn = "Data/layers/flowlinesWhite", layer = "flowlinesWhite", verbose = FALSE)
+sites <- rgdal::readOGR(dsn = "Data/layers/pointsWhite", layer = "pointsWhite", verbose = FALSE)
 load( "Data/White_River_Network.RData") # family defines spatial relationship in network
 colnames(family)[1] = "child_name"
 family = cbind( family, "child_b"=1:nrow(family) )
@@ -233,8 +247,8 @@ Make sure projections are the same across all data
 
 ```{r projections, echo=FALSE, warning=FALSE, message=FALSE}
 # get data in same projection
-print(proj4string(dem))
-print(proj4string(sites))
+# print(proj4string(dem))
+# print(proj4string(sites))
 
 # flowlines_prj <- spTransform(flowlines, crs(projection(dem)))
 # sites_prj <- spTransform(sites, crs(projection(dem)))

@@ -95,15 +95,15 @@ pandoc.table(cov_summary, keep.trailing.zeros = T, style = "rmarkdown")
 ## Model Comparison
 
 ```{r AIC}
-format(adult$aic_table, digits = 1)
+pandoc.table(format(adult$aic_table, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 
-format(yoy$aic_table, digits = 1)
+pandoc.table(format(yoy$aic_table, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 ```
 
 ```{r coef tables}
-adult$SD5$value
+pandoc.table(adult$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
 
-yoy$SD5$value
+pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
 
 ```
 

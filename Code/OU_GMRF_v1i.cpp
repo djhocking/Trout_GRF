@@ -274,9 +274,12 @@ Type objective_function<Type>::operator() ()
   ADREPORT( theta_st );
   ADREPORT( SDinput_st );
   ADREPORT( rho_st );
+  ADREPORT( detectrate );
+  ADREPORT( extradectionSD );
   //ADREPORT( SDinput );
   //  ADREPORT( SDinput_t_b );
   //  ADREPORT( SD_report );
+  ADREPORT( log_mean );
   ADREPORT( gamma_j );
   // ADREPORT( log_N100_dt );
   //   if( Options_vec(6)==1 ) {

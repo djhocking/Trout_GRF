@@ -269,7 +269,7 @@ Type objective_function<Type>::operator() ()
   ADREPORT( mu );
   ADREPORT( gamma_j );
   ADREPORT( detectrate );
-  ADREPORT( extradectionSD );
+  ADREPORT( extradetectionSD );
   ADREPORT( sigmaIID );
   ADREPORT( log_theta_vec );
   ADREPORT( theta );

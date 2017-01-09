@@ -265,22 +265,24 @@ Type objective_function<Type>::operator() ()
 
   // ADREPORT( lambda_ip);
   ADREPORT( mean_N );
+  ADREPORT( log_mean );
   ADREPORT( mu );
-  ADREPORT( sigmaIID );
-  ADREPORT( rhot );
-  ADREPORT( sigmat );
-  ADREPORT( theta );
-  ADREPORT( log_theta_vec );
-  ADREPORT( theta_st );
-  ADREPORT( SDinput_st );
-  ADREPORT( rho_st );
+  ADREPORT( gamma_j );
   ADREPORT( detectrate );
   ADREPORT( extradectionSD );
+  ADREPORT( sigmaIID );
+  ADREPORT( log_theta_vec );
+  ADREPORT( theta );
+  ADREPORT( SDinput );
+  ADREPORT( rhot );
+  ADREPORT( sigmat );
+  ADREPORT( rho_st );
+  ADREPORT( theta_st );
+  ADREPORT( SDinput_st );
+  ADREPORT( sigmaIID );
   //ADREPORT( SDinput );
   //  ADREPORT( SDinput_t_b );
   //  ADREPORT( SD_report );
-  ADREPORT( log_mean );
-  ADREPORT( gamma_j );
   // ADREPORT( log_N100_dt );
   //   if( Options_vec(6)==1 ) {
   ////    vector<Type> log_N_i(n_i);

@@ -196,6 +196,7 @@ pandoc.table(format(df_coefs, digits = 1), keep.trailing.zeros = T, style = "rma
 
 # summary(yoy$SD5, "fixed", p.value = TRUE)
 # summary(yoy$SD5, "report", p.value = TRUE)
+
 foo <- summary(yoy$SD5, "random", p.value = TRUE)
 foo <- data.frame(Parameter = rownames(foo), foo, stringsAsFactors = FALSE)
 bar <- dplyr::filter(foo, !grepl("detectprob_ip|extradetectrate_i|Delta_t|Deltainput_t|lognormal_overdispersed_i|SDinput_t_b|N_ip|Nu_dt", Parameter))
@@ -208,6 +209,7 @@ summary_yoy <- data.frame(Parameter = c(rownames(summary_yoy)[1:(length(rownames
 
 pandoc.table(format(summary_adult, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 pandoc.table(format(summary_yoy, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+# pandoc.table(format(summary(yoy$SD5, "report", p.value = TRUE), digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 ```
 
 The overall mean probability of detection was `r 1 - exp(-1 * adult$Report5$detectrate)` for adults and `r 1 - exp(-1 * yoy$Report5$detectrate)` for YOY, with random variance among sites and years of `r adult$Report$extradetectionSD^2` and `r yoy$Report$extradetectionSD^2` for adults and YOY, respectively.

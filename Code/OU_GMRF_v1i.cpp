@@ -219,6 +219,8 @@ Type objective_function<Type>::operator() ()
   }
   Type mean_N = N_i.sum() / N_i.size();
   
+  Type mean_p = detectprob_ip.mean();
+  
   // Add up components
   jnll = jnll_comp.sum();
   
@@ -268,6 +270,7 @@ Type objective_function<Type>::operator() ()
   ADREPORT( log_mean );
   ADREPORT( mu );
   ADREPORT( gamma_j );
+  // ADREPORT( mean_p );
   ADREPORT( detectrate );
   ADREPORT( extradetectionSD );
   ADREPORT( sigmaIID );

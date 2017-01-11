@@ -174,7 +174,7 @@ Type objective_function<Type>::operator() ()
   int counter_d = 0;
   for(int d=0; d<n_b; d++){
     for(int t=0; t<n_t; t++){  
-      lambda_dt(d,t) = exp( log_mean + Epsiloninput_d(d) + Delta_t(t) + Nu_dt(d,t) );
+      lambda_dt(d,t) = exp( log_mean + Epsiloninput_d(d) + Delta_t(t) + Nu_dt(d,t) ) * 100; // * 100 for offset but should bring in as set value based on whatever the relative offset is set at (offset_denom)
       //      if( !isNA(c_ip(i,1)) ){  
       //        density_dt(d,t) = lambda_dt(d,t)*exp(lognormal_overdispersed_i(i));
       //        if( counter_d < 5 ){

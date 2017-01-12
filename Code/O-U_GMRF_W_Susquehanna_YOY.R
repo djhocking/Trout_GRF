@@ -29,7 +29,7 @@ load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
 covs <- X_ij
 X_ij <- as.matrix(dplyr::select(covs, forest, surfcoarse, temp_mean_fall_1, temp_mean_winter, temp_mean_spring, prcp_mean_fall_1, prcp_mean_winter, prcp_mean_spring))
 
-offset <-  as.numeric(df_yoy$length_sample)
+offset <-  as.numeric(df_yoy$length_sample) / 100
 
 # df = dataframe with all data including sites with multiple passes (multiple instances of each child)
 # family = dataframe with unique child rows. Other columns are parents of each child, lat, lon, and other data associated with each child node.

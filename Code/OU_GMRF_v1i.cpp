@@ -174,7 +174,7 @@ Type objective_function<Type>::operator() ()
   int counter_d = 0;
   for(int d=0; d<n_b; d++){
     for(int t=0; t<n_t; t++){  
-      lambda_dt(d,t) = exp( log_mean + Epsiloninput_d(d) + Delta_t(t) + Nu_dt(d,t) );
+      lambda_dt(d,t) = exp( log_mean + Epsiloninput_d(d) + Delta_t(t) + Nu_dt(d,t) ) * 100; // * 100 for offset but should bring in as set value based on whatever the relative offset is set at (offset_denom)
       //      if( !isNA(c_ip(i,1)) ){  
       //        density_dt(d,t) = lambda_dt(d,t)*exp(lognormal_overdispersed_i(i));
       //        if( counter_d < 5 ){
@@ -218,6 +218,8 @@ Type objective_function<Type>::operator() ()
     N_i(i) = N_ip(i,1);
   }
   Type mean_N = N_i.sum() / N_i.size();
+  
+  Type mean_p = detectprob_ip.mean();
   
   // Add up components
   jnll = jnll_comp.sum();
@@ -265,19 +267,25 @@ Type objective_function<Type>::operator() ()
 
   // ADREPORT( lambda_ip);
   ADREPORT( mean_N );
+  ADREPORT( log_mean );
   ADREPORT( mu );
+  ADREPORT( gamma_j );
+  // ADREPORT( mean_p );
+  ADREPORT( detectrate );
+  ADREPORT( extradetectionSD );
   ADREPORT( sigmaIID );
+  ADREPORT( log_theta_vec );
+  ADREPORT( theta );
+  ADREPORT( SDinput );
   ADREPORT( rhot );
   ADREPORT( sigmat );
-  ADREPORT( theta );
-  ADREPORT( log_theta_vec );
+  ADREPORT( rho_st );
   ADREPORT( theta_st );
   ADREPORT( SDinput_st );
-  ADREPORT( rho_st );
+  ADREPORT( sigmaIID );
   //ADREPORT( SDinput );
   //  ADREPORT( SDinput_t_b );
   //  ADREPORT( SD_report );
-  ADREPORT( gamma_j );
   // ADREPORT( log_N100_dt );
   //   if( Options_vec(6)==1 ) {
   ////    vector<Type> log_N_i(n_i);

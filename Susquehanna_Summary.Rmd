@@ -117,17 +117,15 @@ The West Susquehanna watershed contained `r n_nodes` nodes, comprised of `r n_si
 ## Model Comparison
 
 ```{r AIC}
-
 pandoc.table(format(adult$aic_table, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 
 pandoc.table(format(yoy$aic_table, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 ```
 
 ```{r coef tables}
-adult$SD5$value
 Parameter <- c(names(adult$SD5$value))
 
-yoy$SD5$value
+pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
 
 df_coefs <- data.frame(Parameter = c("mu",
            "sigma.mu",
@@ -173,6 +171,14 @@ df_coefs <- data.frame(Parameter = c("mu",
 # cbind(yoy$SD5$value, yoy$SD5$sd)
 
 pandoc.table(format(df_coefs, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+
+summary(yoy$SD5, "fixed", p.value = TRUE)
+summary(yoy$SD5, "report", p.value = TRUE)
+foo <- summary(yoy$SD5, "random", p.value = TRUE)
+foo <- data.frame(Parameter = rownames(foo), foo, stringsAsFactors = FALSE)
+bar <- dplyr::filter(foo, !grepl("detectprob_ip|extradetectrate_i|Delta_t|Deltainput_t|lognormal_overdispersed_i|SDinput_t_b|N_ip|Nu_dt", Parameter))
+
+pandoc.table(format(summary(yoy$SD5, "report", p.value = TRUE), digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 
 ```
 

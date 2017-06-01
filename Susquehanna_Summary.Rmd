@@ -3,22 +3,45 @@ title: "Adult Summary"
 author: "Daniel J Hocking"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
-  html_document: default
   word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, results = "asis")
+knitr::opts_chunk$set(echo = FALSE, results = "asis", message = FALSE, warning = FALSE)
 ```
 
-```{r load}
+```{r load libraries, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 library(TMB)
 library(dplyr)
+library(tidyr)
 library(minqa)
 library(optimx)
 library(ggplot2)
 source("Functions/Input_Functions.R")
+```
 
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+theme_bw_journal <- function (base_family = "") {
+  theme_grey(base_family = base_family) %+replace%
+  theme(
+  axis.text = element_text(size = rel(0.8)), axis.ticks = element_line(colour = "black"),
+  legend.key = element_rect(colour = "grey80"), panel.background = element_rect(fill = "white",
+  colour = NA), panel.border = element_rect(fill = NA,
+  colour = "grey50"), panel.grid.major = element_line(colour = "grey90",
+  size = 0.2), panel.grid.minor = element_line(colour = "grey98",
+  size = 0.5), strip.background = element_rect(
+  fill = "grey80",
+  colour = "grey50", size = 0.2
+  )
+  )
+  }
+  
+  theme_set(theme_bw_journal())
+```
+
+```{r load}
 adult <- readRDS(file = "Output/W_Susquehanna_Summary.Rds")
 yoy <- readRDS(file = "Output/W_Susquehanna_YOY_Summary.Rds")
 # load("Output/W_Susquehanna_Stock_Recruit.RData")
@@ -122,56 +145,119 @@ pandoc.table(format(adult$aic_table, digits = 1), keep.trailing.zeros = T, style
 pandoc.table(format(yoy$aic_table, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 ```
 
+## Adult Coefiecients
+
 ```{r coef tables}
 Parameter <- c(names(adult$SD5$value))
 
+<<<<<<< HEAD
 pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
+=======
+# pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
+>>>>>>> aab5f3cec0950298b6b65592f7bff94881bf9a8e
 
 df_coefs <- data.frame(Parameter = c("mu",
-           "sigma.mu",
-           "theta",
-           "rhot",
-           "sigmat",
-           "theta_st",
-           "SD_st",
-           # var_sum_sp = adult$Report5$SDinput^2 + adult$Report5$SDinput_st^2,
-           # SD_st_inf = adult$Report5$SD_st_inf,
-           "rho_st",
-           adult$Parameters[1:10]),
-           Adult = c(exp(adult$Report5$log_mean),
-           adult$Report5$sigmaIID,
-           NA_real_,
-           adult$Report5$rhot,
-           adult$Report5$sigmat,
-           adult$Report5$theta_st,
-           adult$Report5$SDinput_st,
-           # var_sum_sp = adult$Report5$SDinput^2 + adult$Report5$SDinput_st^2,
-           # SD_st_inf = adult$Report5$SD_st_inf,
-           adult$Report5$rho_st,
-           adult$Report5$gamma_j), 
-           YOY = c(exp(yoy$Report5$log_mean),
-           yoy$Report5$sigmaIID,
-           NA_real_,
-           yoy$Report5$rhot,
-           yoy$Report5$sigmat,
-           yoy$Report5$theta_st,
-           yoy$Report5$SDinput_st,
-           # var_sum_sp = yoy$Report5$SDinput^2 + yoy$Report5$SDinput_st^2,
-           # SD_st_inf = yoy$Report5$SD_st_inf,
-           yoy$Report5$rho_st,
-           yoy$Report5$gamma_j[1:2],
-           NA_real_,
-           yoy$Report5$gamma_j[3:5],
-           NA_real_,
-           yoy$Report5$gamma_j[6:8]),
-           stringsAsFactors = FALSE)
+                                     "sigma.mu",
+                                     "theta",
+                                     "rhot",
+                                     "sigmat",
+                                     "theta_st",
+                                     "SD_st",
+                                     # var_sum_sp = adult$Report5$SDinput^2 + adult$Report5$SDinput_st^2,
+                                     # SD_st_inf = adult$Report5$SD_st_inf,
+                                     "rho_st",
+                                     adult$Parameters[1:10]),
+                       Adult = c(exp(adult$Report5$log_mean),
+                                 adult$Report5$sigmaIID,
+                                 NA_real_,
+                                 adult$Report5$rhot,
+                                 adult$Report5$sigmat,
+                                 adult$Report5$theta_st,
+                                 adult$Report5$SDinput_st,
+                                 # var_sum_sp = adult$Report5$SDinput^2 + adult$Report5$SDinput_st^2,
+                                 # SD_st_inf = adult$Report5$SD_st_inf,
+                                 adult$Report5$rho_st,
+                                 adult$Report5$gamma_j), 
+                       YOY = c(exp(yoy$Report5$log_mean),
+                               yoy$Report5$sigmaIID,
+                               NA_real_,
+                               yoy$Report5$rhot,
+                               yoy$Report5$sigmat,
+                               yoy$Report5$theta_st,
+                               yoy$Report5$SDinput_st,
+                               # var_sum_sp = yoy$Report5$SDinput^2 + yoy$Report5$SDinput_st^2,
+                               # SD_st_inf = yoy$Report5$SD_st_inf,
+                               yoy$Report5$rho_st,
+                               yoy$Report5$gamma_j[1:2],
+                               NA_real_,
+                               yoy$Report5$gamma_j[3:5],
+                               NA_real_,
+                               yoy$Report5$gamma_j[6:8]),
+                       stringsAsFactors = FALSE)
 
 # cbind(adult$SD5$value, adult$SD5$sd)
 # 
 # cbind(yoy$SD5$value, yoy$SD5$sd)
 
-pandoc.table(format(df_coefs, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+# pandoc.table(format(df_coefs, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 
+# summary(yoy$SD5, "fixed", p.value = TRUE)
+# summary(yoy$SD5, "report", p.value = TRUE)
+
+foo <- summary(yoy$SD5, "random", p.value = FALSE)
+foo <- data.frame(Parameter = rownames(foo), foo, stringsAsFactors = FALSE)
+bar <- dplyr::filter(foo, !grepl("detectprob_ip|extradetectrate_i|Delta_t|Deltainput_t|lognormal_overdispersed_i|SDinput_t_b|N_ip|Nu_dt", Parameter))
+
+summary_adult <- summary(adult$SD5, "report", p.value = FALSE)
+# summary_adult <- data.frame(Parameter = c(rownames(summary_adult)[1:(length(rownames(summary_adult))-length(adult$Parameters))], adult$Parameters), summary_adult, stringsAsFactors = FALSE)
+par_names <- rownames(summary_adult)
+par_vec <- c(par_names[1:3], adult$Parameters, par_names[(length(par_names)-length(adult$Parameters)-2):length(par_names)])
+summary_adult <- data.frame(Parameter = par_vec, summary_adult, stringsAsFactors = FALSE)
+
+summary_yoy <- summary(yoy$SD5, "report", p.value = FALSE)
+par_names <- rownames(summary_yoy)
+par_vec <- c(par_names[1:3], yoy$Parameters, par_names[(length(par_names)-length(yoy$Parameters)-4):length(par_names)])
+summary_yoy <- data.frame(Parameter = par_vec, summary_yoy, stringsAsFactors = FALSE)
+
+pandoc.table(format(summary_adult, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+```
+
+## YOY Coefficients
+
+```{r yoy coefficients}
+pandoc.table(format(summary_yoy, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+# pandoc.table(format(summary(yoy$SD5, "report", p.value = TRUE), digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+
+summary_comb <- left_join(summary_adult, summary_yoy, by = "Parameter")
+names(summary_comb) <- c("Parameter", "mu_adult", "sd_adult", "mu_yoy", "sd_yoy")
+# pandoc.table(format(summary_comb, digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+```
+
+## Detection
+
+```{r detection}
+load("Data/Prepared_Data_W_Susquehanna_Combined.RData")
+obs <- adult$Report5$extradetectrate_i
+obs <- ifelse(obs == 1, 0, 1)
+
+p_adult_hat <- rep(NA, 3)
+for(j in 1:length(p_adult_hat)) {
+  p_adult_hat[j] <- (1 - exp(-1 * adult$Report5$detectrate)) * (1 - (1 - exp(-1 * adult$Report5$detectrate))) ^ (j - 1)
+}
+sum(p_adult_hat)
+
+p_yoy_hat <- rep(NA, 3)
+for(j in 1:length(p_yoy_hat)) {
+  p_yoy_hat[j] <- (1 - exp(-1 * yoy$Report5$detectrate)) * (1 - (1 - exp(-1 * yoy$Report5$detectrate))) ^ (j - 1)
+}
+sum(p_yoy_hat)
+
+# average estimated detections including overdispersion
+p_adult <- as.data.frame(adult$Report5$detectprob_ip)
+names(p_adult) <- c("p1", "p2", "p3")
+p_adult <- data.frame(obs, p_adult)
+
+<<<<<<< HEAD
 summary(yoy$SD5, "fixed", p.value = TRUE)
 summary(yoy$SD5, "report", p.value = TRUE)
 foo <- summary(yoy$SD5, "random", p.value = TRUE)
@@ -180,16 +266,92 @@ bar <- dplyr::filter(foo, !grepl("detectprob_ip|extradetectrate_i|Delta_t|Deltai
 
 pandoc.table(format(summary(yoy$SD5, "report", p.value = TRUE), digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 
+=======
+p_adult <- p_adult %>%
+  dplyr::filter(obs == 1) %>%
+  dplyr::select(-obs)
+
+p_adult_mean <- colMeans(p_adult) # overdispersion effect is very small on average
+>>>>>>> aab5f3cec0950298b6b65592f7bff94881bf9a8e
 ```
 
+The overall mean probability of detection was `r 1 - exp(-1 * adult$Report5$detectrate)` for adults and `r 1 - exp(-1 * yoy$Report5$detectrate)` for YOY, with random variance among sites and years of `r adult$Report$extradetectionSD^2` and `r yoy$Report$extradetectionSD^2` for adults and YOY, respectively.
 
 Compare values to where fall in relation to simulations
 
 
+
+## Plot Adult and YOY spatio-temporal decay functions
+
+```{r observed decay plot}
+library(tidyr)
+
+dist_vec <- seq(0.01, 20, by = 0.01)
+Adult <- exp(-1 * adult$Report5$theta_st * dist_vec)
+YOY <- exp(-1 * yoy$Report5$theta_st * dist_vec)
+
+df_decay <- data.frame(Distance = dist_vec, Adult, YOY, stringsAsFactors = FALSE)
+df_decay_long <- df_decay %>%
+  tidyr::gather(Stage, rho_nu, -Distance)
+
+ggplot(df_decay_long, aes(Distance, rho_nu, group = Stage)) + geom_line(aes(colour = Stage)) + xlab("Hydrologic distance (km)") + ylab(expression(hat(rho)[nu](S))) + theme_bw_journal()
+
+ggsave(filename = "Output/Figures/Trout_Dist_Correlation.pdf")
+
+```
+
+
+## Abundances over time
+
+```{r abundance over time, echo = FALSE}
+# expected not including random overdispersion across entire watershed
+lambda_t_adult <- colMeans(adult$Report5$lambda_dt) * 100
+lambda_t_yoy <- colMeans(yoy$Report5$lambda_dt) * 100
+
+# expected at sites with observed data
+df_expect <- data.frame(year = t_i, obs = obs, adult = adult$Report5$N_ip[ , 1], yoy = yoy$Report5$N_ip[ , 1]) 
+
+df_exp_summary <- df_expect %>%
+  dplyr::filter(obs == 1) %>%
+  dplyr::select(-obs) %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarise_each(funs(mean))
+
+df_exp_summary <- tidyr::gather(df_exp_summary, key = stage, value = abundance, -year)
+
+ggplot(df_exp_summary, aes(year, abundance, colour = stage)) + geom_point() + geom_line()
+
+ggsave(filename = "Output/Figures/Abundance_Time.pdf")
+```
+
+## Evaluate Model Fit
+
+```{r fitted eval}
+# adult
+chat_adult <- tidyr::gather(as.data.frame(adult$Report5$chat_ip), key = pass, value = chat)
+c_adult <- tidyr::gather(as.data.frame(c_ip), key = pass, value = count)
+
+df_chat_adult <- bind_cols(dplyr::select(chat_adult, -pass), c_adult)
+df_chat_adult <- df_chat_adult %>%
+  dplyr::filter(!is.na(count))
+
+ggplot(df_chat_adult, aes(count, chat)) + geom_point() + geom_abline(intercept = 0, slope = 1, colour = "red")
+ggsave(filename = "Output/Figures/Adult_Count_Fit.pdf")
+
+# yoy
+chat_yoy <- tidyr::gather(as.data.frame(yoy$Report5$chat_ip), key = pass, value = chat)
+c_yoy <- tidyr::gather(as.data.frame(c_ip), key = pass, value = count)
+
+df_chat_yoy <- bind_cols(dplyr::select(chat_yoy, -pass), c_yoy)
+df_chat_yoy <- df_chat_yoy %>%
+  dplyr::filter(!is.na(count))
+
+ggplot(df_chat_yoy, aes(count, chat)) + geom_point() + geom_abline(intercept = 0, slope = 1, colour = "red")
+ggsave(filename = "Output/Figures/yoy_Count_Fit.pdf")
+```
+
+
 ```{r plot effects, eval=FALSE}
-
-
-
 n.sims=1000
 simCoef <- as.data.frame(fixef(sim(glmm.M32, n.sims=n.sims)))
 names(simCoef) <- names(fixef(glmm.M32))

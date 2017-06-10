@@ -185,7 +185,18 @@ Type objective_function<Type>::operator() ()
       //      else {
       //        density_dt(d,t) = lambda_dt(d,t);
       //      }
-    }}    
+      }
+    }    
+ 
+ vector<Type> lambda_t(n_t);
+  lambda_t(n_t) = 0;
+ for(int t=0; t<n_t; t++){  
+   for(int d=0; d<n_b; d++){
+     //lambda_d_sum += lambda_dt(d, t);
+     lambda_t(t) += lambda_dt(d,t) / n_b;
+   }
+  //lambda_t(t) = lambda_d_sum / n_b;
+ }
   
   // Likelihood contribution from observations
   matrix<Type> lambda_ip(n_i,3);
@@ -264,6 +275,7 @@ Type objective_function<Type>::operator() ()
   REPORT( rho_t_b );
   REPORT( SDinput_t_b );
   REPORT( temp_b );
+  ADREPORT( lambda_t );
 
   // ADREPORT( lambda_ip);
   ADREPORT( mean_N );
@@ -283,6 +295,7 @@ Type objective_function<Type>::operator() ()
   ADREPORT( theta_st );
   ADREPORT( SDinput_st );
   ADREPORT( sigmaIID );
+  ADREPORT( lambda_t );
   //ADREPORT( SDinput );
   //  ADREPORT( SDinput_t_b );
   //  ADREPORT( SD_report );

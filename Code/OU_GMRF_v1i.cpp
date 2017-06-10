@@ -171,7 +171,7 @@ Type objective_function<Type>::operator() ()
   matrix<Type> lambda_dt(n_b,n_t);
   //    matrix<Type> density_dt(n_b,n_t);
   //    matrix<Type> log_N100_dt(5,n_t); // first 5 sites with data
-  int counter_d = 0;
+  // int counter_d = 0;
   for(int d=0; d<n_b; d++){
     for(int t=0; t<n_t; t++){  
       lambda_dt(d,t) = exp( log_mean + Epsiloninput_d(d) + Delta_t(t) + Nu_dt(d,t) ); // * 100; // * 100 for offset but should bring in as set value based on whatever the relative offset is set at (offset_denom)
@@ -189,14 +189,11 @@ Type objective_function<Type>::operator() ()
     }    
  
  vector<Type> lambda_t(n_t);
- // lambda_t(n_t) = 0;
  for(int t=0; t<n_t; t++){  
    lambda_t(t) = 0;
    for(int d=0; d<n_b; d++){
-     //lambda_d_sum += lambda_dt(d, t);
      lambda_t(t) += lambda_dt(d,t) / n_b;
    }
-  //lambda_t(t) = lambda_d_sum / n_b;
  }
   
   // Likelihood contribution from observations

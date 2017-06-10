@@ -150,7 +150,11 @@ pandoc.table(format(yoy$aic_table, digits = 1), keep.trailing.zeros = T, style =
 ```{r coef tables}
 Parameter <- c(names(adult$SD5$value))
 
+<<<<<<< HEAD
+pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
+=======
 # pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
+>>>>>>> aab5f3cec0950298b6b65592f7bff94881bf9a8e
 
 df_coefs <- data.frame(Parameter = c("mu",
                                      "sigma.mu",
@@ -253,11 +257,22 @@ p_adult <- as.data.frame(adult$Report5$detectprob_ip)
 names(p_adult) <- c("p1", "p2", "p3")
 p_adult <- data.frame(obs, p_adult)
 
+<<<<<<< HEAD
+summary(yoy$SD5, "fixed", p.value = TRUE)
+summary(yoy$SD5, "report", p.value = TRUE)
+foo <- summary(yoy$SD5, "random", p.value = TRUE)
+foo <- data.frame(Parameter = rownames(foo), foo, stringsAsFactors = FALSE)
+bar <- dplyr::filter(foo, !grepl("detectprob_ip|extradetectrate_i|Delta_t|Deltainput_t|lognormal_overdispersed_i|SDinput_t_b|N_ip|Nu_dt", Parameter))
+
+pandoc.table(format(summary(yoy$SD5, "report", p.value = TRUE), digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
+
+=======
 p_adult <- p_adult %>%
   dplyr::filter(obs == 1) %>%
   dplyr::select(-obs)
 
 p_adult_mean <- colMeans(p_adult) # overdispersion effect is very small on average
+>>>>>>> aab5f3cec0950298b6b65592f7bff94881bf9a8e
 ```
 
 The overall mean probability of detection was `r 1 - exp(-1 * adult$Report5$detectrate)` for adults and `r 1 - exp(-1 * yoy$Report5$detectrate)` for YOY, with random variance among sites and years of `r adult$Report$extradetectionSD^2` and `r yoy$Report$extradetectionSD^2` for adults and YOY, respectively.

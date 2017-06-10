@@ -23,6 +23,7 @@ Data/derived_site_metrics.csv
 *.tif
 *.tiff
 *.html
+.DS_Store
 
 # Partial Folders
 Output/*.RData

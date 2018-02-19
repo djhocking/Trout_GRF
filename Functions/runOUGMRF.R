@@ -21,7 +21,7 @@ runOUGMRF <- function(inputs) {
     opt1[["k"]] = length(opt1$par)
     Report1 = obj1$report()
     Report1[["Optimizer"]] <- "nlminb"
-    SD1 = sdreport( obj1, bias.correct=FALSE )
+    SD1 = sdreport( obj1, bias.correct=TRUE )
     
     # Use BOBYQA optimization if PORTS fails
     #if(is.null(SD1)) {

@@ -326,7 +326,10 @@ df_sims <- foreach(i = 1:n_sim,
           N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
           }
           df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
-          try(df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1]))
+          try(df_N <- data.frame(N_i = network$N_i, N_hat = sd_sum[sd_sum$parameter == "N_i", 4]))
+          
+          sd_sum <- summary(mod$SD)
+          sd_sum <- data.frame(parameter = rownames(sd_sum), sd_sum, stringsAsFactors = FALSE)
           
           dat[counter, "iter"] <- i
           dat[counter, "n_sites"] <- sample_sites_vec[b]
@@ -335,7 +338,7 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "mean_N"] <- mean(network$N_i)
           dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
           dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
-          dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
+          dat[counter, "mean_N_est"] <- sd_sum[sd_sum$parameter == "mean_N", 4]
           dat[counter, "N_se"] <- N_se
           dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
           dat[counter, "theta"] <- theta

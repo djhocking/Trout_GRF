@@ -296,6 +296,7 @@ Type objective_function<Type>::operator() ()
   ADREPORT( SDinput_st );
   ADREPORT( sigmaIID );
   ADREPORT( lambda_t );
+  ADREPORT( N_i );
   //ADREPORT( SDinput );
   //  ADREPORT( SDinput_t_b );
   //  ADREPORT( SD_report );

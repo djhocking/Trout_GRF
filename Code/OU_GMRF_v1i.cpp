@@ -254,7 +254,7 @@ Type objective_function<Type>::operator() ()
   REPORT( detectrate );
   REPORT( gamma_j );
   REPORT( eta_i);
-  REPORT( lambda_ip );
+  // REPORT( lambda_ip );
   REPORT( Delta_t );
   REPORT( Deltainput_t );
   REPORT( rhot );
@@ -267,7 +267,7 @@ Type objective_function<Type>::operator() ()
   //REPORT( SDinput_st );
   REPORT( Nu_dt );
   REPORT( lambda_dt );
-  REPORT( N_ip );
+  REPORT( N_i );
   REPORT( chat_ip );
   REPORT( extradetectionSD );
   REPORT( mean_N );

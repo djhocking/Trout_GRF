@@ -150,11 +150,7 @@ pandoc.table(format(yoy$aic_table, digits = 1), keep.trailing.zeros = T, style =
 ```{r coef tables}
 Parameter <- c(names(adult$SD5$value))
 
-<<<<<<< HEAD
-pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
-=======
 # pandoc.table(yoy$SD5$value, keep.trailing.zeros = T, style = "rmarkdown")
->>>>>>> aab5f3cec0950298b6b65592f7bff94881bf9a8e
 
 df_coefs <- data.frame(Parameter = c("mu",
                                      "sigma.mu",
@@ -257,7 +253,6 @@ p_adult <- as.data.frame(adult$Report5$detectprob_ip)
 names(p_adult) <- c("p1", "p2", "p3")
 p_adult <- data.frame(obs, p_adult)
 
-<<<<<<< HEAD
 summary(yoy$SD5, "fixed", p.value = TRUE)
 summary(yoy$SD5, "report", p.value = TRUE)
 foo <- summary(yoy$SD5, "random", p.value = TRUE)
@@ -266,13 +261,11 @@ bar <- dplyr::filter(foo, !grepl("detectprob_ip|extradetectrate_i|Delta_t|Deltai
 
 pandoc.table(format(summary(yoy$SD5, "report", p.value = TRUE), digits = 1), keep.trailing.zeros = T, style = "rmarkdown")
 
-=======
-p_adult <- p_adult %>%
-  dplyr::filter(obs == 1) %>%
-  dplyr::select(-obs)
-
-p_adult_mean <- colMeans(p_adult) # overdispersion effect is very small on average
->>>>>>> aab5f3cec0950298b6b65592f7bff94881bf9a8e
+# p_adult <- p_adult %>%
+#   dplyr::filter(obs == 1) %>%
+#   dplyr::select(-obs)
+# 
+# p_adult_mean <- colMeans(p_adult) # overdispersion effect is very small on average
 ```
 
 The overall mean probability of detection was `r 1 - exp(-1 * adult$Report5$detectrate)` for adults and `r 1 - exp(-1 * yoy$Report5$detectrate)` for YOY, with random variance among sites and years of `r adult$Report$extradetectionSD^2` and `r yoy$Report$extradetectionSD^2` for adults and YOY, respectively.
@@ -283,7 +276,7 @@ Compare values to where fall in relation to simulations
 
 ## Plot Adult and YOY spatio-temporal decay functions
 
-```{r observed decay plot}
+```{r observed dist decay plot}
 library(tidyr)
 
 dist_vec <- seq(0.01, 20, by = 0.01)
@@ -294,12 +287,46 @@ df_decay <- data.frame(Distance = dist_vec, Adult, YOY, stringsAsFactors = FALSE
 df_decay_long <- df_decay %>%
   tidyr::gather(Stage, rho_nu, -Distance)
 
-ggplot(df_decay_long, aes(Distance, rho_nu, group = Stage)) + geom_line(aes(colour = Stage)) + xlab("Hydrologic distance (km)") + ylab(expression(hat(rho)[nu](S))) + theme_bw_journal()
+g_dist <- ggplot(df_decay_long, aes(Distance, rho_nu, group = Stage)) + geom_line(aes(colour = Stage, linetype = Stage)) + xlab("Hydrologic distance (km)") + ylab(expression(paste("Spatio-temporal correlation [", hat(rho)[nu](S), "]"))) + theme_bw_journal()
+g_dist
 
-ggsave(filename = "Output/Figures/Trout_Dist_Correlation.pdf")
+ggsave(g_dist, filename = "Output/Figures/Trout_Dist_Correlation.pdf")
+
+g_dist <- ggplot(df_decay_long, aes(Distance, rho_nu, group = Stage)) + geom_line(aes(colour = Stage, linetype = Stage)) + xlab("Hydrologic distance (km)") + ylab(expression(paste("Spatio-temporal correlation [", hat(rho)[nu](S), "]"))) + guides(fill = NULL) +  theme_bw_journal() + theme(legend.position = "none")
 
 ```
 
+
+## Plot Adult and YOY temporal decay rate
+
+```{r observed time decay plot}
+time_vec <- seq(0, 10, by = 1)
+Adult <- adult$Report5$rhot ^ time_vec
+YOY <- yoy$ Report5$rhot ^ time_vec
+
+df_decay <- data.frame(Time = time_vec, Adult, YOY, stringsAsFactors = FALSE)
+df_decay_long <- df_decay %>%
+  tidyr::gather(Stage, rhot, -Time)
+
+g_time <- ggplot(df_decay_long, aes(Time, rhot, group = Stage)) + geom_line(aes(colour = Stage, linetype = Stage)) + xlab("Time (years)") + ylab(expression(paste("Temporal correlation [", hat(rho)[t], "]"))) + theme_bw_journal()
+g_time
+
+ggsave(g_time, filename = "Output/Figures/Trout_Time_Correlation.pdf")
+
+g_time <- ggplot(df_decay_long, aes(Time, rhot, group = Stage)) + geom_line(aes(colour = Stage, linetype = Stage)) + xlab("Time (years)") + ylab(expression(paste("Temporal correlation [", hat(rho)[t], "]"))) + theme_bw_journal() + theme(legend.position = "none")
+g_time
+```
+
+### Combine plots
+
+```{r combined decay plots}
+library(gridExtra)
+  
+g_decays <- arrangeGrob(g_dist, g_time, ncol = 2)
+plot(g_decays)
+
+ggsave(g_decays, filename = "Output/Figures/Trout_Decay_Correlations.pdf")
+```
 
 ## Abundances over time
 

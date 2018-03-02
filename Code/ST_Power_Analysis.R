@@ -130,7 +130,7 @@ library(foreach)
 library(doParallel)
 
 # set up parallel backend & make database connection available to all workers
-nc <- min(c(detectCores()-1, 12)) #
+nc <- min(c(detectCores()-1, 15)) #
 cl <- makeCluster(nc, type = "PSOCK")
 registerDoParallel(cl)
 
@@ -283,7 +283,7 @@ df_sims <- foreach(i = 1:n_sim,
           try(converge <- mod$opt$convergence == 0)
           try(converge <- ifelse(converge == TRUE, !any(is.na(mod$SD$sd)), converge))
           large_sd <- FALSE
-          try(large_sd <- max(mod$SD$sd, na.rm = T) > 100)
+          # try(large_sd <- max(mod$SD$sd, na.rm = T) > 100)
           
           if(converge == FALSE | large_sd == TRUE) {
             dat[counter, "iter"] <- i
@@ -372,7 +372,7 @@ df_sims <- foreach(i = 1:n_sim,
         #                                sd = as.numeric(mod$SD$sd), stringsAsFactors = F)
         
         #-------- save sim iter output -------
-        save(network, mod, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData"))
+       # save(network, mod, file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData"))
         
       } # end spatial TF loop
     } # end site loop
@@ -387,6 +387,10 @@ df_sims <- foreach(i = 1:n_sim,
 } # end sim iter
 stopCluster(cl)
 closeAllConnections()
+
+save(df_sims, file = "Output/Power_Sim/STsim_Results.RData")
+write.csv(df_sims, file = "Output/Power_Sim/STsim_Results.csv", row.names = FALSE)
+
 
 library(readr)
 # df_sims <- read_csv(paste0("Output/Power_Sim/Data/summary.csv")) #, header = TRUE, stringsAsFactors = FALSE)

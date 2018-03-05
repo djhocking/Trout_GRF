@@ -90,6 +90,10 @@ y_SD_st <- ggplot(df_spatial, aes(n_years, SD_st_hat, group = n_years)) + geom_b
 
 y_rho_st <- ggplot(df_spatial, aes(n_years, rho_st_hat, group = n_years)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE")) + geom_hline(yintercept = df_spatial$rho_st, linetype = 2, size = 1, colour = "red") + theme(legend.position = "none") + ylab(expression("ST correlation per year")) + geom_text(x = 5, y = 65, label = "b") + coord_cartesian(ylim = c(0.4, 1)) #  (", rho[st], ")
 
+y_theta_sd <- ggplot(df_spatial, aes(n_years, theta_hat*(SD_hat), group = n_years)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta*df_spatial$SD, linetype = 2, size = 1, colour = "red") + ylab(expression(paste("Spatial component (", theta[epsilon]*sigma[epsilon], ")"))) + xlab("") + geom_text(x = 5, y = 65, label = "b") + coord_cartesian(ylim = c(0, 0.4)) # (", theta[epsilon], ")"
+
+y_theta_sd_st <- ggplot(df_spatial, aes(n_years, theta_st_hat*(SD_st_hat), group = n_years)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta_st*df_spatial$SD_st, linetype = 2, size = 1, colour = "red") + ylab(expression(paste("Spatio-temporal component (", theta[nu]*sigma[nu], ")"))) + xlab("") + geom_text(x = 5, y = 65, label = "b") + coord_cartesian(ylim = c(0, 0.4))
+
 # Save the legend
 get_legend<-function(myggplot){
   tmp <- ggplot_gtable(ggplot_build(myggplot))
@@ -110,13 +114,13 @@ y_N <- y_N + theme(legend.position="none")
 
 # Create grid of plots
 library(gridExtra)
-grid.arrange(y_gamma, legend, y_N, y_RMSE, y_theta, y_SD, y_rhot, y_sigmat, y_rho_st, y_SD_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(rep(3, times=5)))
+grid.arrange(y_gamma, legend, y_N, y_RMSE, y_theta_sd, y_theta_sd_st, y_rhot, y_sigmat, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(rep(3, times=5)))
 
 #grid.arrange(blank_plot, legend, y_N, y_N_se, y_RMSE, y_theta, y_rhot, y_sigmat, y_thet_st, y_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # y_gamma, 
 
 y_grid <- arrangeGrob(y_N + xlab(""), legend, 
-             y_theta + xlab(""), y_SD + xlab(""), 
-             y_rho_st + xlab(""), y_SD_st + xlab(""),
+             y_theta_sd + xlab(""), y_theta_sd_st + xlab(""), 
+             y_rho_st + xlab(""),
              y_rhot + xlab(""), y_sigmat + xlab(""),
              y_RMSE + xlab(expression(paste("Number of years"))), y_gamma + xlab(expression(paste("Number of years"))), 
              ncol = 2, 
@@ -193,24 +197,58 @@ s_N <- s_N + theme(legend.position="none")
 # blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
 #   cowplot::theme_nothing()
 
+# # Create grid of plots
+# library(gridExtra)
+# grid.arrange(s_gamma, legend, s_N, s_RMSE, s_theta, s_SD, s_rhot, s_sigmat, s_rho_st, s_SD_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(rep(3, times=5)))
+# 
+# #grid.arrange(blank_plot, legend, s_N, s_N_se, s_RMSE, s_theta, s_rhot, s_sigmat, s_thet_st, s_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # s_gamma, 
+# 
+# s_grid <- arrangeGrob(s_N + xlab(""), legend, 
+#              s_theta + xlab(""), s_SD + xlab(""), 
+#              s_rho_st + xlab(""), s_SD_st + xlab(""),
+#              s_rhot + xlab(""), s_sigmat + xlab(""),
+#              s_RMSE + xlab(expression(paste("Number of sites"))), s_gamma + xlab(expression(paste("Number of sites"))), 
+#              ncol = 2, 
+#              nrow = 5, 
+#              widths = c(2.7, 2.7), 
+#              heights = c(rep(5, times=5)))
+# 
+# ggsave(file = "Output/Power_Sim/ST_sites.png", s_grid, dpi = 72)
+# ggsave(file = "Output/Power_Sim/ST_sites.pdf", s_grid, dpi = 300)
+# 
+# grid::grid.draw(s_grid)
+
+s_theta_sd <- ggplot(df_spatial, aes(n_sites, theta_hat*(SD_hat), group = n_sites)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta*df_spatial$SD, linetype = 2, size = 1, colour = "red") + ylab(expression(paste("Spatial component (", theta[epsilon]*sigma[epsilon], ")"))) + xlab("") + geom_text(x = 5, y = 65, label = "b") + coord_cartesian(ylim = c(0, 0.4)) # (", theta[epsilon], ")"
+
+s_theta_sd_st <- ggplot(df_spatial, aes(n_sites, theta_st_hat*(SD_st_hat), group = n_sites)) + geom_boxplot(aes(fill = "#619CFF"), outlier.colour = "NA") + scale_fill_manual(values=c("#619CFF"), name = "Spatial", labels = c("FALSE", "TRUE"))  + theme(legend.position="none") + geom_hline(yintercept = df_spatial$theta_st*df_spatial$SD_st, linetype = 2, size = 1, colour = "red") + ylab(expression(paste("Spatio-temporal component (", theta[st]*sigma[st], ")"))) + xlab("") + geom_text(x = 5, y = 65, label = "b") + coord_cartesian(ylim = c(0, 0.5))
+
+
+# Remove the legend from the box plot
+s_N <- s_N + theme(legend.position="none")
+
+# Create a blank plot
+# library(cowplot)
+# blank_plot <- ggplot()+geom_blank(aes(1,1)) + 
+#   cowplot::theme_nothing()
+
 # Create grid of plots
 library(gridExtra)
-grid.arrange(s_gamma, legend, s_N, s_RMSE, s_theta, s_SD, s_rhot, s_sigmat, s_rho_st, s_SD_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(rep(3, times=5)))
+grid.arrange(s_gamma, legend, s_N, s_RMSE, s_theta_sd, s_theta_sd_st, s_rhot, s_sigmat, s_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(rep(3, times=5)))
 
 #grid.arrange(blank_plot, legend, s_N, s_N_se, s_RMSE, s_theta, s_rhot, s_sigmat, s_thet_st, s_rho_st, ncol = 2, nrow = 5, widths = c(2.7, 2.7), heights = c(0.2, rep(2.5, times=4))) # s_gamma, 
 
 s_grid <- arrangeGrob(s_N + xlab(""), legend, 
-             s_theta + xlab(""), s_SD + xlab(""), 
-             s_rho_st + xlab(""), s_SD_st + xlab(""),
+             s_theta_sd + xlab(""), s_theta_sd_st + xlab(""), 
+             s_rho_st + xlab(""),
              s_rhot + xlab(""), s_sigmat + xlab(""),
-             s_RMSE + xlab(expression(paste("Number of sites"))), s_gamma + xlab(expression(paste("Number of sites"))), 
+             s_RMSE + xlab(expression(paste("Number of years"))), s_gamma + xlab(expression(paste("Number of years"))), 
              ncol = 2, 
              nrow = 5, 
              widths = c(2.7, 2.7), 
              heights = c(rep(5, times=5)))
 
-ggsave(file = "Output/Power_Sim/ST_sites.png", s_grid, dpi = 72)
-ggsave(file = "Output/Power_Sim/ST_sites.pdf", s_grid, dpi = 300)
+ggsave(file = "Output/Power_Sim/ST_years.png", s_grid, dpi = 72)
+ggsave(file = "Output/Power_Sim/ST_years.pdf", s_grid, dpi = 300)
 
 grid::grid.draw(s_grid)
 

@@ -55,7 +55,7 @@ theta_st <- 0.3 # Range for spatio-temporal variation (0.5 works)
 SD_st <- 0.4 # 0.15   # Marginal SD of spatial component of spatio-temporal variation
 rho <- 0.7    # Correlation among years for spatio-temporal variation
 
-n_sim <- 200
+n_sim <- 300
 
 # Covariates
 # add spatially varying covariates constant in time
@@ -177,8 +177,8 @@ df_sims <- foreach(i = 1:n_sim,
   # simulate abundance and counts on network
   #set.seed(723750)
   network <- simST(family, theta = theta, SD = SD, rhot = rhot, SD_t = SD_t, theta_st = theta_st, SD_st = SD_st, mean_N = mean_N, n_years = n_years, rho = rho, gamma_j = gamma_j, X_ij=X_ij, p = p, spatial = TRUE, temporal = TRUE, spatiotemporal = TRUE)
-  str(network)
-  summary(network$N_i)
+  # str(network)
+  # summary(network$N_i)
   
   # thin to sample sites and years
   for(b in 1:length(sample_sites_vec)) {
@@ -281,6 +281,7 @@ df_sims <- foreach(i = 1:n_sim,
           # check convergence
           converge <- FALSE
           try(converge <- mod$opt$convergence == 0)
+          try(converge <- ifelse(any(mod$opt[["final_gradient"]] > 0.001), FALSE, converge))
           try(converge <- ifelse(converge == TRUE, !any(is.na(mod$SD$sd)), converge))
           large_sd <- FALSE
           # try(large_sd <- max(mod$SD$sd, na.rm = T) > 100)
@@ -326,10 +327,9 @@ df_sims <- foreach(i = 1:n_sim,
           N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
           }
           df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
-          try(df_N <- data.frame(N_i = network$N_i, N_hat = sd_sum[sd_sum$parameter == "N_i", 4]))
-          
           sd_sum <- summary(mod$SD)
           sd_sum <- data.frame(parameter = rownames(sd_sum), sd_sum, stringsAsFactors = FALSE)
+          try(df_N <- data.frame(N_i = network$N_i, N_hat = sd_sum[sd_sum$parameter == "N_i", 4]))
           
           dat[counter, "iter"] <- i
           dat[counter, "n_sites"] <- sample_sites_vec[b]
@@ -366,6 +366,7 @@ df_sims <- foreach(i = 1:n_sim,
           dat[counter, "converge"] <- TRUE
           }
         }
+        dat$rmse <- as.numeric(dat$RMSE)
         #         mean(network$N_i)
         #         SD_means <- data.frame(param = names(mod$SD$value), 
         #                                est = as.numeric(mod$SD$value), 
@@ -382,7 +383,7 @@ df_sims <- foreach(i = 1:n_sim,
   
   # problem no file locking when writing in parallel so things seem to get messed up and written in the wrong places
   write.table(dat, file = paste0("Output/Power_Sim/Data/summary_", i, ".csv"), sep = ",", row.names = FALSE)
-  # save(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".RData"))
+   # save(dat, file = paste0("Output/Power_Sim/Data/summary_sim", i, ".RData"))
   return(dat) # if save before the return nothing gets returned
 } # end sim iter
 stopCluster(cl)

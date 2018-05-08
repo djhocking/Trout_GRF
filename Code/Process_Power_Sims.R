@@ -15,28 +15,41 @@ source("Functions/summary_functions.R")
 load(file = "Output/Power_Sim/Data/ST_Conditions.RData")
 
 dat <- data.frame(iter=integer(),
-                      n_sites=integer(),
-                      n_years=integer(),
-                      spatialTF=integer(),
+                  n_sites=integer(),
+                  n_years=integer(),
+                  spatialTF=integer(),
+                  mean_N=numeric(),
                   min_N=numeric(),
                   max_N=numeric(),
-                      mean_N=numeric(),
-                      mean_N_est=numeric(),
-                      N_se=numeric(),
-                      RMSE=numeric(),
-                      theta=numeric(),
-                      theta_hat=numeric(),
-                      rhot=numeric(),
-                      rhot_hat=numeric(),
-                      sigmat=numeric(),
-                      sigmat_hat=numeric(),
-                      theta_st=numeric(),
-                      theta_st_hat=numeric(),
-                      rho_st=numeric(),
-                      rho_st_hat=numeric(),
-                      gamma_j=numeric(),
-                      gamma_j_hat=numeric(),
-                      stringsAsFactors=FALSE)
+                  mean_N_est=numeric(),
+                  N_se=numeric(),
+                  RMSE=numeric(),
+                  theta=numeric(),
+                  theta_hat=numeric(),
+                  rhot=numeric(),
+                  rhot_hat=numeric(),
+                  sigmat=numeric(),
+                  sigmat_hat=numeric(),
+                  theta_st=numeric(),
+                  theta_st_hat=numeric(),
+                  SD = numeric(),
+                  SD_hat = numeric(),
+                  SD_st = numeric(),
+                  SD_st_hat = numeric(),
+                  var_sum_sp = numeric(),
+                  var_sum_sp_hat = numeric(),
+                  SD_inf = numeric(),
+                  SD_inf_hat = numeric(),
+                  SD_st_inf = numeric(),
+                  SD_st_inf_hat = numeric(),
+                  rho_st=numeric(),
+                  rho_st_hat=numeric(),
+                  gamma_j=numeric(),
+                  gamma_j_hat=numeric(),
+                  converge = logical(),
+                  stringsAsFactors=FALSE)
+
+df_sims <- dat
 
 counter <- 0
 for(i in 1:n_sim) {
@@ -47,37 +60,7 @@ for(i in 1:n_sim) {
         if(file.exists(paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData"))) {
           load(file = paste0("Output/Power_Sim/Data/sim_", i, "_st_", s-1, "_sites_", sample_sites_vec[b], "_years_", n_years_vec[ti], ".RData"))
           if(any(class(mod) == "try-error" | is.null(mod[[1]]) | is.null(mod[[2]]) | is.null(mod[[2]]))) {
-            dat[counter, "iter"] <- i
-            dat[counter, "n_sites"] <- sample_sites_vec[b]
-            dat[counter, "n_years"] <- n_years_vec[ti]
-            dat[counter, "spatialTF"] <- s - 1
-            dat[counter, "mean_N"] <- mean(network$N_i)
-            dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
-            dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
-            dat[counter, "mean_N_est"] <- NA_real_
-            dat[counter, "N_se"] <- NA_real_
-            dat[counter, "RMSE"] <- NA_real_
-            dat[counter, "theta"] <- theta
-            dat[counter, "theta_hat"] <- NA_real_
-            dat[counter, "rhot"] <- rhot
-            dat[counter, "rhot_hat"] <- NA_real_
-            dat[counter, "sigmat"] <- SD_t
-            dat[counter, "sigmat_hat"] <- NA_real_
-            dat[counter, "theta_st"] <- theta_st
-            dat[counter, "theta_st_hat"] <- NA_real_
-            dat[counter, "rho_st"] <- rho
-            dat[counter, "rho_st_hat"] <- NA_real_
-            dat[counter, "gamma_j"] <- gamma_j
-            dat[counter, "gamma_j_hat"] <- NA_real_
-            dat[counter, "converge"] <- FALSE
-          } else {
-            # check convergence
-            converge <- FALSE
-            if(!is.null(mod$SD$sd)) {
-            try(converge <- mod$opt$convergence == 0 & !any(is.na(mod$SD$sd)))
-            }
-            
-            if(converge == FALSE) {
+            if(class(mod) == "try-error") {
               dat[counter, "iter"] <- i
               dat[counter, "n_sites"] <- sample_sites_vec[b]
               dat[counter, "n_years"] <- n_years_vec[ti]
@@ -96,73 +79,113 @@ for(i in 1:n_sim) {
               dat[counter, "sigmat_hat"] <- NA_real_
               dat[counter, "theta_st"] <- theta_st
               dat[counter, "theta_st_hat"] <- NA_real_
+              dat[counter, "SD"] <- SD
+              dat[counter, "SD_hat"] <- NA_real_
+              dat[counter, "SD_st"] <- SD_st
+              dat[counter, "SD_st_hat"] <- NA_real_
+              dat[counter, "var_sum_sp"] <- SD^2 + SD_st^2
+              dat[counter, "var_sum_sp_hat"] <- NA_real_
+              dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
+              dat[counter, "SD_inf_hat"] <- NA_real_
+              dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
+              dat[counter, "SD_st_inf_hat"] <- NA_real_
               dat[counter, "rho_st"] <- rho
               dat[counter, "rho_st_hat"] <- NA_real_
               dat[counter, "gamma_j"] <- gamma_j
               dat[counter, "gamma_j_hat"] <- NA_real_
               dat[counter, "converge"] <- FALSE
             } else {
-              N_se <- NULL
-              try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
-              N_se <- ifelse(is.null(N_se), NA_real_, N_se)
-#               if(!is.na(N_se)) {
-#                 N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
-#               }
-              df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
-              try(df_N <- data.frame(N_i = network$N_i, N_hat = mod$Report$N_ip[,1]))
+              # check convergence
+              converge <- FALSE
+              try(converge <- mod$opt$convergence == 0)
+              try(converge <- ifelse(any(mod$opt[["final_gradient"]] > 0.001), FALSE, converge))
+              try(converge <- ifelse(converge == TRUE, !any(is.na(mod$SD$sd)), converge))
+              large_sd <- FALSE
+              # try(large_sd <- max(mod$SD$sd, na.rm = T) > 100)
               
-              dat[counter, "iter"] <- i
-              dat[counter, "n_sites"] <- sample_sites_vec[b]
-              dat[counter, "n_years"] <- n_years_vec[ti]
-              dat[counter, "spatialTF"] <- s - 1
-              dat[counter, "mean_N"] <- mean(network$N_i)
-              dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
-              dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
-              dat[counter, "mean_N_est"] <- mean(mod$Report$N_ip[ , 1])
-              dat[counter, "N_se"] <- N_se
-              dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
-              dat[counter, "theta"] <- theta
-              dat[counter, "theta_hat"] <- mod$Report$theta
-              dat[counter, "rhot"] <- rhot
-              dat[counter, "rhot_hat"] <- mod$Report$rhot
-              dat[counter, "sigmat"] <- SD_t
-              dat[counter, "sigmat_hat"] <- mod$Report$sigmat
-              dat[counter, "theta_st"] <- theta_st
-              dat[counter, "theta_st_hat"] <- mod$Report$theta_st
-              dat[counter, "rho_st"] <- rho
-              dat[counter, "rho_st_hat"] <- mod$Report$rho_st
-              dat[counter, "gamma_j"] <- gamma_j
-              dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
-              dat[counter, "converge"] <- TRUE
-              
+              if(converge == FALSE | large_sd == TRUE) {
+                dat[counter, "iter"] <- i
+                dat[counter, "n_sites"] <- sample_sites_vec[b]
+                dat[counter, "n_years"] <- n_years_vec[ti]
+                dat[counter, "spatialTF"] <- s - 1
+                dat[counter, "mean_N"] <- mean(network$N_i)
+                dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
+                dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
+                dat[counter, "mean_N_est"] <- NA_real_
+                dat[counter, "N_se"] <- NA_real_
+                dat[counter, "RMSE"] <- NA_real_
+                dat[counter, "theta"] <- theta
+                dat[counter, "theta_hat"] <- NA_real_
+                dat[counter, "rhot"] <- rhot
+                dat[counter, "rhot_hat"] <- NA_real_
+                dat[counter, "sigmat"] <- SD_t
+                dat[counter, "sigmat_hat"] <- NA_real_
+                dat[counter, "theta_st"] <- theta_st
+                dat[counter, "theta_st_hat"] <- NA_real_
+                dat[counter, "SD"] <- SD
+                dat[counter, "SD_hat"] <- NA_real_
+                dat[counter, "SD_st"] <- SD_st
+                dat[counter, "SD_st_hat"] <- NA_real_
+                dat[counter, "var_sum_sp"] <- SD^2 + SD_st^2
+                dat[counter, "var_sum_sp_hat"] <- NA_real_
+                dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
+                dat[counter, "SD_inf_hat"] <- NA_real_
+                dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
+                dat[counter, "SD_st_inf_hat"] <- NA_real_
+                dat[counter, "rho_st"] <- rho
+                dat[counter, "rho_st_hat"] <- NA_real_
+                dat[counter, "gamma_j"] <- gamma_j
+                dat[counter, "gamma_j_hat"] <- NA_real_
+                dat[counter, "converge"] <- FALSE
+              } else {
+                try(N_se <- mod$SD$sd[which(names(mod$SD$value) == "mean_N")])
+                N_se <- ifelse(is.null(N_se), NA_real_, N_se)
+                if(!is.na(N_se)) {
+                  N_se <- ifelse(N_se == "NaN", NA_real_, N_se)
+                }
+                df_N <- data.frame(N_i = network$N_i, N_hat = NA_real_)
+                sd_sum <- summary(mod$SD)
+                sd_sum <- data.frame(parameter = rownames(sd_sum), sd_sum, stringsAsFactors = FALSE)
+                try(df_N <- data.frame(N_i = network$N_i, N_hat = sd_sum[sd_sum$parameter == "N_i", 4]))
+                
+                dat[counter, "iter"] <- i
+                dat[counter, "n_sites"] <- sample_sites_vec[b]
+                dat[counter, "n_years"] <- n_years_vec[ti]
+                dat[counter, "spatialTF"] <- s - 1
+                dat[counter, "mean_N"] <- mean(network$N_i)
+                dat[counter, "min_N"] <- min(network$N_i, na.rm = T)
+                dat[counter, "max_N"] <- max(network$N_i, na.rm = T)
+                dat[counter, "mean_N_est"] <- sd_sum[sd_sum$parameter == "mean_N", 4]
+                dat[counter, "N_se"] <- N_se
+                dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
+                dat[counter, "theta"] <- theta
+                dat[counter, "theta_hat"] <- mod$Report$theta
+                dat[counter, "rhot"] <- rhot
+                dat[counter, "rhot_hat"] <- mod$Report$rhot
+                dat[counter, "sigmat"] <- SD_t
+                dat[counter, "sigmat_hat"] <- mod$Report$sigmat
+                dat[counter, "theta_st"] <- theta_st
+                dat[counter, "theta_st_hat"] <- mod$Report$theta_st
+                dat[counter, "SD"] <- SD
+                dat[counter, "SD_hat"] <- mod$Report$SDinput
+                dat[counter, "SD_st"] <- SD_st
+                dat[counter, "SD_st_hat"] <- mod$Report$SDinput_st
+                dat[counter, "var_sum_sp"] <- mod$Report$SDinput^2 + mod$Report$SDinput_st^2
+                dat[counter, "var_sum_sp_hat"] <- SD^2 + SD_st^2
+                dat[counter, "SD_inf"] <- SD / ((2 * theta) ^ 0.5)
+                dat[counter, "SD_inf_hat"] <- mod$Report$SD_inf
+                dat[counter, "SD_st_inf"] <- SD_st / ((2 * theta_st) ^ 0.5)
+                dat[counter, "SD_st_inf_hat"] <- mod$Report$SD_st_inf
+                dat[counter, "rho_st"] <- rho
+                dat[counter, "rho_st_hat"] <- mod$Report$rho_st
+                dat[counter, "gamma_j"] <- gamma_j
+                dat[counter, "gamma_j_hat"] <- mod$Report$gamma_j
+                dat[counter, "converge"] <- TRUE
+              }
             }
-          }
-        } else {
-          dat[counter, "iter"] <- i
-          dat[counter, "n_sites"] <- sample_sites_vec[b]
-          dat[counter, "n_years"] <- n_years_vec[ti]
-          dat[counter, "spatialTF"] <- s - 1
-          dat[counter, "mean_N"] <- NA_real_
-          dat[counter, "min_N"] <- NA_real_
-          dat[counter, "max_N"] <- NA_real_
-          dat[counter, "mean_N_est"] <- NA_real_
-          dat[counter, "N_se"] <- NA_real_
-          dat[counter, "RMSE"] <- NA_real_
-          dat[counter, "theta"] <- theta
-          dat[counter, "theta_hat"] <- NA_real_
-          dat[counter, "rhot"] <- rhot
-          dat[counter, "rhot_hat"] <- NA_real_
-          dat[counter, "sigmat"] <- SD_t
-          dat[counter, "sigmat_hat"] <- NA_real_
-          dat[counter, "theta_st"] <- theta_st
-          dat[counter, "theta_st_hat"] <- NA_real_
-          dat[counter, "rho_st"] <- rho
-          dat[counter, "rho_st_hat"] <- NA_real_
-          dat[counter, "gamma_j"] <- gamma_j
-          dat[counter, "gamma_j_hat"] <- NA_real_
-          dat[counter, "converge"] <- FALSE
-        }
-        #df_sims <- rbind(df_sims, dat)
+            dat$rmse <- as.numeric(dat$RMSE)
+    }
+  }
       }
     }
   }
@@ -279,7 +302,7 @@ for(i in 1:n_sim) {
             dat[counter, "spatialTF"] <- s - 1
             dat[counter, "mean_N"] <- mean(network$N_i)
             dat[counter, "mean_N_est"] <- mod$Report$mean_N
-              dat[counter, "N_se"] <- N_se
+            dat[counter, "N_se"] <- N_se
             dat[counter, "RMSE"] <- rmse(df_N$N_i - df_N$N_hat)
             dat[counter, "theta"] <- theta
             dat[counter, "theta_hat"] <- mod$Report$theta
